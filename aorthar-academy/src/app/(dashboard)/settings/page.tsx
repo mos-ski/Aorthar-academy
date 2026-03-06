@@ -62,6 +62,18 @@ export default async function SettingsPage() {
           </div>
           <Separator />
           <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Department</span>
+            <span className="font-medium">{shownProfile?.department ?? 'Not set'}</span>
+          </div>
+          <Separator />
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Onboarding</span>
+            <Badge variant={shownProfile?.onboarding_completed_at ? 'default' : 'secondary'}>
+              {shownProfile?.onboarding_completed_at ? 'Completed' : 'Pending'}
+            </Badge>
+          </div>
+          <Separator />
+          <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Joined</span>
             <span>{formatDate(shownProfile?.created_at)}</span>
           </div>

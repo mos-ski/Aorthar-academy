@@ -15,7 +15,7 @@ export default async function DashboardLayout({
       <div className="flex flex-1 flex-col overflow-hidden">
         <Navbar user={{ name: profile?.full_name ?? '', email: user.email ?? '', role: profile?.role ?? 'student' }} />
         <main className="flex-1 overflow-y-auto p-6">
-          <div className="mx-auto w-full max-w-none">{children}</div>
+          <div className="mx-auto w-full px-[15%]">{children}</div>
         </main>
       </div>
     </div>

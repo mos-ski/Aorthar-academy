@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { ensureQuizQuestions } from '@/lib/quiz/generator';
+import { getDemoCourseDetail } from '@/lib/demo/studentSnapshot';
+import { buildDemoQuestions, createDemoAttempt } from '@/lib/demo/quizAttempts';
 
 // POST /api/quiz/start — Creates a quiz attempt and returns shuffled questions (no answers)
 export async function POST(req: NextRequest) {
@@ -10,23 +12,74 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json();
-  const courseId = (body.courseId ?? body.course_id) as string | undefined;
+  const requestedCourseId = (body.courseId ?? body.course_id) as string | undefined;
   const assessment_type = (body.assessmentType ?? body.assessment_type ?? 'quiz') as 'quiz' | 'exam';
 
-  if (!courseId) {
+  if (!requestedCourseId) {
     return NextResponse.json({ error: 'courseId is required' }, { status: 400 });
   }
 
-  // Fetch course config
-  const { data: course } = await supabase
+  // Fetch course config (support both UUID id and code-like route ids such as "dev102")
+  let { data: course } = await supabase
     .from('courses')
     .select('id, quiz_attempt_limit, exam_attempt_limit, cooldown_hours, exam_duration_mins, quiz_duration_mins, pass_mark, status, is_premium')
-    .eq('id', courseId)
+    .eq('id', requestedCourseId)
     .single();
 
-  if (!course || course.status !== 'published') {
-    return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+  if (!course) {
+    const { data: byCode } = await supabase
+      .from('courses')
+      .select('id, quiz_attempt_limit, exam_attempt_limit, cooldown_hours, exam_duration_mins, quiz_duration_mins, pass_mark, status, is_premium')
+      .eq('code', requestedCourseId.toUpperCase())
+      .maybeSingle();
+    course = byCode ?? null;
   }
+
+  if (!course || course.status !== 'published') {
+    const demoCourse =
+      getDemoCourseDetail(requestedCourseId) ??
+      getDemoCourseDetail(requestedCourseId.toLowerCase()) ??
+      getDemoCourseDetail(requestedCourseId.toUpperCase().toLowerCase());
+
+    if (!demoCourse) {
+      return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+    }
+
+    const lessonTitles = (demoCourse.lessons ?? []).map((l) => l.title);
+    const generated = buildDemoQuestions(demoCourse.name, lessonTitles);
+    const clientQuestions = generated.map((q) => ({
+      ...q,
+      options: q.options.map(({ id, text }) => ({ id, text })),
+    }));
+
+    const attempt = createDemoAttempt({
+      user_id: user.id,
+      course_id: demoCourse.id,
+      assessment_type,
+      started_at: new Date().toISOString(),
+      completed_at: null,
+      time_limit_secs: 45 * 60,
+      score: null,
+      passed: null,
+      questions_snapshot: generated,
+    });
+
+    return NextResponse.json({
+      attemptId: attempt.id,
+      attempt_id: attempt.id,
+      questions: clientQuestions,
+      started_at: attempt.started_at,
+      time_limit_minutes: 45,
+      data: {
+        attempt_id: attempt.id,
+        questions: clientQuestions,
+        started_at: attempt.started_at,
+        time_limit_minutes: 45,
+      },
+      mode: 'demo',
+    });
+  }
+  const courseId = course.id;
 
   // Check premium access for premium courses
   if (course.is_premium) {
@@ -86,20 +139,33 @@ export async function POST(req: NextRequest) {
       .sort(() => (q.shuffle_options ? Math.random() - 0.5 : 0))
       .map(({ id, text }) => ({ id, text })),
   }));
+  const serverQuestionsSnapshot = shuffled.map((q) => ({
+    ...q,
+    options: (q.options as { id: string; text: string; is_correct: boolean }[])
+      .sort(() => (q.shuffle_options ? Math.random() - 0.5 : 0)),
+  }));
 
   // Create attempt record
-  const { data: attempt } = await supabase
+  let attempt:
+    | { id: string; started_at: string }
+    | null = null;
+
+  const payload = {
+    user_id: user.id,
+    course_id: courseId,
+    assessment_type,
+    attempt_number: (count ?? 0) + 1,
+    questions_snapshot: serverQuestionsSnapshot,
+    time_limit_secs: (assessment_type === 'exam' ? course.exam_duration_mins : course.quiz_duration_mins) * 60,
+  };
+
+  const { data: inserted } = await supabase
     .from('quiz_attempts')
-    .insert({
-      user_id: user.id,
-      course_id: courseId,
-      assessment_type,
-      attempt_number: (count ?? 0) + 1,
-      questions_snapshot: clientQuestions,
-      time_limit_secs: (assessment_type === 'exam' ? course.exam_duration_mins : course.quiz_duration_mins) * 60,
-    })
+    .insert(payload)
     .select('id, started_at')
     .single();
+
+  attempt = inserted;
 
   if (!attempt) return NextResponse.json({ error: 'Failed to create attempt' }, { status: 500 });
 

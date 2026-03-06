@@ -50,7 +50,7 @@ export default function CourseCard({ course, isPassed, disabled = false }: Cours
   }
 
   return (
-    <Link href={`/courses/${course.id}`}>
+    <Link href={`/classroom/${course.id}`}>
       {content}
     </Link>
   );

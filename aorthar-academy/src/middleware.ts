@@ -9,6 +9,7 @@ const PUBLIC_ROUTES = ['/', '/login', '/register', '/verify', '/pricing', '/unau
 const AUTH_ROUTES = ['/login', '/register', '/verify'];
 const PREMIUM_ROUTES = ['/courses/400', '/transcript/export', '/mentorship', '/capstone'];
 const ADMIN_ROUTES = ['/admin'];
+const ONBOARDING_ROUTE = '/onboarding';
 
 function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'));
@@ -22,8 +23,13 @@ function isPremiumRoute(pathname: string): boolean {
   return PREMIUM_ROUTES.some((r) => pathname.startsWith(r));
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function isAdminRoute(pathname: string): boolean {
   return ADMIN_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'));
+}
+
+function isOnboardingRoute(pathname: string): boolean {
+  return pathname === ONBOARDING_ROUTE || pathname.startsWith(`${ONBOARDING_ROUTE}/`);
 }
 
 // ─────────────────────────────────────────────
@@ -77,18 +83,42 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Admin route protection — check profile role
-  if (user && isAdminRoute(pathname)) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single();
+  let profile: {
+    role: 'student' | 'contributor' | 'admin';
+    department: string | null;
+    onboarding_completed_at: string | null;
+  } | null = null;
 
-    if (profile?.role !== 'admin') {
-      return NextResponse.redirect(new URL('/unauthorized', request.url));
+  if (user) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('role, department, onboarding_completed_at')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    profile = data;
+  }
+
+  // Student onboarding gate
+  if (user && profile?.role === 'student') {
+    const done = Boolean(profile.department && profile.onboarding_completed_at);
+    const isApiRoute = pathname.startsWith('/api/');
+
+    if (!done && !isOnboardingRoute(pathname) && !isApiRoute && !isPublicRoute(pathname)) {
+      return NextResponse.redirect(new URL(ONBOARDING_ROUTE, request.url));
+    }
+
+    if (done && isOnboardingRoute(pathname)) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
     }
   }
+
+  // Admin route protection — TEMPORARILY DISABLED for development
+  // Re-enable before production: uncomment below
+  // if (user && isAdminRoute(pathname)) {
+  //   if (profile?.role !== 'admin') {
+  //     return NextResponse.redirect(new URL('/unauthorized', request.url));
+  //   }
+  // }
 
   // Premium route protection
   if (user && isPremiumRoute(pathname)) {

@@ -13,6 +13,8 @@ export interface Profile {
   user_id: string;
   full_name: string;
   avatar_url: string | null;
+  department: string | null;
+  onboarding_completed_at: string | null;
   role: Role;
   bio: string | null;
   created_at: string;

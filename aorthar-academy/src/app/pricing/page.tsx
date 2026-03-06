@@ -18,8 +18,8 @@ export default async function PricingPage() {
   const { data: plans } = await supabase.from('plans').select('*').order('price');
 
   return (
-    <div className="min-h-screen bg-background py-16 px-4">
-      <div className="max-w-4xl mx-auto space-y-12">
+    <div className="min-h-screen bg-background py-16 px-[15%]">
+      <div className="space-y-12">
         <div className="text-center space-y-3">
           <Badge variant="outline">Pricing</Badge>
           <h1 className="text-4xl font-bold">Unlock your full potential</h1>

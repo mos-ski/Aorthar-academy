@@ -15,6 +15,8 @@ import {
   FileQuestion,
   CheckSquare,
   CreditCard,
+  GraduationCap,
+  Building2,
 } from 'lucide-react';
 import type { Role } from '@/types';
 
@@ -23,18 +25,19 @@ const studentNav = [
   { href: '/courses', label: 'Courses', icon: BookOpen },
   { href: '/progress', label: 'Progress', icon: TrendingUp },
   { href: '/gpa', label: 'GPA & Grades', icon: Award },
-  { href: '/capstone', label: 'Capstone', icon: CheckSquare },
+  { href: '/capstone', label: 'Capstone', icon: GraduationCap },
   { href: '/suggest', label: 'Suggest Content', icon: Lightbulb },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
 const adminNav = [
-  { href: '/admin', label: 'Admin', icon: Shield },
-  { href: '/admin/courses', label: 'Admin Courses', icon: BookOpen },
+  { href: '/admin', label: 'Overview', icon: Shield },
+  { href: '/admin/courses', label: 'Courses', icon: BookOpen },
   { href: '/admin/questions', label: 'Questions', icon: FileQuestion },
   { href: '/admin/users', label: 'Users', icon: Users },
+  { href: '/admin/departments', label: 'Departments', icon: Building2 },
   { href: '/admin/suggestions', label: 'Suggestions', icon: Lightbulb },
-  { href: '/admin/capstone', label: 'Capstone Review', icon: CheckSquare },
+  { href: '/admin/capstone', label: 'Capstone', icon: CheckSquare },
   { href: '/admin/payments', label: 'Payments', icon: CreditCard },
 ];
 

@@ -117,54 +117,54 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="border-0 bg-violet-500/10 dark:bg-violet-500/15">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-violet-700 dark:text-violet-400 flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               Cumulative GPA
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-5xl font-bold">{cumulativeGpaValue.toFixed(2)}</p>
+            <p className="text-4xl font-bold">{cumulativeGpaValue.toFixed(2)}</p>
             <p className="text-sm text-muted-foreground">out of 5.0</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 bg-amber-500/10 dark:bg-amber-500/15">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-400 flex items-center gap-2">
               <Award className="h-4 w-4" />
               Credits Earned
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-5xl font-bold">{creditsEarnedValue}</p>
+            <p className="text-4xl font-bold">{creditsEarnedValue}</p>
             <p className="text-sm text-muted-foreground">credit units</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 bg-green-500/10 dark:bg-green-500/15">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-green-700 dark:text-green-400 flex items-center gap-2">
               <Trophy className="h-4 w-4" />
               Courses Passed
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-5xl font-bold">{passedCount}</p>
+            <p className="text-4xl font-bold">{passedCount}</p>
             <p className="text-sm text-muted-foreground">completed</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 bg-blue-500/10 dark:bg-blue-500/15">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-400 flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
               In Progress
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-5xl font-bold">{inProgressCount}</p>
+            <p className="text-4xl font-bold">{inProgressCount}</p>
             <p className="text-sm text-muted-foreground">active courses</p>
           </CardContent>
         </Card>

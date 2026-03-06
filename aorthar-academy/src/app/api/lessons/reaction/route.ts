@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+async function getCounts(supabase: Awaited<ReturnType<typeof createClient>>, lessonId: string) {
+  const { data: rows } = await supabase
+    .from('lesson_reactions')
+    .select('reaction')
+    .eq('lesson_id', lessonId);
+
+  const like = (rows ?? []).filter((r) => r.reaction === 'like').length;
+  const dislike = (rows ?? []).filter((r) => r.reaction === 'dislike').length;
+  return { like, dislike };
+}
+
 export async function GET(req: NextRequest) {
   const lessonId = req.nextUrl.searchParams.get('lessonId');
   if (!lessonId) return NextResponse.json({ error: 'lessonId is required' }, { status: 400 });
@@ -16,8 +27,9 @@ export async function GET(req: NextRequest) {
     .eq('lesson_id', lessonId)
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ reaction: data?.reaction ?? null });
+  if (error) return NextResponse.json({ reaction: null, counts: { like: 0, dislike: 0 } });
+  const counts = await getCounts(supabase, lessonId);
+  return NextResponse.json({ reaction: data?.reaction ?? null, counts });
 }
 
 export async function POST(req: NextRequest) {
@@ -45,8 +57,9 @@ export async function POST(req: NextRequest) {
       .eq('user_id', user.id)
       .eq('lesson_id', lessonId);
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ ok: true, reaction: null });
+    if (error) return NextResponse.json({ ok: true, reaction: null, counts: { like: 0, dislike: 0 } });
+    const counts = await getCounts(supabase, lessonId);
+    return NextResponse.json({ ok: true, reaction: null, counts });
   }
 
   const { error } = await supabase
@@ -58,6 +71,13 @@ export async function POST(req: NextRequest) {
       reaction,
     }, { onConflict: 'user_id,lesson_id' });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true, reaction });
+  if (error) {
+    return NextResponse.json({
+      ok: true,
+      reaction,
+      counts: { like: reaction === 'like' ? 1 : 0, dislike: reaction === 'dislike' ? 1 : 0 },
+    });
+  }
+  const counts = await getCounts(supabase, lessonId);
+  return NextResponse.json({ ok: true, reaction, counts });
 }

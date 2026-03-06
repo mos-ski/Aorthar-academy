@@ -3,6 +3,7 @@ import { formatDate } from '@/utils/formatters';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import AdminUserActions from '@/components/admin/AdminUserActions';
 
 const ROLE_VARIANT: Record<string, 'default' | 'secondary' | 'destructive'> = {
   admin: 'destructive',
@@ -31,28 +32,16 @@ export default async function AdminUsersPage() {
 
       <div className="grid grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Admins</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{adminCount}</p>
-          </CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Admins</CardTitle></CardHeader>
+          <CardContent><p className="text-2xl font-bold">{adminCount}</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Contributors</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{contributorCount}</p>
-          </CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Contributors</CardTitle></CardHeader>
+          <CardContent><p className="text-2xl font-bold">{contributorCount}</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Premium</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{premiumCount}</p>
-          </CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Premium</CardTitle></CardHeader>
+          <CardContent><p className="text-2xl font-bold">{premiumCount}</p></CardContent>
         </Card>
       </div>
 
@@ -62,10 +51,11 @@ export default async function AdminUsersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
+                <TableHead>Department</TableHead>
                 <TableHead>Premium</TableHead>
                 <TableHead>Joined</TableHead>
+                <TableHead className="w-28">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -75,25 +65,29 @@ export default async function AdminUsersPage() {
                   user.subscriptions.some((s: { status: string }) => s.status === 'active');
                 return (
                   <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.full_name ?? '—'}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{user.email ?? '—'}</TableCell>
+                    <TableCell>
+                      <p className="font-medium text-sm">{user.full_name ?? '—'}</p>
+                      <p className="text-xs text-muted-foreground">{user.email ?? '—'}</p>
+                    </TableCell>
                     <TableCell>
                       <Badge variant={ROLE_VARIANT[user.role] ?? 'secondary'}>{user.role}</Badge>
                     </TableCell>
+                    <TableCell className="text-sm">{user.department ?? '—'}</TableCell>
                     <TableCell>
-                      {isPremium ? (
-                        <Badge variant="default">Premium</Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Free</span>
-                      )}
+                      {isPremium
+                        ? <Badge variant="default">Premium</Badge>
+                        : <span className="text-xs text-muted-foreground">Free</span>}
                     </TableCell>
                     <TableCell className="text-sm">{formatDate(user.created_at)}</TableCell>
+                    <TableCell>
+                      <AdminUserActions userId={user.user_id} currentRole={user.role} isPremium={isPremium} />
+                    </TableCell>
                   </TableRow>
                 );
               })}
               {rows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                     No users yet.
                   </TableCell>
                 </TableRow>

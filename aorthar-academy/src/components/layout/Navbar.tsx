@@ -37,10 +37,29 @@ export default function Navbar({ user }: NavbarProps) {
     router.refresh();
   }
 
+  const PAGE_TITLES: Record<string, string> = {
+    '/dashboard': 'Dashboard',
+    '/courses': 'Courses',
+    '/progress': 'Progress',
+    '/gpa': 'GPA & Transcript',
+    '/capstone': 'Capstone',
+    '/suggest': 'Suggest Content',
+    '/settings': 'Settings',
+    '/admin': 'Admin',
+    '/admin/courses': 'Courses',
+    '/admin/users': 'Users',
+    '/admin/departments': 'Departments',
+    '/admin/suggestions': 'Suggestions',
+    '/admin/capstone': 'Capstone Reviews',
+    '/admin/payments': 'Payments',
+    '/admin/settings': 'Settings',
+  };
+  const pageTitle = PAGE_TITLES[pathname] ?? PAGE_TITLES[Object.keys(PAGE_TITLES).find((k) => pathname.startsWith(k + '/')) ?? ''] ?? '';
+
   return (
     <header className="h-14 border-b px-6 flex items-center justify-between bg-background">
-      <p className="text-sm text-muted-foreground">
-        {pathname === '/dashboard' ? 'Welcome,' : ''}
+      <p className="text-sm font-medium text-foreground/80">
+        {pageTitle}
       </p>
       <div className="flex items-center gap-3">
         <Badge variant="secondary" className="capitalize">

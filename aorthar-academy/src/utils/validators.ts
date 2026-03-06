@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AORTHAR_DEPARTMENTS } from '@/lib/academics/departments';
 
 // ─────────────────────────────────────────────
 // ZOD VALIDATORS
@@ -10,6 +11,9 @@ export const courseCodeSchema = z
 
 export const registerSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters'),
+  department: z.enum(AORTHAR_DEPARTMENTS, {
+    message: 'Please select a department',
+  }),
   email: z.string().email('Invalid email address'),
   password: z
     .string()

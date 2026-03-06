@@ -2,7 +2,15 @@ import { createClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/auth';
 import { formatYearLabel, formatSemesterLabel } from '@/utils/formatters';
 import { Badge } from '@/components/ui/badge';
-import { Lock } from 'lucide-react';
+import { Lock, BookOpen, BookMarked, Layers, GraduationCap } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+const YEAR_ICONS: Record<number, LucideIcon> = {
+  100: BookOpen,
+  200: BookMarked,
+  300: Layers,
+  400: GraduationCap,
+};
 import CourseCard from '@/components/courses/CourseCard';
 import { getDemoStudentSnapshot } from '@/lib/demo/studentSnapshot';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -63,15 +71,19 @@ export default async function CoursesPage() {
 
       <Tabs defaultValue={defaultTab} className="space-y-5">
         <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-xl border border-border bg-card p-1.5">
-          {(years ?? []).map((year) => (
-            <TabsTrigger
-              key={year.id}
-              value={`year-${year.level}`}
-              className="min-w-[120px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-            >
-              {formatYearLabel(year.level)}
-            </TabsTrigger>
-          ))}
+          {(years ?? []).map((year) => {
+            const Icon = YEAR_ICONS[year.level] ?? BookOpen;
+            return (
+              <TabsTrigger
+                key={year.id}
+                value={`year-${year.level}`}
+                className="min-w-[120px] gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {formatYearLabel(year.level)}
+              </TabsTrigger>
+            );
+          })}
         </TabsList>
 
         {(years ?? []).map((year) => (
