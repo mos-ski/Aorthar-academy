@@ -53,12 +53,19 @@ Year (100, 200, 300, 400)
 - **Display Name**: "First Semester", "Second Semester"
 - **Prerequisites**: Semester 2 locked until Semester 1 completed with passing grade
 
+#### Department
+- **Identifier**: UUID
+- **Name**: "UI/UX Design", "Product Management", "Frontend Engineering", etc.
+- **Faculty**: "Faculty of Product Development"
+- **Description**: The specialized track a student follows.
+
 #### Course
 - **Code**: String format [A-Z]{3}[1-3]{3} (e.g., DES101, DEV201)
 - **Name**: Human-readable course title
 - **Credit Units**: Integer (1-6)
 - **Year Level**: Foreign key to Year
 - **Semester**: Foreign key to Semester
+- **Department**: Foreign key to Department (Optional - some courses may be general)
 - **Pass Mark**: Default 60%
 - **Quiz Attempt Limit**: Default 3 attempts
 - **Exam Attempt Limit**: Default 3 attempts
@@ -66,7 +73,7 @@ Year (100, 200, 300, 400)
 - **Is Premium**: Boolean (requires premium subscription)
 
 #### Lesson
-- **Title**: Lesson name
+- **Title**: Class/Curriculum topic (e.g., "Week 1: Empathy")
 - **Order**: Integer for sequencing
 - **Course**: Foreign key to Course
 - **Content**: Markdown or rich text
@@ -741,6 +748,7 @@ aorthar-academy/
 │ id (PK)         │────→│ user_id (FK)    │
 │ email           │     │ full_name       │
 │ created_at      │     │ avatar_url      │
+│                 │     │ department_id   │
 │                 │     │ role            │
 └─────────────────┘     └─────────────────┘
                                 │
@@ -993,21 +1001,23 @@ export function adminMiddleware(request: NextRequest) {
    ↓
 2. Complete profile
    ↓
-3. View available courses (Year 100, Semester 1)
+3. Select Department (e.g., UI/UX Design)
    ↓
-4. Enroll in course
+4. View available courses (Year 100, Semester 1)
    ↓
-5. Complete lessons
+5. Enroll in course (e.g., DST 101)
    ↓
-6. Take quiz (max 3 attempts)
+6. Complete 12 Classes (Curriculum)
    ↓
-7. Take final exam
+7. Take quiz/exam (max 3 attempts)
    ↓
-8. Pass (≥60%) → Unlock next semester/year
+8. Pass (≥60%) → Earn GPA Points
    ↓
-9. Repeat until Year 400 complete
+9. Unlock next semester/year
    ↓
-10. Submit capstone → Graduation
+10. Repeat until Year 400 complete
+   ↓
+11. Submit capstone → Graduation
 ```
 
 ### 15.2 Payment Flow
