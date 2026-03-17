@@ -6,10 +6,13 @@ import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, Lock } from 'lucide-react';
 import { getDemoStudentSnapshot } from '@/lib/demo/studentSnapshot';
+import { isDemoMode, isExplicitLiveMode } from '@/lib/demo/mode';
 
 export default async function ProgressPage() {
   const { user } = await requireAuth();
   const supabase = await createClient();
+  const forcedDemo = await isDemoMode();
+  const explicitLive = await isExplicitLiveMode();
 
   const [{ data: yearsData }, { data: progressData }, { data: semProgress }] =
     await Promise.all([
@@ -25,7 +28,7 @@ export default async function ProgressPage() {
     ]);
 
   const demo = getDemoStudentSnapshot();
-  const shouldUseDemo = (yearsData?.length ?? 0) === 0;
+  const shouldUseDemo = forcedDemo || (!explicitLive && (yearsData?.length ?? 0) === 0);
   const years = shouldUseDemo ? demo.years : yearsData;
   const progressMap = new Map(
     (shouldUseDemo ? demo.progressRows : (progressData ?? [])).map((p) => [p.course_id, p.status]),

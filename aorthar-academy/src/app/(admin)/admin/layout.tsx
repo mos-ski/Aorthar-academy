@@ -1,14 +1,49 @@
-export default function AdminLayout({
+import Sidebar from '@/components/layout/Sidebar';
+import Navbar from '@/components/layout/Navbar';
+import { createClient } from '@/lib/supabase/server';
+import { isDemoMode } from '@/lib/demo/mode';
+
+async function getAdminUser() {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name, role')
+      .eq('user_id', user.id)
+      .single();
+    return {
+      name: profile?.full_name ?? 'Admin',
+      email: user.email ?? '',
+      role: (profile?.role ?? 'admin') as 'admin' | 'student' | 'contributor',
+    };
+  } catch {
+    return null;
+  }
+}
+
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const adminUser = await getAdminUser();
+  const user = adminUser ?? { name: 'Admin Preview', email: 'admin@aorthar.com', role: 'admin' as const };
+  const demo = await isDemoMode();
+  const appEnv = process.env.NEXT_PUBLIC_APP_ENV ?? 'development';
+
   return (
-    <div className="space-y-6">
-      <div className="border-b pb-4">
-        <h1 className="text-2xl font-bold text-destructive">Admin Panel</h1>
+    <div className="flex h-screen overflow-hidden bg-background">
+      <Sidebar role={user.role} />
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <Navbar user={user} isDemoMode={demo} appEnv={appEnv} />
+        <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+          <div className="mx-auto max-w-6xl space-y-6">
+            {children}
+          </div>
+        </main>
       </div>
-      {children}
     </div>
   );
 }

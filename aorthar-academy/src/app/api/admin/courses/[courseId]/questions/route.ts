@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { DEMO_QUESTIONS_BY_COURSE } from '@/lib/demo/adminSnapshot';
 
 // GET /api/admin/courses/[courseId]/questions
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ courseId: string }> }) {
-  const supabase = await createClient();
   const { courseId } = await params;
 
+  if (courseId.startsWith('demo-')) {
+    const questions = (DEMO_QUESTIONS_BY_COURSE as Record<string, object[]>)[courseId] ?? [];
+    return NextResponse.json({ data: questions });
+  }
+
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('questions')
     .select('*')

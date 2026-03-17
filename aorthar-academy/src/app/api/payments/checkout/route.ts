@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
   const result = await initiatePayment({
     email: user.email!,
-    amount_kobo: Math.round(plan.price * 100), // USD cents → kobo (adjust currency if NGN)
+    amount_kobo: Math.round(plan.price * 100), // price stored in NGN → multiply by 100 for kobo
     reference,
     metadata: { user_id: user.id, plan_type: plan.plan_type },
     callback_url: `${process.env.NEXTAUTH_URL}/dashboard?payment=success`,

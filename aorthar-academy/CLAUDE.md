@@ -22,10 +22,10 @@ No test suite exists. The build (`bun run build`) is the primary correctness gat
 
 | Group | Path prefix | Auth | Purpose |
 |---|---|---|---|
-| `(auth)` | `/login`, `/register`, `/verify` | public | Auth pages — split-panel layout, no shared layout file |
+| `(auth)` | `/login`, `/register`, `/verify`, `/forgot-password`, `/reset-password` | public | Auth pages — split-panel layout, no shared layout file |
 | `(dashboard)` | `/dashboard`, `/courses`, `/progress`, `/gpa`, `/capstone`, `/suggest`, `/settings` | required + onboarding gate | Student app. Shared layout at `src/app/(dashboard)/layout.tsx` with Sidebar + Navbar. All pages get `px-[15%]` padding via the layout wrapper div. |
 | `(classroom)` | `/classroom/[courseId]` | required | Full-screen dark course viewer. Separate layout, no sidebar. |
-| `(admin)` | `/admin/**` | required (guard disabled in dev) | Admin CMS. Shared layout at `src/app/(admin)/admin/layout.tsx`. |
+| `(admin)` | `/admin/**` | required (guard disabled in dev) | Admin CMS. Shared layout at `src/app/(admin)/admin/layout.tsx`. Includes: courses, questions, users, suggestions, capstone, payments, curriculum, departments pages. |
 | root | `/`, `/pricing`, `/onboarding` | public / conditional | Landing, pricing, and student onboarding pages. |
 
 ### Supabase client selection
@@ -56,7 +56,7 @@ await requireRole('admin', profile);                     // throws → redirect 
 2. Auth-route redirect (logged-in → dashboard)
 3. Public-route passthrough
 4. **Onboarding gate** — students without `profile.department` + `profile.onboarding_completed_at` are redirected to `/onboarding`
-5. Admin route guard — **currently commented out for development** — re-enable before production
+5. Admin route guard — **disabled when `NEXT_PUBLIC_APP_ENV=development`**, enforced in staging + production
 6. Premium route guard — checks `subscriptions.status = 'active'`
 
 ### Academic data model
@@ -92,9 +92,54 @@ Eight departments in `src/lib/academics/departments.ts` (`AORTHAR_DEPARTMENTS`).
 
 Edge Functions use Deno imports and are excluded from `tsconfig.json`. Do not add them to the TS project.
 
+### API routes (`src/app/api/`)
+
+| Route | Purpose |
+|---|---|
+| `POST /api/quiz/start` | Create attempt, return shuffled questions (no answers) |
+| `POST /api/quiz/submit` | Delegates to grade-quiz Edge Function |
+| `GET /api/quiz/attempt/[id]` | Fetch attempt state |
+| `GET /api/quiz/attempt/[id]/solutions` | Fetch graded solutions post-submission |
+| `POST /api/quiz/generate` | AI-generate questions for a lesson |
+| `POST /api/payments/checkout` | Create Paystack session |
+| `POST /api/webhooks/paystack` | Delegates to verify-payment Edge Function |
+| `POST /api/capstone/submit` | Submit capstone (premium only) |
+| `POST /api/suggestions` | Submit suggestion |
+| `GET\|PUT /api/profile` | Read/update student profile fields |
+| `DELETE /api/account` | Delete account |
+| `GET /api/transcript/download` | Generate and stream transcript PDF |
+| `POST /api/onboarding/change-department` | Switch department post-onboarding |
+| `POST /api/unlock-next-level` | Trigger progression unlock check |
+| `GET\|POST /api/lessons/comments` | Lesson comments |
+| `POST /api/lessons/comments/reaction` | React to a comment |
+| `POST /api/lessons/reaction` | React to a lesson |
+| `GET /api/lessons/summary\|related\|deep-dive` | AI-generated lesson content |
+| `GET\|POST /api/admin/courses` | List/create courses |
+| `GET\|POST /api/admin/years` | List/create academic years |
+| `GET\|POST /api/admin/semesters` | List/create semesters |
+| `GET /api/admin/curriculum` | Full curriculum tree |
+| `POST /api/demo-mode` | Flip `aorthar_demo` cookie |
+
 ### Demo mode
 
-When `years` table is empty (no curriculum seeded), every student-facing page falls back to `src/lib/demo/studentSnapshot.ts`. This allows the UI to render without a seeded database.
+Two layers:
+
+1. **Passive fallback** — when `years` table is empty, student pages use `src/lib/demo/studentSnapshot.ts` and admin pages use `src/lib/demo/adminSnapshot.ts` (31 real courses seeded).
+2. **Forced demo toggle** — a cookie `aorthar_demo=1` overrides live data on any page. Toggle is exposed in the Navbar (hidden in production). `POST /api/demo-mode` flips the cookie.
+
+Helper: `isDemoMode()` from `src/lib/demo/mode.ts` — call at the top of any server page/layout that needs to respect the toggle. Returns `false` unconditionally when `NEXT_PUBLIC_APP_ENV=production`.
+
+### Environments
+
+`NEXT_PUBLIC_APP_ENV` controls the environment badge in the Navbar and gates the demo toggle:
+
+| Value | Navbar badge | Demo toggle |
+|---|---|---|
+| `development` | yellow DEV | visible |
+| `staging` | blue STAGING | visible |
+| `production` | green PROD | hidden |
+
+Set per deployment in Vercel environment variables. Local `.env.local` uses `development`.
 
 ### Payments
 
@@ -107,11 +152,18 @@ Paystack (Nigerian market). `src/lib/paystack.ts` for helpers. Webhook at `POST 
 | `src/types/index.ts` | All TypeScript interfaces |
 | `src/middleware.ts` | Auth + onboarding + premium route guards |
 | `src/utils/validators.ts` | Zod schemas for all form inputs |
-| `src/utils/formatters.ts` | GPA, currency, date, year/semester label formatters |
+| `src/utils/formatters.ts` | GPA, currency (NGN default), date, year/semester label formatters |
 | `src/lib/gpa.ts` | GPA calculation logic (server-only) |
 | `src/lib/progression.ts` | Unlock / progression logic |
+| `src/lib/demo/mode.ts` | `isDemoMode()` — reads `aorthar_demo` cookie; false in production |
+| `src/lib/demo/adminSnapshot.ts` | Admin demo data — 31 courses, 8 users, full curriculum |
+| `src/lib/demo/studentSnapshot.ts` | Student demo data — parsed from markdown curriculum |
 | `src/lib/courses/loadCourseViewerData.ts` | Data loader for the classroom viewer |
 | `src/components/courses/CourseViewer.tsx` | Full classroom UI (tabs: Class Info, Materials, Related, Classroom) |
+| `src/components/layout/Navbar.tsx` | Top nav — env badge + demo toggle (client component) |
+| `src/components/settings/SettingsClient.tsx` | Settings page client component (profile, account, department) |
+| `src/lib/academics/departments.ts` | `AORTHAR_DEPARTMENTS` — 8 department definitions |
+| `src/lib/academics/plan.ts` | `getSemester1EnrollmentCodes(dept)` — onboarding course enrollment |
 | `supabase/migrations/001_initial_schema.sql` | Canonical schema — all tables |
 | `supabase/migrations/002_rls_policies.sql` | RLS + `is_admin()` / `is_premium()` helpers |
 | `supabase/migrations/003_functions.sql` | GPA RPCs, cooldown checks, contributor auto-promotion trigger |
@@ -142,13 +194,16 @@ SUPABASE_SERVICE_ROLE_KEY=
 PAYSTACK_SECRET_KEY=
 PAYSTACK_PUBLIC_KEY=
 NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=
+NEXT_PUBLIC_APP_ENV=development   # development | staging | production
 ```
 
 ## Important patterns & gotchas
 
 - **`profiles.user_id` vs `profiles.id`** — `user_id` is the FK to `auth.users`. Always filter with `.eq('user_id', user.id)`, never `.eq('id', user.id)`.
-- **Admin guard is disabled** — `isAdminRoute()` check in middleware is commented out. Re-enable before production.
+- **Admin guard** — Active when `NEXT_PUBLIC_APP_ENV !== 'development'`. In dev, any logged-in user can access `/admin`. In staging/prod, non-admins are redirected to `/unauthorized`.
 - **JSONB options format** — Quiz question options are stored as `[{"id":"a","text":"...","is_correct":true}]`. Always use this shape when inserting.
 - **Tailwind v4** — Uses `@import "tailwindcss"` syntax, not `@tailwind base/components/utilities`. CSS variables are defined in `globals.css` under `:root` and `.dark`.
 - **shadcn components** — Added via `bunx shadcn add <component>`. Config is in `components.json`.
 - **`px-[15%]` layout padding** — Applied in `(dashboard)/layout.tsx` wrapper div. Do not add per-page horizontal padding on top of this in dashboard pages.
+- **AI utilities** — `src/lib/ai/` contains server-side AI helpers used by `GET /api/lessons/summary|related|deep-dive`. Never import from this directory in Client Components.
+- **Dependency patches** — `patches/` holds `patch-package` diffs applied automatically via the `postinstall` script. If a build breaks after adding/upgrading a package, check here for conflicts. Regenerate with `bunx patch-package <package-name>`.

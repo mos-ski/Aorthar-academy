@@ -36,7 +36,7 @@ export function formatDateTime(iso?: string | null): string {
 
 export function formatCurrency(
   amount: number,
-  currency = 'USD',
+  currency = 'NGN',
 ): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',

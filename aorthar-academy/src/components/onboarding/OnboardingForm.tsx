@@ -5,34 +5,53 @@ import { useRouter } from 'next/navigation';
 import { AORTHAR_DEPARTMENTS } from '@/lib/academics/departments';
 import { getSemester1EnrollmentCodes } from '@/lib/academics/plan';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import {
+  Layers,
+  Package,
+  Palette,
+  Code2,
+  Server,
+  RefreshCw,
+  Settings2,
+  TestTube2,
+  CheckCircle2,
+} from 'lucide-react';
+
+const DEPARTMENT_META: Record<string, { icon: React.ElementType; description: string }> = {
+  'UI/UX Design': { icon: Layers, description: 'Design systems, user research, and interaction design' },
+  'Product Management': { icon: Package, description: 'Strategy, roadmaps, and stakeholder alignment' },
+  'Product Design': { icon: Palette, description: 'Visual design, branding, and design systems' },
+  'Design Engineering (FE)': { icon: Code2, description: 'React, TypeScript, and production-quality UI' },
+  'Backend Engineering': { icon: Server, description: 'APIs, databases, and distributed systems' },
+  'Scrum & Agile': { icon: RefreshCw, description: 'Sprint planning, ceremonies, and team delivery' },
+  'Operations': { icon: Settings2, description: 'Process, analytics, and operational excellence' },
+  'Quality Assurance (QA)': { icon: TestTube2, description: 'Test automation, QA strategy, and reliability' },
+};
 
 interface OnboardingFormProps {
   initialDepartment: string | null;
   studentName: string;
 }
 
+const STEPS = ['Welcome', 'Your Track', 'Confirm'];
+
 export default function OnboardingForm({ initialDepartment, studentName }: OnboardingFormProps) {
   const router = useRouter();
+  const [step, setStep] = useState(1);
+  const [acknowledged, setAcknowledged] = useState(false);
   const [department, setDepartment] = useState<string>(initialDepartment ?? '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const semester1Codes = department ? getSemester1EnrollmentCodes(department) : null;
+  const semester1Codes = department ? getSemester1EnrollmentCodes(department) : [];
+  const firstName = studentName.split(' ')[0];
 
   async function completeOnboarding() {
     setLoading(true);
     setError(null);
-
-    if (!department) {
-      setError('Please select your department to continue.');
-      setLoading(false);
-      return;
-    }
 
     const response = await fetch('/api/onboarding/complete', {
       method: 'POST',
@@ -53,71 +72,184 @@ export default function OnboardingForm({ initialDepartment, studentName }: Onboa
 
   return (
     <div className="min-h-screen bg-background px-4 py-10">
-      <div className="mx-auto w-full max-w-3xl space-y-6">
-        <div>
-          <Badge variant="outline" className="mb-3">Faculty Onboarding</Badge>
-          <h1 className="text-4xl font-semibold tracking-tight">Welcome to Aorthar, {studentName}</h1>
-          <p className="mt-2 text-muted-foreground">
-            Faculty of Product Development. Select your discipline and start Year 100, Semester 1.
-          </p>
+      <div className="mx-auto w-full max-w-2xl space-y-8">
+        {/* Logo */}
+        <div className="text-center">
+          <p className="text-2xl font-bold tracking-tight">Aorthar<span className="text-primary">.</span></p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Department Selection</CardTitle>
-            <CardDescription>
-              Your department shapes your core track. You can still explore cross-functional courses later.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        {/* Step indicator */}
+        <div className="flex items-center justify-center gap-0">
+          {STEPS.map((label, i) => {
+            const num = i + 1;
+            const isComplete = step > num;
+            const isActive = step === num;
+            return (
+              <div key={num} className="flex items-center">
+                <div className="flex flex-col items-center gap-1">
+                  <div
+                    className={cn(
+                      'flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold border-2 transition-colors',
+                      isComplete
+                        ? 'bg-primary border-primary text-primary-foreground'
+                        : isActive
+                        ? 'border-primary text-primary bg-background'
+                        : 'border-muted text-muted-foreground bg-background',
+                    )}
+                    aria-current={isActive ? 'step' : undefined}
+                  >
+                    {isComplete ? <CheckCircle2 className="h-4 w-4" /> : num}
+                  </div>
+                  <span className={cn('text-xs', isActive ? 'text-primary font-medium' : 'text-muted-foreground')}>
+                    {label}
+                  </span>
+                </div>
+                {i < STEPS.length - 1 && (
+                  <div className={cn('h-0.5 w-16 mx-2 mb-5 transition-colors', step > num ? 'bg-primary' : 'bg-muted')} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Step 1 — Welcome & Rules */}
+        {step === 1 && (
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Welcome to Aorthar Academy, {firstName}.</h1>
+              <p className="mt-2 text-muted-foreground">
+                Aorthar Academy is a structured, 4-year product & design education programme.
+                We believe world-class training should be accessible to everyone — built on real industry skills,
+                not generic courses.
+              </p>
+            </div>
+
+            <div className="rounded-lg border bg-muted/20 p-5 space-y-3">
+              <p className="font-semibold">Academic Rules</p>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li className="flex gap-2"><span className="text-foreground font-medium shrink-0">GPA scale:</span> 5.0 — A+ = 5.0, D = 2.0, F = 0.0</li>
+                <li className="flex gap-2"><span className="text-foreground font-medium shrink-0">Pass mark:</span> 60% per course</li>
+                <li className="flex gap-2"><span className="text-foreground font-medium shrink-0">Course grade:</span> Quiz 40% + Final Exam 60%</li>
+                <li className="flex gap-2"><span className="text-foreground font-medium shrink-0">Progression:</span> Semester 2 unlocks after all Semester 1 courses are passed</li>
+                <li className="flex gap-2"><span className="text-foreground font-medium shrink-0">Year 400:</span> Requires an active Premium subscription</li>
+                <li className="flex gap-2"><span className="text-foreground font-medium shrink-0">Exam attempts:</span> Max 3 per course — 24-hour cooldown on fail</li>
+              </ul>
+            </div>
+
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                id="acknowledge"
+                type="checkbox"
+                checked={acknowledged}
+                onChange={(e) => setAcknowledged(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-border accent-primary cursor-pointer"
+              />
+              <span className="text-sm">
+                I have read and understood the Aorthar Academic Rules.
+              </span>
+            </label>
+
+            <Button className="w-full" disabled={!acknowledged} onClick={() => setStep(2)}>
+              Continue
+            </Button>
+          </div>
+        )}
+
+        {/* Step 2 — Choose Department */}
+        {step === 2 && (
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Choose Your Track</h1>
+              <p className="mt-2 text-muted-foreground">
+                Your department shapes your core curriculum. You can explore cross-functional courses later.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {AORTHAR_DEPARTMENTS.map((dept) => {
+                const meta = DEPARTMENT_META[dept];
+                const Icon = meta?.icon;
+                const isSelected = department === dept;
+                return (
+                  <button
+                    key={dept}
+                    type="button"
+                    onClick={() => setDepartment(dept)}
+                    className={cn(
+                      'flex items-start gap-3 rounded-lg border p-4 text-left transition-colors hover:bg-muted/40',
+                      isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border bg-background',
+                    )}
+                  >
+                    {Icon && (
+                      <div className={cn('mt-0.5 shrink-0', isSelected ? 'text-primary' : 'text-muted-foreground')}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-semibold text-sm">{dept}</p>
+                      {meta?.description && (
+                        <p className="text-xs text-muted-foreground mt-0.5">{meta.description}</p>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setStep(1)} className="w-1/3">
+                Back
+              </Button>
+              <Button disabled={!department} onClick={() => setStep(3)} className="flex-1">
+                Continue
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3 — Preview & Confirm */}
+        {step === 3 && (
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">{department}</h1>
+              <p className="mt-2 text-muted-foreground">
+                Review your Semester 1 courses before confirming enrollment.
+              </p>
+            </div>
+
+            <div className="rounded-lg border bg-muted/20 p-5 space-y-3">
+              <p className="font-semibold text-sm">Year 100 — Semester 1 Courses</p>
+              {semester1Codes.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {semester1Codes.map((code) => (
+                    <Badge key={code} variant="outline" className="text-xs border-primary/30 text-primary bg-primary/5">
+                      {code}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No courses configured yet for this department. Enrollment will be set up shortly.
+                </p>
+              )}
+            </div>
+
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <div className="space-y-2">
-              <Label>Choose your department</Label>
-              <Select value={department} onValueChange={setDepartment}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select department" />
-                </SelectTrigger>
-                <SelectContent>
-                  {AORTHAR_DEPARTMENTS.map((item) => (
-                    <SelectItem key={item} value={item}>
-                      {item}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
-            <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground space-y-2">
-              {semester1Codes ? (
-                <>
-                  <p className="font-medium text-foreground">{department} — Semester 1 Courses</p>
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {semester1Codes.map((code) => (
-                      <Badge key={code} variant="outline" className="text-xs border-primary/30 text-primary bg-primary/5">
-                        {code}
-                      </Badge>
-                    ))}
-                  </div>
-                  <p className="pt-1"><strong>Course format:</strong> 12-week classes with lesson videos, quizzes, and GPA tracking.</p>
-                </>
-              ) : (
-                <>
-                  <p><strong>Next:</strong> You will be enrolled into entry-level courses for Semester 1.</p>
-                  <p><strong>Shared foundation:</strong> PM101, DES101, and PM103 are common across departments.</p>
-                  <p><strong>Course format:</strong> 12-week classes with lesson videos, quizzes, and GPA tracking.</p>
-                </>
-              )}
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setStep(2)} className="w-1/3" disabled={loading}>
+                Back
+              </Button>
+              <Button onClick={completeOnboarding} disabled={loading} className="flex-1">
+                {loading ? 'Setting up your semester...' : 'Confirm Enrollment'}
+              </Button>
             </div>
-
-            <Button onClick={completeOnboarding} disabled={loading || !department} className="w-full">
-              {loading ? 'Setting up your semester...' : 'Start Year 100 Semester 1'}
-            </Button>
-          </CardContent>
-        </Card>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -47,7 +47,7 @@ export default function RegisterPage() {
       return;
     }
 
-    router.push('/verify');
+    router.push(`/verify?email=${encodeURIComponent(values.email)}`);
   }
 
   return (

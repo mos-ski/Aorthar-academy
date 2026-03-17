@@ -13,11 +13,14 @@ const YEAR_ICONS: Record<number, LucideIcon> = {
 };
 import CourseCard from '@/components/courses/CourseCard';
 import { getDemoStudentSnapshot } from '@/lib/demo/studentSnapshot';
+import { isDemoMode, isExplicitLiveMode } from '@/lib/demo/mode';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default async function CoursesPage() {
   const { user } = await requireAuth();
   const supabase = await createClient();
+  const forcedDemo = await isDemoMode();
+  const explicitLive = await isExplicitLiveMode();
 
   const [{ data: yearsData }, { data: passedCourseIds }, { data: semesterProgressData }] =
     await Promise.all([
@@ -37,7 +40,7 @@ export default async function CoursesPage() {
     ]);
 
   const demo = getDemoStudentSnapshot();
-  const shouldUseDemo = (yearsData?.length ?? 0) === 0;
+  const shouldUseDemo = forcedDemo || (!explicitLive && (yearsData?.length ?? 0) === 0);
   const years = shouldUseDemo ? demo.years : yearsData;
 
   const passed = shouldUseDemo

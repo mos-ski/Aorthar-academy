@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { AORTHAR_DEPARTMENTS } from '@/lib/academics/departments';
 import { getSemester1EnrollmentCodes } from '@/lib/academics/plan';
 
@@ -9,8 +10,8 @@ const completeOnboardingSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  // Verify identity with the user-scoped client (respects RLS / cookies).
   const supabase = await createClient();
-
   const {
     data: { user },
     error: authError,
@@ -33,35 +34,61 @@ export async function POST(request: Request) {
   const { department } = parsed.data;
   const nowIso = new Date().toISOString();
 
-  // Always update the profile first — this must succeed for onboarding to complete.
-  const { error: profileError } = await supabase
-    .from('profiles')
-    .update({
-      department,
-      onboarding_completed_at: nowIso,
-    })
-    .eq('user_id', user.id);
+  // Use the admin client for all writes so RLS never blocks onboarding.
+  const admin = createAdminClient();
 
-  if (profileError) {
+  // Try update first (profile row should exist from the auth trigger).
+  const { data: updated, error: updateError } = await admin
+    .from('profiles')
+    .update({ department, onboarding_completed_at: nowIso })
+    .eq('id', user.id)
+    .select('id');
+
+  if (updateError) {
     return NextResponse.json(
-      { error: 'Failed to update student profile.' },
+      { error: `Profile update failed: ${updateError.message}` },
       { status: 500 },
     );
   }
 
+  // If no row matched, insert one (trigger may not have fired).
+  if (!updated || updated.length === 0) {
+    const fullName =
+      typeof user.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()
+        ? user.user_metadata.full_name.trim()
+        : (user.email?.split('@')[0] ?? 'Student');
+
+    const { error: insertError } = await admin
+      .from('profiles')
+      .insert({
+        id: user.id,
+        user_id: user.id,
+        full_name: fullName,
+        role: 'student',
+        department,
+        onboarding_completed_at: nowIso,
+      });
+
+    if (insertError) {
+      return NextResponse.json(
+        { error: `Profile create failed: ${insertError.message}` },
+        { status: 500 },
+      );
+    }
+  }
+
   // Attempt curriculum enrollment — non-fatal if curriculum hasn't been seeded yet.
-  const { data: year100 } = await supabase
+  const { data: year100 } = await admin
     .from('years')
     .select('id')
     .eq('level', 100)
     .maybeSingle();
 
   if (!year100) {
-    // Curriculum not seeded yet; profile is saved, redirect to dashboard.
     return NextResponse.json({ ok: true, department, enrolledCount: 0 });
   }
 
-  const { data: semester1 } = await supabase
+  const { data: semester1 } = await admin
     .from('semesters')
     .select('id')
     .eq('year_id', year100.id)
@@ -72,7 +99,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, department, enrolledCount: 0 });
   }
 
-  const { data: courses } = await supabase
+  const { data: courses } = await admin
     .from('courses')
     .select('id, code, sort_order')
     .eq('semester_id', semester1.id)
@@ -85,48 +112,41 @@ export async function POST(request: Request) {
   }
 
   const entryCodes = getSemester1EnrollmentCodes(department);
-  const byCode = new Map(courses.map((course) => [course.code.toUpperCase(), course]));
+  const byCode = new Map(courses.map((c) => [c.code.toUpperCase(), c]));
   const selected = entryCodes
     .map((code) => byCode.get(code))
-    .filter((course): course is NonNullable<typeof course> => Boolean(course))
+    .filter((c): c is NonNullable<typeof c> => Boolean(c))
     .slice(0, 8);
 
-  // Fallback: enroll in first available courses if department plan has no matches.
   if (selected.length === 0) {
     selected.push(...[...courses].slice(0, 8));
   }
 
-  // Unlock semester 1.
-  await supabase
-    .from('semester_progress')
-    .upsert(
-      {
-        user_id: user.id,
-        year_id: year100.id,
-        semester_id: semester1.id,
-        is_unlocked: true,
-        unlocked_at: nowIso,
-      },
-      { onConflict: 'user_id,semester_id' },
-    );
+  await admin.from('semester_progress').upsert(
+    {
+      user_id: user.id,
+      year_id: year100.id,
+      semester_id: semester1.id,
+      is_unlocked: true,
+      unlocked_at: nowIso,
+    },
+    { onConflict: 'user_id,semester_id' },
+  );
 
-  // Enroll student in courses.
-  await supabase
-    .from('user_progress')
-    .upsert(
-      selected.map((course) => ({
-        user_id: user.id,
-        course_id: course.id,
-        status: 'not_started',
-        enrolled_at: nowIso,
-      })),
-      { onConflict: 'user_id,course_id' },
-    );
+  await admin.from('user_progress').upsert(
+    selected.map((c) => ({
+      user_id: user.id,
+      course_id: c.id,
+      status: 'not_started',
+      enrolled_at: nowIso,
+    })),
+    { onConflict: 'user_id,course_id' },
+  );
 
   return NextResponse.json({
     ok: true,
     department,
-    selectedCourseCodes: selected.map((course) => course.code),
+    selectedCourseCodes: selected.map((c) => c.code),
     enrolledCount: selected.length,
   });
 }

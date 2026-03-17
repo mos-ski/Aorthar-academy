@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# runtime cache (demo YouTube link resolver, quiz attempt snapshots)
+.cache/
+
 # production
 /build
 

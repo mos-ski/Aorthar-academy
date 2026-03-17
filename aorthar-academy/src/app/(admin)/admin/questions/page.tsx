@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
-type QuestionOption = { id: string; text: string; is_correct: boolean };
+import { FileQuestion, CheckCircle2, AlertCircle } from 'lucide-react';
+import Link from 'next/link';
+import { DEMO_COURSES, DEMO_QUESTION_COUNTS } from '@/lib/demo/adminSnapshot';
 
 export default async function AdminQuestionsPage() {
   const supabase = await createClient();
@@ -12,93 +13,86 @@ export default async function AdminQuestionsPage() {
     .select('id, code, name, semesters!inner(years!inner(level))')
     .order('code', { ascending: true });
 
-  // Get question counts per course
   const { data: questionCounts } = await supabase
     .from('questions')
     .select('course_id, id');
 
-  const countMap: Record<string, number> = {};
-  (questionCounts ?? []).forEach((q) => {
-    countMap[q.course_id] = (countMap[q.course_id] ?? 0) + 1;
-  });
+  const isLive = (courses ?? []).length > 0;
+  const displayCourses = isLive ? (courses ?? []) : DEMO_COURSES;
 
-  // Get a sample of questions for the selected course (first course by default)
-  const firstCourse = courses?.[0];
-  const { data: sampleQuestions } = firstCourse
-    ? await supabase
-        .from('questions')
-        .select('*')
-        .eq('course_id', firstCourse.id)
-        .limit(5)
-    : { data: [] };
+  const countMap: Record<string, number> = {};
+  if (isLive) {
+    (questionCounts ?? []).forEach((q) => {
+      countMap[q.course_id] = (countMap[q.course_id] ?? 0) + 1;
+    });
+  } else {
+    Object.assign(countMap, DEMO_QUESTION_COUNTS);
+  }
+
+  const totalQuestions = Object.values(countMap).reduce((a, b) => a + b, 0);
+  const EXPECTED = 20;
+  const incomplete = displayCourses.filter((c) => (countMap[c.id] ?? 0) < EXPECTED).length;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Questions</h2>
-        <span className="text-sm text-muted-foreground">
-          {Object.values(countMap).reduce((a, b) => a + b, 0)} total
-        </span>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold">Questions</h2>
+          <p className="text-sm text-muted-foreground">
+            {totalQuestions.toLocaleString()} total · {displayCourses.length} courses · click a card to edit
+          </p>
+        </div>
+        {incomplete > 0 && (
+          <Badge variant="destructive" className="gap-1 shrink-0">
+            <AlertCircle className="h-3 w-3" />
+            {incomplete} incomplete
+          </Badge>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {(courses ?? []).map((course) => {
-          const sem = course.semesters as unknown as { years: { level: number } };
-          const yearLevel = sem?.years?.level ?? 0;
-          const count = countMap[course.id] ?? 0;
-          const expected = 20;
-          return (
-            <Card
-              key={course.id}
-              className={count < expected ? 'border-destructive/40' : ''}
-            >
-              <CardHeader className="pb-1 pt-3 px-3">
-                <CardTitle className="text-sm font-mono">{course.code}</CardTitle>
-                <p className="text-xs text-muted-foreground truncate">Year {yearLevel}</p>
-              </CardHeader>
-              <CardContent className="px-3 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold">{count}</span>
-                  <Badge variant={count >= expected ? 'default' : 'destructive'} className="text-xs">
-                    {count >= expected ? 'Complete' : `${expected - count} missing`}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {firstCourse && (
-        <div className="space-y-3">
-          <h3 className="text-base font-semibold">Sample — {firstCourse.code}</h3>
-          {(sampleQuestions ?? []).map((q) => {
-            const options = q.options as QuestionOption[];
+      {displayCourses.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <FileQuestion className="h-10 w-10 text-muted-foreground/40 mb-3" />
+          <p className="font-medium text-sm">No courses yet</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Add courses in the{' '}
+            <Link href="/admin/courses" className="text-primary underline">
+              Courses
+            </Link>{' '}
+            section, then add questions from each course editor.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {displayCourses.map((course) => {
+            const sem = course.semesters as unknown as { years: { level: number } };
+            const yearLevel = sem?.years?.level ?? 0;
+            const count = countMap[course.id] ?? 0;
+            const isComplete = count >= EXPECTED;
             return (
-              <Card key={q.id}>
-                <CardContent className="p-4 space-y-2">
-                  <div className="flex items-start gap-2">
-                    <Badge variant="outline" className="text-xs shrink-0">
-                      {q.is_exam_question ? 'Exam' : 'Quiz'} · Diff {q.difficulty}
-                    </Badge>
-                    <p className="text-sm font-medium">{q.question_text}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-1">
-                    {options.map((opt) => (
-                      <div
-                        key={opt.id}
-                        className={`text-xs px-2 py-1 rounded ${
-                          opt.is_correct
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 font-medium'
-                            : 'bg-muted text-muted-foreground'
-                        }`}
-                      >
-                        {opt.id}. {opt.text}
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <Link key={course.id} href={`/admin/courses/${course.id}`}>
+                <Card className={`hover:border-primary/50 transition-colors cursor-pointer h-full ${!isComplete ? 'border-destructive/40' : ''}`}>
+                  <CardHeader className="pb-1 pt-3 px-3">
+                    <div className="flex items-start justify-between gap-1">
+                      <CardTitle className="text-sm font-mono leading-tight">{course.code}</CardTitle>
+                      {isComplete
+                        ? <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+                        : <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />}
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{course.name}</p>
+                    <p className="text-xs text-muted-foreground">Year {yearLevel}</p>
+                  </CardHeader>
+                  <CardContent className="px-3 pb-3">
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-xl font-bold">{count}</span>
+                      <span className="text-xs text-muted-foreground">/ {EXPECTED}</span>
+                    </div>
+                    {!isComplete && (
+                      <p className="text-xs text-destructive mt-0.5">{EXPECTED - count} missing</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </Link>
             );
           })}
         </div>

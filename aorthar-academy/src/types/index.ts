@@ -316,7 +316,7 @@ export interface Suggestion {
 // ── MONETIZATION ─────────────────────────────
 
 export type BillingType = 'one_time' | 'subscription';
-export type PlanType = 'free' | 'semester' | 'lifetime' | 'monthly' | 'yearly';
+export type PlanType = 'free' | 'standard' | 'mentorship' | 'semester' | 'lifetime' | 'monthly' | 'yearly';
 
 export interface Plan {
   id: string;

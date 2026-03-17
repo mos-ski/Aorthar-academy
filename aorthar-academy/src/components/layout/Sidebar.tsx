@@ -15,8 +15,8 @@ import {
   FileQuestion,
   CheckSquare,
   CreditCard,
-  GraduationCap,
   Building2,
+  Layers,
 } from 'lucide-react';
 import type { Role } from '@/types';
 
@@ -25,13 +25,14 @@ const studentNav = [
   { href: '/courses', label: 'Courses', icon: BookOpen },
   { href: '/progress', label: 'Progress', icon: TrendingUp },
   { href: '/gpa', label: 'GPA & Grades', icon: Award },
-  { href: '/capstone', label: 'Capstone', icon: GraduationCap },
+  { href: '/pricing', label: 'Pricing', icon: CreditCard },
   { href: '/suggest', label: 'Suggest Content', icon: Lightbulb },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
 const adminNav = [
   { href: '/admin', label: 'Overview', icon: Shield },
+  { href: '/admin/curriculum', label: 'Curriculum', icon: Layers },
   { href: '/admin/courses', label: 'Courses', icon: BookOpen },
   { href: '/admin/questions', label: 'Questions', icon: FileQuestion },
   { href: '/admin/users', label: 'Users', icon: Users },

@@ -2,44 +2,60 @@ import { createClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { formatYearLabel } from '@/utils/formatters';
 import Link from 'next/link';
-import { BookOpen, Trophy, TrendingUp, Award } from 'lucide-react';
+import { BookOpen, Trophy, TrendingUp, Award, Flame, ArrowRight, Lock } from 'lucide-react';
 import { getDemoStudentSnapshot } from '@/lib/demo/studentSnapshot';
+import { isDemoMode, isExplicitLiveMode } from '@/lib/demo/mode';
 
 export default async function DashboardPage() {
   const { user, profile } = await requireAuth();
   const supabase = await createClient();
+  const forcedDemo = await isDemoMode();
+  const explicitLive = await isExplicitLiveMode();
 
-  const [{ data: gpa }, { data: initialProgress }, { data: initialRecentCourses }, { data: years }, { data: semesterProgress }] =
-    await Promise.all([
-      supabase
-        .from('cumulative_gpas')
-        .select('cumulative_gpa, total_credits_earned')
-        .eq('user_id', user.id)
-        .maybeSingle(),
-      supabase
-        .from('user_progress')
-        .select('status, courses(name, code, years(level))')
-        .eq('user_id', user.id),
-      supabase
-        .from('user_progress')
-        .select('status, courses(id, name, code, years(level))')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false })
-        .limit(4),
-      supabase
-        .from('years')
-        .select('id, level, semesters(id, number, courses(id, status))')
-        .order('level'),
-      supabase
-        .from('semester_progress')
-        .select('semester_id, is_unlocked')
-        .eq('user_id', user.id),
-    ]);
+  const [
+    { data: gpa },
+    { data: initialProgress },
+    { data: initialRecentCourses },
+    { data: years },
+    { data: semesterProgress },
+    { data: streakProfile },
+  ] = await Promise.all([
+    supabase
+      .from('cumulative_gpas')
+      .select('cumulative_gpa, total_credits_earned')
+      .eq('user_id', user.id)
+      .maybeSingle(),
+    supabase
+      .from('user_progress')
+      .select('status, courses(name, code, years(level))')
+      .eq('user_id', user.id),
+    supabase
+      .from('user_progress')
+      .select('status, courses(id, name, code, years(level))')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false })
+      .limit(6),
+    supabase
+      .from('years')
+      .select('id, level, semesters(id, number, courses(id, status))')
+      .order('level'),
+    supabase
+      .from('semester_progress')
+      .select('semester_id, is_unlocked')
+      .eq('user_id', user.id),
+    supabase
+      .from('profiles')
+      .select('streak_count, last_active_date')
+      .eq('user_id', user.id)
+      .maybeSingle(),
+  ]);
+
   const demo = getDemoStudentSnapshot();
   const hasCatalog = (years?.length ?? 0) > 0;
-  const shouldUseDemo = !hasCatalog;
+  const shouldUseDemo = forcedDemo || (!explicitLive && !hasCatalog);
   const firstName =
     profile?.full_name?.split(' ')[0] ??
     user.email?.split('@')[0] ??
@@ -90,7 +106,7 @@ export default async function DashboardPage() {
           .select('status, courses(id, name, code, years(level))')
           .eq('user_id', user.id)
           .order('updated_at', { ascending: false })
-          .limit(4),
+          .limit(6),
       ]);
 
       progress = refreshedProgress ?? progress;
@@ -102,6 +118,39 @@ export default async function DashboardPage() {
   const inProgressCount = progress?.filter((p) => p.status === 'in_progress').length ?? 0;
   const cumulativeGpaValue = Number(displayGpa?.cumulative_gpa ?? 0);
   const creditsEarnedValue = Number(displayGpa?.total_credits_earned ?? 0);
+
+  // Continue Learning CTA: find the most recent in_progress course, then not_started
+  type RecentCourse = { status: string; courses: { id: string; name: string; code: string; years: { level: number } } | null };
+  const continueCourse = (recentCourses as unknown as RecentCourse[] | null)?.find(
+    (r) => r.courses && r.status === 'in_progress',
+  ) ?? (recentCourses as unknown as RecentCourse[] | null)?.find(
+    (r) => r.courses && r.status === 'not_started',
+  );
+  const allPassed = (progress?.length ?? 0) > 0 && passedCount === (progress?.length ?? 0);
+
+  // Unlock nudge: find first locked semester and count remaining courses to unlock it
+  const unlockedSemIds = new Set((semesterProgress ?? []).filter((sp) => sp.is_unlocked).map((sp) => sp.semester_id));
+  let unlockNudge: { label: string; remaining: number; isPremium?: boolean } | null = null;
+  if (!shouldUseDemo) {
+    outer: for (const year of (years ?? [])) {
+      for (const sem of (year.semesters ?? [])) {
+        if (!unlockedSemIds.has(sem.id)) {
+          // This semester is locked — count how many courses in the prior semester are not passed
+          // The unlock count is courses in the previous semester
+          const prevSems = (year.semesters ?? []).filter((s: { id: string }) => s.id !== sem.id);
+          const prevCourses = prevSems.flatMap((s: { courses: { id: string; status: string }[] }) => s.courses ?? []);
+          const remaining = prevCourses.filter((c: { status: string }) => c.status === 'published').length - passedCount;
+          unlockNudge = {
+            label: `Semester ${sem.number} · Year ${year.level}`,
+            remaining: Math.max(0, remaining),
+          };
+          break outer;
+        }
+      }
+    }
+  }
+
+  const streakCount = (streakProfile as unknown as { streak_count?: number } | null)?.streak_count ?? 0;
 
   return (
     <div className="space-y-6">
@@ -115,6 +164,44 @@ export default async function DashboardPage() {
         <h1 className="text-5xl font-bold tracking-tight mt-1">Welcome back, {firstName}!</h1>
         <p className="text-muted-foreground mt-2">Track your academic journey at Aorthar Academy.</p>
       </div>
+
+      {/* Continue Learning CTA */}
+      {allPassed ? (
+        <Card className="border-0 bg-green-500/10 dark:bg-green-500/15">
+          <CardContent className="p-5 flex items-center justify-between gap-4">
+            <p className="font-semibold text-green-700 dark:text-green-400">
+              You&apos;re up to date — explore new courses
+            </p>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/courses">Browse Courses <ArrowRight className="ml-2 h-4 w-4" /></Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : continueCourse?.courses ? (
+        <Card className="border-0 bg-foreground text-background">
+          <CardContent className="p-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm opacity-70">Continue Learning</p>
+              <p className="font-semibold text-lg">{continueCourse.courses.name}</p>
+              <p className="text-sm opacity-60">{continueCourse.courses.code}</p>
+            </div>
+            <Button asChild variant="secondary" size="sm" className="shrink-0">
+              <Link href={`/classroom/${continueCourse.courses.id}`}>
+                Continue <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-0 bg-foreground text-background">
+          <CardContent className="p-5 flex items-center justify-between gap-4">
+            <p className="font-semibold">Start your learning journey</p>
+            <Button asChild variant="secondary" size="sm">
+              <Link href="/courses">Start Learning <ArrowRight className="ml-2 h-4 w-4" /></Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-0 bg-violet-500/10 dark:bg-violet-500/15">
@@ -170,6 +257,47 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Streak Tracker */}
+        <Card className="border-0 bg-orange-500/10 dark:bg-orange-500/15">
+          <CardContent className="p-5 flex items-center gap-4">
+            <Flame className="h-8 w-8 text-orange-500 shrink-0" aria-hidden="true" />
+            <div>
+              {streakCount > 0 ? (
+                <>
+                  <p className="font-semibold text-orange-700 dark:text-orange-400">{streakCount} day streak</p>
+                  <p className="text-sm text-muted-foreground">Keep it up — log in daily to maintain your streak.</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-semibold">Start your streak today</p>
+                  <p className="text-sm text-muted-foreground">Open any lesson to begin tracking your streak.</p>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Unlock Nudge */}
+        {unlockNudge ? (
+          <Link href="/progress">
+            <Card className="border-0 bg-muted/40 hover:bg-muted/60 transition-colors cursor-pointer h-full">
+              <CardContent className="p-5 flex items-center gap-4">
+                <Lock className="h-8 w-8 text-muted-foreground shrink-0" aria-hidden="true" />
+                <div>
+                  <p className="font-semibold">
+                    {unlockNudge.remaining === 0
+                      ? `Ready to unlock ${unlockNudge.label}`
+                      : `${unlockNudge.remaining} course${unlockNudge.remaining === 1 ? '' : 's'} left to unlock ${unlockNudge.label}`}
+                  </p>
+                  <p className="text-sm text-muted-foreground">View your progress →</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        ) : null}
+      </div>
+
       <div>
         <h2 className="text-4xl font-semibold mb-3">Recent Activity</h2>
         {(recentCourses ?? []).length > 0 ? (
@@ -178,7 +306,7 @@ export default async function DashboardPage() {
               const course = item.courses as unknown as { id: string; name: string; code: string; years: { level: number } };
               if (!course) return null;
               return (
-                <Link key={course.id} href={`/courses/${course.id}`}>
+                <Link key={course.id} href={`/classroom/${course.id}`}>
                   <Card className="hover:bg-muted/30 transition-colors">
                     <CardContent className="p-4 flex items-center justify-between">
                       <div>

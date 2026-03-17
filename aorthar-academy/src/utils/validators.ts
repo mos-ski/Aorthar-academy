@@ -116,6 +116,29 @@ export const adminReviewSchema = z.object({
   admin_notes: z.string().max(1000).optional(),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email address'),
+});
+
+export const resetPasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+      .regex(/[0-9]/, 'Must contain at least one number'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
+
+export const profileSchema = z.object({
+  full_name: z.string().min(2, 'Name must be at least 2 characters').max(100),
+  bio: z.string().max(500, 'Bio must be 500 characters or less').optional(),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type CourseInput = z.infer<typeof courseSchema>;
@@ -125,3 +148,6 @@ export type QuestionInput = z.infer<typeof questionSchema>;
 export type CapstoneInput = z.infer<typeof capstoneSchema>;
 export type SuggestionInput = z.infer<typeof suggestionSchema>;
 export type AdminReviewInput = z.infer<typeof adminReviewSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type ProfileInput = z.infer<typeof profileSchema>;

@@ -23,7 +23,6 @@ function isPremiumRoute(pathname: string): boolean {
   return PREMIUM_ROUTES.some((r) => pathname.startsWith(r));
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function isAdminRoute(pathname: string): boolean {
   return ADMIN_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'));
 }
@@ -62,13 +61,19 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // Skip Supabase auth check for public routes that aren't auth routes
+  // (e.g. landing page, pricing) — avoids blocking requests when Supabase is slow
+  const needsAuthCheck = isAuthRoute(pathname) || !isPublicRoute(pathname);
+
   // Refresh session — gracefully handle missing/placeholder Supabase credentials
   let user = null;
-  try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
-  } catch {
-    // Supabase not configured yet — treat as unauthenticated
+  if (needsAuthCheck) {
+    try {
+      const { data } = await supabase.auth.getUser();
+      user = data.user;
+    } catch {
+      // Supabase not configured yet — treat as unauthenticated
+    }
   }
 
   // Redirect logged-in users away from auth pages
@@ -112,13 +117,12 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Admin route protection — TEMPORARILY DISABLED for development
-  // Re-enable before production: uncomment below
-  // if (user && isAdminRoute(pathname)) {
-  //   if (profile?.role !== 'admin') {
-  //     return NextResponse.redirect(new URL('/unauthorized', request.url));
-  //   }
-  // }
+  // Admin route protection — disabled in development, enforced in staging + production
+  if (process.env.NEXT_PUBLIC_APP_ENV !== 'development' && user && isAdminRoute(pathname)) {
+    if (profile?.role !== 'admin') {
+      return NextResponse.redirect(new URL('/unauthorized', request.url));
+    }
+  }
 
   // Premium route protection
   if (user && isPremiumRoute(pathname)) {
