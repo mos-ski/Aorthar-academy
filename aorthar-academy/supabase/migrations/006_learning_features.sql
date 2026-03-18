@@ -22,7 +22,7 @@ ALTER TABLE quiz_attempts
 -- ─────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS lesson_reactions (
-  id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   course_id  UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
   lesson_id  UUID NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
@@ -74,7 +74,7 @@ END $$;
 -- ─────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS lesson_deep_dive_links (
-  id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   lesson_id  UUID NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
   course_id  UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
   query      TEXT NOT NULL,

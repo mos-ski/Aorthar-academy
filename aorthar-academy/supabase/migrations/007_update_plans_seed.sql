@@ -11,7 +11,7 @@ INSERT INTO plans (name, description, price, currency, billing_type, plan_type, 
     20000,
     'NGN',
     'one_time',
-    'standard',
+    'lifetime',
     ARRAY['200_level', '300_level', '400_level', 'gpa_export', 'capstone']
   ),
   (
@@ -20,6 +20,6 @@ INSERT INTO plans (name, description, price, currency, billing_type, plan_type, 
     30000,
     'NGN',
     'one_time',
-    'mentorship',
+    'lifetime',
     ARRAY['mentorship', 'priority_support']
   );

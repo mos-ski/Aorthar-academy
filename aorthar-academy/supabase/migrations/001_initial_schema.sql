@@ -28,7 +28,7 @@
 -- 1. EXTENSIONS
 -- ───────────────────────────────────────────────────────────────────────────
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";      -- uuid_generate_v4()
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";      -- gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";       -- gen_random_bytes() for idempotency tokens
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";        -- trigram indexes for full-text course search
 
@@ -41,7 +41,7 @@ CREATE EXTENSION IF NOT EXISTS "pg_trgm";        -- trigram indexes for full-tex
 -- ───────────────────────────────────────────────────────────────────────────
 
 CREATE TYPE user_role          AS ENUM ('student', 'contributor', 'admin');
-CREATE TYPE year_level         AS ENUM (100, 200, 300, 400);
+CREATE TYPE year_level         AS ENUM ('100', '200', '300', '400');
 -- NOTE: year_level stores the numeric codes 100–400 as an enum
 -- Postgres does not support integer enums natively; we store as text internally
 -- and cast in application. Use integer column with CHECK instead (see years table).
@@ -86,7 +86,7 @@ CREATE TYPE audit_action       AS ENUM (
 -- ───────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE profiles (
-  id               UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id          UUID        UNIQUE NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name        TEXT        NOT NULL CHECK (char_length(full_name) BETWEEN 2 AND 120),
   avatar_url       TEXT        CHECK (avatar_url ~* '^https?://'),
@@ -112,7 +112,7 @@ COMMENT ON COLUMN profiles.approved_suggestions_count IS 'Denormalized count kep
 -- 4a. YEARS ─────────────────────────────────────────────────────────────────
 
 CREATE TABLE years (
-  id          UUID    PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id          UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
   level       INTEGER NOT NULL UNIQUE CHECK (level IN (100, 200, 300, 400)),
   name        TEXT    NOT NULL CHECK (char_length(name) BETWEEN 2 AND 60),
   description TEXT,
@@ -126,7 +126,7 @@ COMMENT ON COLUMN years.level  IS '100 = First Year … 400 = Fourth Year (premi
 -- 4b. SEMESTERS ─────────────────────────────────────────────────────────────
 
 CREATE TABLE semesters (
-  id          UUID     PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id          UUID     PRIMARY KEY DEFAULT gen_random_uuid(),
   year_id     UUID     NOT NULL REFERENCES years(id) ON DELETE RESTRICT,
   number      SMALLINT NOT NULL CHECK (number IN (1, 2)),
   name        TEXT     NOT NULL CHECK (char_length(name) BETWEEN 2 AND 60),
@@ -139,7 +139,7 @@ COMMENT ON TABLE semesters IS 'Two semesters per year. Semester 2 is locked unti
 -- 4c. COURSES ───────────────────────────────────────────────────────────────
 
 CREATE TABLE courses (
-  id                 UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id                 UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Identity
   code               TEXT          NOT NULL UNIQUE
@@ -176,15 +176,8 @@ CREATE TABLE courses (
   -- Metadata
   created_by         UUID          REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at         TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-  updated_at         TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-
-  -- Enforce semester belongs to the declared year
-  CONSTRAINT semester_belongs_to_year
-    FOREIGN KEY (year_id, semester_id) REFERENCES semesters(year_id, id)
-    -- Note: This requires a UNIQUE constraint on semesters(year_id, id) which is
-    -- implicitly satisfied because (year_id, number) is UNIQUE and id is PK.
-    -- Supabase/Postgres supports composite FK references.
-    DEFERRABLE INITIALLY DEFERRED
+  updated_at         TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+  -- semester_belongs_to_year enforced by trigger in 003_functions.sql
 );
 
 COMMENT ON TABLE  courses                    IS 'One row per course. Code follows [A-Z]{3}[0-9]{3} format.';
@@ -201,7 +194,7 @@ ALTER TABLE courses DROP CONSTRAINT IF EXISTS semester_belongs_to_year;
 -- 4d. LESSONS ───────────────────────────────────────────────────────────────
 
 CREATE TABLE lessons (
-  id           UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   course_id    UUID        NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
   title        TEXT        NOT NULL CHECK (char_length(title) BETWEEN 2 AND 200),
   content      TEXT,                          -- Markdown / rich text; nullable = coming soon
@@ -220,7 +213,7 @@ COMMENT ON COLUMN lessons.content    IS 'Markdown. NULL = lesson exists but cont
 -- 4e. RESOURCES ─────────────────────────────────────────────────────────────
 
 CREATE TABLE resources (
-  id           UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id           UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
   lesson_id    UUID          NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
   type         resource_type NOT NULL,
   title        TEXT          NOT NULL CHECK (char_length(title) BETWEEN 2 AND 200),
@@ -240,7 +233,7 @@ COMMENT ON COLUMN resources.url  IS 'Must be a valid http/https URL. YouTube URL
 -- ───────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE specialization_tracks (
-  id          UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   name        TEXT        NOT NULL UNIQUE CHECK (char_length(name) BETWEEN 3 AND 120),
   slug        TEXT        NOT NULL UNIQUE CHECK (slug ~ '^[a-z0-9-]+$'),
   description TEXT,
@@ -279,7 +272,7 @@ COMMENT ON TABLE course_prerequisites IS 'A course may require one or more other
 -- 7a. QUESTIONS ─────────────────────────────────────────────────────────────
 
 CREATE TABLE questions (
-  id               UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id               UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
   course_id        UUID          NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
   type             question_type NOT NULL,
   question_text    TEXT          NOT NULL CHECK (char_length(question_text) BETWEEN 5 AND 3000),
@@ -311,7 +304,7 @@ COMMENT ON COLUMN questions.difficulty       IS '1=easy 2=medium 3=hard. Used fo
 -- 7b. QUIZ ATTEMPTS ─────────────────────────────────────────────────────────
 
 CREATE TABLE quiz_attempts (
-  id              UUID            PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id              UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id         UUID            NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   course_id       UUID            NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
   assessment_type assessment_type NOT NULL DEFAULT 'quiz',
@@ -361,7 +354,7 @@ CREATE UNIQUE INDEX uq_quiz_attempts_active
 -- 8a. COURSE GRADES ─────────────────────────────────────────────────────────
 
 CREATE TABLE course_grades (
-  id            UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id            UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id       UUID         NOT NULL REFERENCES auth.users(id)  ON DELETE CASCADE,
   course_id     UUID         NOT NULL REFERENCES courses(id)     ON DELETE RESTRICT,
   --
@@ -409,7 +402,7 @@ COMMENT ON COLUMN course_grades.is_overridden IS 'True if an admin manually chan
 -- 8b. SEMESTER GPAs ─────────────────────────────────────────────────────────
 
 CREATE TABLE semester_gpas (
-  id             UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id             UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id        UUID         NOT NULL REFERENCES auth.users(id)  ON DELETE CASCADE,
   year_id        UUID         NOT NULL REFERENCES years(id)       ON DELETE RESTRICT,
   semester_id    UUID         NOT NULL REFERENCES semesters(id)   ON DELETE RESTRICT,
@@ -441,7 +434,7 @@ COMMENT ON TABLE cumulative_gpas IS 'Rolling cumulative GPA. One row per user; u
 -- Explicit enrollment event; separates "signed up for course" from "progress status".
 
 CREATE TABLE enrollments (
-  id          UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     UUID        NOT NULL REFERENCES auth.users(id)  ON DELETE CASCADE,
   course_id   UUID        NOT NULL REFERENCES courses(id)     ON DELETE CASCADE,
   enrolled_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -453,7 +446,7 @@ COMMENT ON TABLE enrollments IS 'A student formally enrolls in a course before t
 -- 9b. USER PROGRESS ─────────────────────────────────────────────────────────
 
 CREATE TABLE user_progress (
-  id           UUID                   PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id           UUID                   PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id      UUID                   NOT NULL REFERENCES auth.users(id)  ON DELETE CASCADE,
   course_id    UUID                   NOT NULL REFERENCES courses(id)     ON DELETE CASCADE,
   status       course_progress_status NOT NULL DEFAULT 'not_started',
@@ -476,7 +469,7 @@ COMMENT ON COLUMN user_progress.last_lesson_id IS 'Used to restore the student t
 -- 9c. SEMESTER PROGRESS ─────────────────────────────────────────────────────
 
 CREATE TABLE semester_progress (
-  id           UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id      UUID        NOT NULL REFERENCES auth.users(id)   ON DELETE CASCADE,
   year_id      UUID        NOT NULL REFERENCES years(id)        ON DELETE RESTRICT,
   semester_id  UUID        NOT NULL REFERENCES semesters(id)    ON DELETE RESTRICT,
@@ -499,7 +492,7 @@ COMMENT ON TABLE semester_progress IS 'Tracks whether a semester is unlocked/com
 -- ───────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE capstone_submissions (
-  id             UUID            PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id             UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id        UUID            UNIQUE NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
                                  -- one capstone per student (UNIQUE enforces this)
 
@@ -549,7 +542,7 @@ COMMENT ON COLUMN capstone_submissions.github_url IS 'Must be a github.com URL.'
 -- 11a. SUGGESTIONS ──────────────────────────────────────────────────────────
 
 CREATE TABLE suggestions (
-  id           UUID              PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id           UUID              PRIMARY KEY DEFAULT gen_random_uuid(),
   proposer_id  UUID              NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   type         suggestion_type   NOT NULL,
   status       suggestion_status NOT NULL DEFAULT 'pending',
@@ -597,7 +590,7 @@ COMMENT ON TABLE suggestion_votes IS 'One vote per user per suggestion. Used to 
 -- 12a. PLANS ────────────────────────────────────────────────────────────────
 
 CREATE TABLE plans (
-  id           UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id           UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
   name         TEXT         NOT NULL UNIQUE CHECK (char_length(name) BETWEEN 2 AND 80),
   description  TEXT,
   price        NUMERIC(10,2) NOT NULL CHECK (price >= 0),
@@ -618,7 +611,7 @@ COMMENT ON COLUMN plans.currency     IS 'ISO 4217 3-letter currency code (USD, N
 -- 12b. SUBSCRIPTIONS ────────────────────────────────────────────────────────
 
 CREATE TABLE subscriptions (
-  id            UUID                PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id            UUID                PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id       UUID                NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   plan_id       UUID                NOT NULL REFERENCES plans(id)      ON DELETE RESTRICT,
 
@@ -659,7 +652,7 @@ CREATE UNIQUE INDEX uq_subscriptions_one_active
 -- 12c. TRANSACTIONS ─────────────────────────────────────────────────────────
 
 CREATE TABLE transactions (
-  id                  UUID               PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id                  UUID               PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id             UUID               NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
 
   -- Idempotency key — Paystack reference is unique per payment
@@ -695,7 +688,7 @@ COMMENT ON COLUMN transactions.raw_payload        IS 'Full Paystack event payloa
 -- Append-only log of every incoming Paystack webhook, even those we don't act on.
 
 CREATE TABLE webhook_events (
-  id            UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   event_type    TEXT        NOT NULL,                 -- e.g. 'charge.success'
   reference     TEXT,                                 -- paystack_reference if present
   payload       JSONB       NOT NULL,
@@ -712,7 +705,7 @@ COMMENT ON COLUMN webhook_events.processed IS 'false if the event was received b
 -- ───────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE notifications (
-  id          UUID              PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id          UUID              PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     UUID              NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   type        notification_type NOT NULL,
   title       TEXT              NOT NULL CHECK (char_length(title) <= 200),
@@ -735,7 +728,7 @@ COMMENT ON COLUMN notifications.entity_id  IS 'Optional FK to the triggering ent
 -- ───────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE audit_log (
-  id           UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id           UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
   action       audit_action NOT NULL,
   performed_by UUID         REFERENCES auth.users(id) ON DELETE SET NULL,
   target_user  UUID         REFERENCES auth.users(id) ON DELETE SET NULL,

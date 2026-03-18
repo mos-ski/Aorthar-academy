@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
         course_id: courseId,
         summary_markdown: summaryMarkdown,
         key_points: keyPoints,
-        source: ai ? 'openai' : 'fallback',
+        source: ai ? 'gemini' : 'fallback',
         created_by: user.id,
       },
       { onConflict: 'lesson_id,created_by' },

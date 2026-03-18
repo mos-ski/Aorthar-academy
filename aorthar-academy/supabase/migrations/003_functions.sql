@@ -15,26 +15,32 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS set_updated_at_profiles ON profiles;
 CREATE TRIGGER set_updated_at_profiles
   BEFORE UPDATE ON profiles
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+DROP TRIGGER IF EXISTS set_updated_at_courses ON courses;
 CREATE TRIGGER set_updated_at_courses
   BEFORE UPDATE ON courses
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+DROP TRIGGER IF EXISTS set_updated_at_lessons ON lessons;
 CREATE TRIGGER set_updated_at_lessons
   BEFORE UPDATE ON lessons
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+DROP TRIGGER IF EXISTS set_updated_at_course_grades ON course_grades;
 CREATE TRIGGER set_updated_at_course_grades
   BEFORE UPDATE ON course_grades
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+DROP TRIGGER IF EXISTS set_updated_at_user_progress ON user_progress;
 CREATE TRIGGER set_updated_at_user_progress
   BEFORE UPDATE ON user_progress
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+DROP TRIGGER IF EXISTS set_updated_at_capstone ON capstone_submissions;
 CREATE TRIGGER set_updated_at_capstone
   BEFORE UPDATE ON capstone_submissions
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
@@ -124,7 +130,7 @@ CREATE OR REPLACE FUNCTION is_on_cooldown(
     SELECT 1 FROM quiz_attempts
     WHERE user_id = p_user_id
       AND course_id = p_course_id
-      AND assessment_type = p_assessment_type
+      AND assessment_type = p_assessment_type::assessment_type
       AND cooldown_until > NOW()
     ORDER BY created_at DESC
     LIMIT 1
@@ -141,7 +147,7 @@ CREATE OR REPLACE FUNCTION get_attempt_count(
   FROM quiz_attempts
   WHERE user_id = p_user_id
     AND course_id = p_course_id
-    AND assessment_type = p_assessment_type
+    AND assessment_type = p_assessment_type::assessment_type
     AND completed_at IS NOT NULL;
 $$;
 
@@ -211,6 +217,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS on_suggestion_approved ON suggestions;
 CREATE TRIGGER on_suggestion_approved
   AFTER UPDATE ON suggestions
   FOR EACH ROW EXECUTE FUNCTION check_contributor_promotion();

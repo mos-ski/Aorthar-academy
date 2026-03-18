@@ -15,7 +15,7 @@ CREATE INDEX IF NOT EXISTS idx_attempts_course_lesson_scope
   ON quiz_attempts (user_id, course_id, lesson_id, assessment_type);
 
 CREATE TABLE IF NOT EXISTS lesson_summaries (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   lesson_id UUID NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
   course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
   summary_markdown TEXT NOT NULL,
@@ -44,7 +44,7 @@ BEGIN
 END $$;
 
 CREATE TABLE IF NOT EXISTS lesson_comments (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   lesson_id UUID NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
   course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -117,7 +117,7 @@ BEGIN
 END $$;
 
 CREATE TABLE IF NOT EXISTS lesson_comment_reactions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   comment_id UUID NOT NULL REFERENCES lesson_comments(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   reaction TEXT NOT NULL CHECK (reaction IN ('like', 'dislike')),
