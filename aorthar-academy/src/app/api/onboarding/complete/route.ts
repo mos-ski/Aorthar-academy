@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   const { data: updated, error: updateError } = await admin
     .from('profiles')
     .update({ department, onboarding_completed_at: nowIso })
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .select('id');
 
   if (updateError) {
