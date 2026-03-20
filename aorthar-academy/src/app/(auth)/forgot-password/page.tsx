@@ -44,8 +44,8 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex">
       {/* Brand panel */}
       <div className="hidden lg:flex lg:w-[45%] bg-primary flex-col justify-between p-12 text-primary-foreground">
-        <Link href="/" className="text-2xl font-bold tracking-tight">
-          Aorthar<span className="opacity-50">.</span>
+        <Link href="/">
+          <img src="/Aorthar Logo long complete.svg" alt="Aorthar" width={118} height={51} />
         </Link>
         <div className="space-y-5">
           <div className="h-14 w-14 rounded-2xl bg-primary-foreground/15 flex items-center justify-center">
@@ -65,8 +65,8 @@ export default function ForgotPasswordPage() {
       <div className="flex-1 flex items-center justify-center px-6 py-12 bg-background">
         <div className="w-full max-w-sm space-y-7">
           <div>
-            <Link href="/" className="text-xl font-bold tracking-tight lg:hidden">
-              Aorthar<span className="text-primary">.</span>
+            <Link href="/" className="lg:hidden inline-block">
+              <img src="/Aorthar Logo long complete.svg" alt="Aorthar" width={99} height={43} className="brightness-0 dark:brightness-100" />
             </Link>
             <h1 className="text-2xl font-bold mt-6">Reset your password</h1>
             <p className="text-muted-foreground text-sm mt-1">

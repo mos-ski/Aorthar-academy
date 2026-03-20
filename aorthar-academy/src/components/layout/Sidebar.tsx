@@ -68,8 +68,8 @@ export default function Sidebar({ role }: { role: Role }) {
       {/* Desktop sidebar */}
       <aside className="hidden w-64 shrink-0 border-r bg-background md:flex md:flex-col">
         <div className="p-6 border-b">
-          <Link href="/dashboard" className="text-4xl font-semibold tracking-tight">
-            Aorthar.
+          <Link href="/dashboard">
+            <img src="/Aorthar Logo long complete.svg" alt="Aorthar" width={118} height={51} className="brightness-0 dark:brightness-100" />
           </Link>
         </div>
 

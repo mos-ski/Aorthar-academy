@@ -269,11 +269,11 @@ export default function HomePage() {
       </section>
 
       {/* ── Features ── */}
-      <section className="flex flex-col gap-12 sm:gap-16 items-center py-16 sm:py-24 w-full">
+      <section className="py-16 sm:py-24 w-full">
+        <div className="w-full max-w-[1280px] mx-auto px-8">
 
-        {/* Heading — max-w-[1280px] px-[32px] */}
-        <div className="w-full max-w-[1280px] mx-auto px-8" data-reveal>
-          <div className="flex flex-col gap-3 max-w-[768px]">
+          {/* Heading */}
+          <div className="flex flex-col gap-3 max-w-[768px] mb-12 sm:mb-16" data-reveal>
             <p className="text-[16px] font-medium leading-6" style={{ color: "#a7d252" }}>
               Features
             </p>
@@ -284,10 +284,8 @@ export default function HomePage() {
               Start &amp; Grow Your Career in Product Development
             </h2>
           </div>
-        </div>
 
-        {/* Feature tabs — px-[32px] on mobile, px-[105px] on desktop */}
-        <div className="w-full px-8 lg:px-[105px]">
+          {/* Feature tabs */}
           <div className="flex flex-wrap gap-8">
             <FeatureTab
               title="Courses (Learn at Your Own Pace)"
@@ -310,8 +308,8 @@ export default function HomePage() {
               ctaHref="/register"
             />
           </div>
-        </div>
 
+        </div>
       </section>
 
       {/* ── Hire Talent ── */}

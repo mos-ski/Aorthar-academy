@@ -91,8 +91,8 @@ export default function Navbar({ user, isDemoMode = false, appEnv = 'development
   return (
     <header className="h-14 border-b px-4 md:px-6 flex items-center justify-between bg-background">
       <div className="flex items-center gap-3">
-        <Link href="/dashboard" className="text-xl font-semibold tracking-tight md:hidden">
-          Aorthar.
+        <Link href="/dashboard" className="md:hidden">
+          <img src="/Aorthar Logo long complete.svg" alt="Aorthar" width={99} height={43} className="brightness-0 dark:brightness-100" />
         </Link>
         <p className="hidden md:block text-sm font-medium text-foreground/80">
           {pageTitle}
