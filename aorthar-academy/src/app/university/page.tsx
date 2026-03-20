@@ -31,22 +31,60 @@ const YEARS = [
   },
 ];
 
+const DEPT_COLORS = ["#a7d252", "#5fc49a", "#7eb8f7", "#f7c97e", "#c49af0", "#f07e7e", "#7ef0e0", "#f0c47e"];
+
 const DEPARTMENTS = [
-  { name: "Product Design", icon: "🎨" },
-  { name: "Product Management", icon: "📋" },
-  { name: "QA & Testing", icon: "🔍" },
-  { name: "Scrum & Agile", icon: "⚡" },
-  { name: "Tech Operations", icon: "🛠" },
-  { name: "Frontend Development", icon: "💻" },
-  { name: "Backend Development", icon: "⚙️" },
-  { name: "Product Marketing", icon: "📣" },
+  { name: "Product Design" },
+  { name: "Product Management" },
+  { name: "QA & Testing" },
+  { name: "Scrum & Agile" },
+  { name: "Tech Operations" },
+  { name: "Frontend Development" },
+  { name: "Backend Development" },
+  { name: "Product Marketing" },
 ];
 
+function IconStack() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#a7d252" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="4" width="18" height="3" rx="0.5" />
+      <rect x="2" y="9.5" width="18" height="3" rx="0.5" />
+      <rect x="2" y="15" width="18" height="3" rx="0.5" />
+    </svg>
+  );
+}
+function IconBarChart() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#a7d252" strokeWidth="1.4" strokeLinecap="round">
+      <path d="M3 19V11M8 19V5M13 19V13M18 19V8" />
+      <path d="M2 19h19" />
+    </svg>
+  );
+}
+function IconGradCap() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#a7d252" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 3L2 8l9 5 9-5-9-5z" />
+      <path d="M5 10.5V16c0 1.8 2.686 3 6 3s6-1.2 6-3v-5.5" />
+      <path d="M20 8v4.5" />
+    </svg>
+  );
+}
+function IconAward() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#a7d252" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="13" r="5" />
+      <path d="M7 8.5L4.5 4h13L15 8.5" />
+      <path d="M9 13l1.5 1.5L13 11" />
+    </svg>
+  );
+}
+
 const FEATURES = [
-  { icon: "📚", title: "Structured Curriculum", body: "A 4-year learning path designed with the rigour of a university degree — built for the modern product industry." },
-  { icon: "📊", title: "Real GPA Tracking", body: "Earn grades on quizzes and exams. Your GPA is calculated in real time across every course you take." },
-  { icon: "🎓", title: "Capstone Project", body: "Graduate with a real-world project that proves your skills. Show it to any employer in Africa or beyond." },
-  { icon: "🏆", title: "Industry Recognition", body: "Aorthar graduates are placed with partner startups. Your certificate carries real-world weight." },
+  { Icon: IconStack, title: "Structured Curriculum", body: "A 4-year learning path designed with the rigour of a university degree — built for the modern product industry." },
+  { Icon: IconBarChart, title: "Real GPA Tracking", body: "Earn grades on quizzes and exams. Your GPA is calculated in real time across every course you take." },
+  { Icon: IconGradCap, title: "Capstone Project", body: "Graduate with a real-world project that proves your skills. Show it to any employer in Africa or beyond." },
+  { Icon: IconAward, title: "Industry Recognition", body: "Aorthar graduates are placed with partner startups. Your certificate carries real-world weight." },
 ];
 
 export default function UniversityPage() {
@@ -85,7 +123,7 @@ export default function UniversityPage() {
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 text-[13px] font-semibold"
               style={{ backgroundColor: "rgba(167,210,82,0.1)", border: "1px solid rgba(167,210,82,0.25)", color: "#a7d252" }}
             >
-              🎓 Africa&apos;s #1 Product Internship School
+              Africa&apos;s #1 Product Internship School
             </div>
             <h1
               className="text-[38px] sm:text-[58px] lg:text-[68px] font-semibold leading-[1.05] mb-6"
@@ -222,7 +260,7 @@ export default function UniversityPage() {
                 className="flex items-center gap-3 p-4 rounded-xl"
                 style={{ backgroundColor: "#1c1c1c", border: "1px solid rgba(255,255,255,0.08)" }}
               >
-                <span className="text-xl shrink-0">{d.icon}</span>
+                <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: DEPT_COLORS[DEPARTMENTS.indexOf(d)] }} />
                 <span className="text-[13px] sm:text-[14px] font-medium text-white">{d.name}</span>
               </div>
             ))}
@@ -240,7 +278,9 @@ export default function UniversityPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {FEATURES.map((f) => (
               <div key={f.title} className="flex flex-col gap-3 p-6 rounded-xl" style={{ backgroundColor: "#1c1c1c", border: "1px solid rgba(255,255,255,0.08)" }}>
-                <span className="text-3xl">{f.icon}</span>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(167,210,82,0.1)" }}>
+                  <f.Icon />
+                </div>
                 <p className="font-semibold text-white text-[15px]">{f.title}</p>
                 <p className="text-[13px] leading-5" style={{ color: "#a0aba7" }}>{f.body}</p>
               </div>

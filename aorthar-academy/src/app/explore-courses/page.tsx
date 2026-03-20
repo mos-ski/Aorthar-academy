@@ -192,7 +192,10 @@ export default function ExploreCoursesPage() {
             className="mb-8 flex items-start gap-3 p-4 rounded-lg text-[13px] sm:text-[14px]"
             style={{ backgroundColor: "rgba(167,210,82,0.08)", border: "1px solid rgba(167,210,82,0.2)", color: "#c4cdd6" }}
           >
-            <span style={{ color: "#a7d252" }}>💡</span>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-0.5" style={{ color: "#a7d252" }}>
+              <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.2" />
+              <path d="M8 7v4M8 5.5v.01" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
             <span>
               All courses are included free with an{" "}
               <Link href="/university" className="underline font-medium" style={{ color: "#a7d252" }}>

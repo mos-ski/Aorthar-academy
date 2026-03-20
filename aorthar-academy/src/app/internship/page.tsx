@@ -12,11 +12,11 @@ const STEPS = [
 ];
 
 const TRACKS = [
-  { name: "Product Design", icon: "🎨", description: "Figma, user research, wireframing, design systems, and visual design for product teams." },
-  { name: "Product Management", icon: "📋", description: "Discovery, roadmaps, PRDs, sprint management, and leading cross-functional product teams." },
-  { name: "QA & Testing", icon: "🔍", description: "Test planning, bug tracking, manual testing, and quality processes for fast-moving products." },
-  { name: "Scrum & Agile", icon: "⚡", description: "Sprint facilitation, backlog grooming, team coordination, and delivery excellence." },
-  { name: "Tech Operations", icon: "🛠", description: "Product support, ops workflows, tooling, documentation, and cross-team system management." },
+  { name: "Product Design", accent: "#a7d252", description: "Figma, user research, wireframing, design systems, and visual design for product teams." },
+  { name: "Product Management", accent: "#5fc49a", description: "Discovery, roadmaps, PRDs, sprint management, and leading cross-functional product teams." },
+  { name: "QA & Testing", accent: "#7eb8f7", description: "Test planning, bug tracking, manual testing, and quality processes for fast-moving products." },
+  { name: "Scrum & Agile", accent: "#f7c97e", description: "Sprint facilitation, backlog grooming, team coordination, and delivery excellence." },
+  { name: "Tech Operations", accent: "#c49af0", description: "Product support, ops workflows, tooling, documentation, and cross-team system management." },
 ];
 
 const REQUIREMENTS = [
@@ -28,11 +28,51 @@ const REQUIREMENTS = [
   "You're 18 years or older",
 ];
 
+function IconBuilding() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a7d252" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="7" width="18" height="14" rx="1" />
+      <path d="M8 21v-5h8v5" />
+      <rect x="8" y="10" width="2.5" height="2.5" />
+      <rect x="13.5" y="10" width="2.5" height="2.5" />
+      <path d="M8 7V5l4-2 4 2v2" />
+    </svg>
+  );
+}
+function IconLayers() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a7d252" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2L2 7l10 5 10-5-10-5z" />
+      <path d="M2 12l10 5 10-5" />
+      <path d="M2 17l10 5 10-5" />
+    </svg>
+  );
+}
+function IconNodes() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a7d252" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="4" r="2" />
+      <circle cx="4" cy="18" r="2" />
+      <circle cx="20" cy="18" r="2" />
+      <path d="M12 6L4 16M12 6l8 10M6 18h12" />
+    </svg>
+  );
+}
+function IconBadge() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a7d252" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="14" r="5" />
+      <path d="M7.5 9.5L5 4h14l-2.5 5.5" />
+      <path d="M10 14l1.5 1.5L14 12" />
+    </svg>
+  );
+}
+
 const OUTCOMES = [
-  { icon: "🏢", title: "Real Startup Placement", body: "Top performers are placed with actual startups for hands-on product work." },
-  { icon: "📁", title: "Portfolio-Ready Work", body: "You'll work on live projects you can show to any employer." },
-  { icon: "🤝", title: "Network & Community", body: "Join a growing community of Aorthar alumni working across top companies." },
-  { icon: "📜", title: "Certificate of Completion", body: "Receive an Aorthar certificate recognising your training and achievement." },
+  { Icon: IconBuilding, title: "Real Startup Placement", body: "Top performers are placed with actual startups for hands-on product work." },
+  { Icon: IconLayers, title: "Portfolio-Ready Work", body: "You'll work on live projects you can show to any employer." },
+  { Icon: IconNodes, title: "Network & Community", body: "Join a growing community of Aorthar alumni working across top companies." },
+  { Icon: IconBadge, title: "Certificate of Completion", body: "Receive an Aorthar certificate recognising your training and achievement." },
 ];
 
 type Step = 1 | 2 | 3;
@@ -212,7 +252,7 @@ export default function InternshipPage() {
                     className="flex items-start gap-4 p-4 rounded-xl"
                     style={{ backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                   >
-                    <span className="text-2xl shrink-0">{t.icon}</span>
+                    <div className="w-2 h-full min-h-[40px] rounded-full shrink-0" style={{ backgroundColor: t.accent, opacity: 0.7 }} />
                     <div>
                       <p className="font-semibold text-white text-[15px]">{t.name}</p>
                       <p className="text-[13px] leading-5 mt-0.5" style={{ color: "#a0aba7" }}>{t.description}</p>
@@ -239,7 +279,9 @@ export default function InternshipPage() {
                 className="flex flex-col gap-3 p-6 rounded-xl"
                 style={{ backgroundColor: "#1c1c1c", border: "1px solid rgba(255,255,255,0.08)" }}
               >
-                <span className="text-3xl">{o.icon}</span>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(167,210,82,0.1)" }}>
+                  <o.Icon />
+                </div>
                 <p className="font-semibold text-white text-[15px]">{o.title}</p>
                 <p className="text-[13px] leading-5" style={{ color: "#a0aba7" }}>{o.body}</p>
               </div>
@@ -406,7 +448,11 @@ export default function InternshipPage() {
           {/* Success */}
           {step === 3 && submitted && (
             <div className="text-center py-8 space-y-5">
-              <div className="text-5xl">🎉</div>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ backgroundColor: "rgba(167,210,82,0.15)" }}>
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                  <path d="M6 16l7 7 13-13" stroke="#a7d252" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
               <h2 className="text-[28px] font-semibold text-white">Application Received!</h2>
               <p className="text-[15px] leading-7" style={{ color: "#b1b1b1" }}>
                 We&apos;ll review your application and reach out within 5 business days. While you wait, join our community — it&apos;s where the real learning happens.
