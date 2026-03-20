@@ -21,8 +21,8 @@ export default async function DashboardLayout({
           isDemoMode={demo}
           appEnv={appEnv}
         />
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="mx-auto w-full px-[15%]">{children}</div>
+        <main className="flex-1 overflow-y-auto p-4 pb-20 md:p-6 md:pb-6">
+          <div className="mx-auto w-full md:px-[5%] xl:px-[10%]">{children}</div>
         </main>
       </div>
     </div>

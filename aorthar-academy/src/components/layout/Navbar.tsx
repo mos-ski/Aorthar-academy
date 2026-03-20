@@ -89,10 +89,15 @@ export default function Navbar({ user, isDemoMode = false, appEnv = 'development
   const showToggle = appEnv !== 'production';
 
   return (
-    <header className="h-14 border-b px-6 flex items-center justify-between bg-background">
-      <p className="text-sm font-medium text-foreground/80">
-        {pageTitle}
-      </p>
+    <header className="h-14 border-b px-4 md:px-6 flex items-center justify-between bg-background">
+      <div className="flex items-center gap-3">
+        <Link href="/dashboard" className="text-xl font-semibold tracking-tight md:hidden">
+          Aorthar.
+        </Link>
+        <p className="hidden md:block text-sm font-medium text-foreground/80">
+          {pageTitle}
+        </p>
+      </div>
       <div className="flex items-center gap-2">
         {/* Environment badge */}
         <Badge
