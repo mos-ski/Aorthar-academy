@@ -3,8 +3,16 @@ import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/theme-provider';
 import './globals.css';
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ??
+  (process.env.NEXTAUTH_URL && process.env.NEXTAUTH_URL.includes('localhost')
+    ? undefined
+    : process.env.NEXTAUTH_URL) ??
+  'https://aorthar.academy';
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXTAUTH_URL ?? 'https://aorthar.academy'),
+  metadataBase: new URL(siteUrl),
   title: 'Aorthar Academy',
   description:
     'Open-source, university-structured learning for designers, engineers, and product thinkers.',
@@ -20,7 +28,14 @@ export const metadata: Metadata = {
     title: 'Aorthar Academy',
     description:
       'Open-source, university-structured learning for designers, engineers, and product thinkers.',
-    images: ['/Banner.png'],
+    images: [
+      {
+        url: '/Banner.png',
+        width: 600,
+        height: 315,
+        alt: 'Aorthar Academy - We train the next generation of product talent',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
