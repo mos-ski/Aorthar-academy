@@ -3,13 +3,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/theme-provider';
 import './globals.css';
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ??
-  (process.env.NEXTAUTH_URL && process.env.NEXTAUTH_URL.includes('localhost')
-    ? undefined
-    : process.env.NEXTAUTH_URL) ??
-  'https://aorthar.academy';
+const siteUrl = 'https://aorthar.com';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -25,6 +19,7 @@ export const metadata: Metadata = {
     apple: [{ url: '/aorthar-favicon.svg', type: 'image/svg+xml' }],
   },
   openGraph: {
+    url: siteUrl,
     title: 'Aorthar Academy',
     description:
       'Open-source, university-structured learning for designers, engineers, and product thinkers.',
