@@ -3,7 +3,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/theme-provider';
 import './globals.css';
 
-const siteUrl = 'https://aorthar.com';
+const siteUrl = 'https://www.aorthar.academy';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
       'Open-source, university-structured learning for designers, engineers, and product thinkers.',
     images: [
       {
-        url: '/banner-og.png',
+        url: `${siteUrl}/banner-og.png`,
         width: 1200,
         height: 630,
         alt: 'Aorthar Academy - We train the next generation of product talent',
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     title: 'Aorthar Academy',
     description:
       'Open-source, university-structured learning for designers, engineers, and product thinkers.',
-    images: ['/banner-og.png'],
+    images: [`${siteUrl}/banner-og.png`],
   },
 };
 
