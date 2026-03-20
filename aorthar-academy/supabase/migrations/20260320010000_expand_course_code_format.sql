@@ -4,4 +4,4 @@ ALTER TABLE courses
 
 ALTER TABLE courses
   ADD CONSTRAINT courses_code_check
-  CHECK (code ~ '^[A-Z]{2,6}[0-9]{3}$');
+  CHECK (code ~ '^[A-Z]{2,4}[0-9]{3}$');
