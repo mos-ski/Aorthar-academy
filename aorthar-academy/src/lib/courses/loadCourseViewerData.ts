@@ -1,4 +1,4 @@
-import { notFound, redirect } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getDemoCourseDetail } from '@/lib/demo/studentSnapshot';
 import { getDemoStudentSnapshot } from '@/lib/demo/studentSnapshot';
@@ -9,20 +9,42 @@ type QueryParams = { lesson?: string };
 export async function loadCourseViewerData(courseId: string, userId: string, searchParams: QueryParams) {
   const supabase = await createClient();
 
-  const { data: dbCourse } = await supabase
+  const { data: dbCourseBase } = await supabase
     .from('courses')
-    .select(`
-      id, code, name, description, credit_units, pass_mark, is_premium,
-      semesters!inner(id, number, years!inner(id, level)),
-      lessons(id, title, description:content, sort_order, duration_minutes,
-        resources(id, type, title, url, sort_order)
-      )
-    `)
+    .select('id, code, name, description, credit_units, pass_mark, is_premium, semester_id')
     .eq('id', courseId)
-    .single();
+    .maybeSingle();
+
+  const [{ data: semesterData }, { data: lessonsData }] = await Promise.all([
+    dbCourseBase?.semester_id
+      ? supabase
+          .from('semesters')
+          .select('id, number, years(level)')
+          .eq('id', dbCourseBase.semester_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    dbCourseBase
+      ? supabase
+          .from('lessons')
+          .select(`
+            id, title, description:content, sort_order, duration_minutes,
+            resources(id, type, title, url, sort_order)
+          `)
+          .eq('course_id', dbCourseBase.id)
+          .order('sort_order', { ascending: true })
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const dbCourse = dbCourseBase
+    ? {
+        ...dbCourseBase,
+        semesters: semesterData ?? null,
+        lessons: lessonsData ?? [],
+      }
+    : null;
 
   const course = dbCourse ?? getDemoCourseDetail(courseId);
-  if (!course) notFound();
+  if (!course) redirect('/courses');
 
   if (course.is_premium && dbCourse) {
     const { data: sub } = await supabase
@@ -80,20 +102,21 @@ export async function loadCourseViewerData(courseId: string, userId: string, sea
   let nextCourse: { id: string; code: string; name: string } | null = null;
 
   if (dbCourse) {
-    const semesterRef = dbCourse.semesters as unknown as { id: string };
-    const { data: siblingCourses } = await supabase
-      .from('courses')
-      .select('id, code, name, sort_order')
-      .eq('semester_id', semesterRef.id)
-      .order('sort_order', { ascending: true });
+    if (dbCourse.semester_id) {
+      const { data: siblingCourses } = await supabase
+        .from('courses')
+        .select('id, code, name, sort_order')
+        .eq('semester_id', dbCourse.semester_id)
+        .order('sort_order', { ascending: true });
 
-    const siblings = siblingCourses ?? [];
-    const idx = siblings.findIndex((c) => c.id === courseId);
-    if (idx > 0) {
-      prevCourse = { id: siblings[idx - 1].id, code: siblings[idx - 1].code, name: siblings[idx - 1].name };
-    }
-    if (idx >= 0 && idx < siblings.length - 1) {
-      nextCourse = { id: siblings[idx + 1].id, code: siblings[idx + 1].code, name: siblings[idx + 1].name };
+      const siblings = siblingCourses ?? [];
+      const idx = siblings.findIndex((c) => c.id === courseId);
+      if (idx > 0) {
+        prevCourse = { id: siblings[idx - 1].id, code: siblings[idx - 1].code, name: siblings[idx - 1].name };
+      }
+      if (idx >= 0 && idx < siblings.length - 1) {
+        nextCourse = { id: siblings[idx + 1].id, code: siblings[idx + 1].code, name: siblings[idx + 1].name };
+      }
     }
   } else {
     const demo = getDemoStudentSnapshot();
