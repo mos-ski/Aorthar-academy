@@ -1,3 +1,4 @@
+import React from "react";
 import Link from "next/link";
 import { ScrollReveal } from "@/components/landing/ScrollReveal";
 
@@ -49,31 +50,38 @@ function RatingsBadge() {
   );
 }
 
-type FeatureTabProps = {
+type FeatureCardProps = {
   title: string;
   description: string;
-  ctaHref?: string;
+  ctaLabel: string;
+  ctaHref: string;
+  external?: boolean;
+  borderLeft?: boolean;
+  borderTop?: boolean;
 };
 
-function FeatureTab({ title, description, ctaHref = "/register" }: FeatureTabProps) {
+function FeatureCard({ title, description, ctaLabel, ctaHref, external, borderLeft, borderTop }: FeatureCardProps) {
+  const border: React.CSSProperties = {
+    borderTop: borderTop ? "1px solid rgba(255,255,255,0.12)" : undefined,
+    borderLeft: borderLeft ? "1px solid rgba(255,255,255,0.12)" : undefined,
+  };
+  const btnCls = "inline-flex items-center gap-2 text-[14px] sm:text-[15px] font-semibold px-4 py-2.5 w-fit transition-colors hover:bg-[#a7d252]/10";
+  const btnStyle: React.CSSProperties = { border: "1px solid #a7d252", color: "#a7d252" };
   return (
-    <div
-      className="flex flex-col gap-5 pl-6 py-4 w-full sm:w-[calc(50%-16px)]"
-      style={{ borderLeft: "0.5px solid #f2f4f7" }}
-      data-reveal="left"
-    >
-      <div className="flex flex-col gap-2">
-        <p className="text-[20px] leading-[30px] text-white font-medium">{title}</p>
-        <p className="text-[16px] leading-6" style={{ color: "#b1b1b1" }}>{description}</p>
+    <div className="flex flex-col gap-6 p-8 sm:p-10 w-full sm:w-[calc(50%-0.5px)]" style={border} data-reveal="left">
+      <div className="flex flex-col gap-3">
+        <p className="text-[18px] sm:text-[20px] leading-7 text-white font-semibold">{title}</p>
+        <p className="text-[15px] sm:text-[16px] leading-6" style={{ color: "#b1b1b1" }}>{description}</p>
       </div>
-      <Link
-        href={ctaHref}
-        className="inline-flex items-center gap-2 text-[16px] font-semibold leading-6 hover:opacity-80 transition-opacity w-fit"
-        style={{ color: "#a7d252" }}
-      >
-        Learn more
-        <span aria-hidden="true">→</span>
-      </Link>
+      {external ? (
+        <a href={ctaHref} target="_blank" rel="noopener noreferrer" className={btnCls} style={btnStyle}>
+          {ctaLabel} →
+        </a>
+      ) : (
+        <Link href={ctaHref} className={btnCls} style={btnStyle}>
+          {ctaLabel} →
+        </Link>
+      )}
     </div>
   );
 }
@@ -97,13 +105,15 @@ export default function HomePage() {
             <Link href="/about" className="text-sm text-white/70 hover:text-white transition-colors hidden sm:block">
               About us
             </Link>
-            <Link
+            <a
               href="https://www.motivv.co/post-job"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-xs sm:text-sm font-medium hover:opacity-80 transition-opacity whitespace-nowrap"
               style={{ color: "#a7d252" }}
             >
               Hire from us
-            </Link>
+            </a>
           </div>
         </div>
 
@@ -179,7 +189,7 @@ export default function HomePage() {
 
           {/* CTA Button */}
           <Link
-            href="/register"
+            href="/internship"
             className="landing-pulse flex items-center justify-center text-white font-bold text-[14px] sm:text-[15px] hover:opacity-90 transition-opacity"
             style={{ backgroundColor: "#08694a", padding: "10px", width: "min(273px, 100%)" }}
             data-reveal="zoom"
@@ -259,14 +269,16 @@ export default function HomePage() {
         </div>
 
         {/* CTA */}
-        <Link
-          href="/register"
+        <a
+          href="https://chat.whatsapp.com/BaZqynmCDKrEkiY0OED51K"
+          target="_blank"
+          rel="noopener noreferrer"
           className="flex items-center justify-center text-white font-bold text-[14px] sm:text-[15px] hover:opacity-90 transition-opacity"
           style={{ backgroundColor: "#08694a", padding: "10px", width: "min(260px, 100%)" }}
           data-reveal="zoom"
         >
-          Join our Community —— for Free!
-        </Link>
+          Join our Community — for Free!
+        </a>
       </section>
 
       {/* ── Features ── */}
@@ -286,27 +298,38 @@ export default function HomePage() {
             </h2>
           </div>
 
-          {/* Feature tabs */}
-          <div className="flex flex-wrap gap-8">
-            <FeatureTab
+          {/* Feature grid — 2×2 */}
+          <div className="flex flex-wrap" style={{ borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+            <FeatureCard
               title="Courses (Learn at Your Own Pace)"
-              description="Pre-recorded courses designed to teach you essential product skills anytime, anywhere. Learn on your schedule with structured lessons, practical exercises, and real-world applications."
+              description="Pre-recorded courses in Product Design, Management, QA, Scrum & Ops. Learn on your schedule with structured lessons and real-world exercises."
+              ctaLabel="Browse Courses"
               ctaHref="/explore-courses"
+              borderTop={false}
             />
-            <FeatureTab
-              title="Internships (Free Program)"
-              description="Apply twice a year for a 3-month real-world training with early startups. We train and place top 10-20 selected applicants in real product teams, giving them hands-on experience and career opportunities. If you excel, you could even secure a full-time role."
+            <FeatureCard
+              title="Internship & Talent Hunt"
+              description="A quarterly cohort where we train the top 10–20 applicants on real projects and place them in early-stage startups. Free. Applications open twice a year."
+              ctaLabel="Join Waitlist"
               ctaHref="/internship"
+              borderLeft
+              borderTop={false}
             />
-            <FeatureTab
-              title="University (Guided Cohort Program)"
-              description="A structured, cohort-style path designed to replace bootcamps: practical learning, project-based collaboration, and clear progression across product tracks."
+            <FeatureCard
+              title="University (Premium Program)"
+              description="A structured 4-year product development curriculum with GPA tracking, quizzes, exams, and a capstone project. Year 400 is premium."
+              ctaLabel="Explore University"
               ctaHref="/university"
+              borderTop
             />
-            <FeatureTab
-              title="Hire Talent (Motivv)"
-              description="Looking to hire product talent? Post roles and discover qualified candidates via Motivv, our talent and placement partner."
+            <FeatureCard
+              title="Motivv — Let Recruiters Find You"
+              description="Submit your CV/portfolio, get AI-vetted by our team, and let top companies discover you. We recommend only the best version of you."
+              ctaLabel="Create a Profile"
               ctaHref="https://www.motivv.co"
+              external
+              borderLeft
+              borderTop
             />
           </div>
 
@@ -360,13 +383,15 @@ export default function HomePage() {
               </div>
             </div>
 
-            <Link
+            <a
               className="flex items-center justify-center text-white font-bold text-[14px] sm:text-[15px] transition-opacity hover:opacity-90 w-full sm:w-[260px]"
               style={{ backgroundColor: "#08694a", padding: "10px" }}
-              href="/about"
+              href="https://www.motivv.co/post-job"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              Contact Us
-            </Link>
+              Post a Role on Motivv
+            </a>
           </div>
         </div>
 
@@ -471,14 +496,20 @@ export default function HomePage() {
                 <p className="text-[13px] sm:text-[14px] leading-5 font-medium" style={{ color: "#d0d5dd" }}>Social</p>
                 <div className="flex flex-col gap-2 sm:gap-3">
                   {[
-                    { label: "Partnership", href: "/partnership" },
-                    { label: "Donate", href: "https://paystack.shop/pay/qzr1023ydq" },
-                    { label: "Community", href: "https://chat.whatsapp.com/BaZqymnCDKrEkiY00ED51K" },
-                  ].map(({ label, href }) => (
-                    <Link key={label} href={href} className="text-[14px] sm:text-[16px] leading-6 font-medium hover:opacity-80 transition-opacity whitespace-nowrap" style={{ color: "#e4e7ec" }}>
-                      {label}
-                    </Link>
-                  ))}
+                    { label: "Partnership", href: "/partnership", external: false },
+                    { label: "Donate", href: "https://paystack.shop/pay/qzr1023ydq", external: true },
+                    { label: "Community", href: "https://chat.whatsapp.com/BaZqynmCDKrEkiY0OED51K", external: true },
+                  ].map(({ label, href, external }) =>
+                    external ? (
+                      <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="text-[14px] sm:text-[16px] leading-6 font-medium hover:opacity-80 transition-opacity whitespace-nowrap" style={{ color: "#e4e7ec" }}>
+                        {label}
+                      </a>
+                    ) : (
+                      <Link key={label} href={href} className="text-[14px] sm:text-[16px] leading-6 font-medium hover:opacity-80 transition-opacity whitespace-nowrap" style={{ color: "#e4e7ec" }}>
+                        {label}
+                      </Link>
+                    )
+                  )}
                 </div>
               </div>
 
@@ -490,7 +521,7 @@ export default function HomePage() {
                     { label: "Terms", href: "/terms" },
                     { label: "Privacy", href: "/privacy" },
                     { label: "Cookies", href: "/cookies" },
-                    { label: "Contact", href: "/contact" },
+                    { label: "Contact", href: "mailto:hello@aorthar.com" },
                   ].map(({ label, href }) => (
                     <Link key={label} href={href} className="text-[14px] sm:text-[16px] leading-6 font-medium hover:opacity-80 transition-opacity whitespace-nowrap" style={{ color: "#e4e7ec" }}>
                       {label}
