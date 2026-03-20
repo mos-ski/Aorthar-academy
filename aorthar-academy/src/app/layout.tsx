@@ -3,7 +3,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/theme-provider';
 import './globals.css';
 
-const siteUrl = 'https://www.aorthar.academy';
+const siteUrl = 'https://aorthar.com';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
