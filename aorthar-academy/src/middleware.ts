@@ -5,7 +5,23 @@ import { NextResponse, type NextRequest } from 'next/server';
 // ROUTE CATEGORIES
 // ─────────────────────────────────────────────
 
-const PUBLIC_ROUTES = ['/', '/login', '/register', '/verify', '/pricing', '/unauthorized'];
+const PUBLIC_ROUTES = [
+  '/',
+  '/about',
+  '/contact',
+  '/cookies',
+  '/explore-courses',
+  '/internship',
+  '/login',
+  '/partnership',
+  '/pricing',
+  '/privacy',
+  '/register',
+  '/terms',
+  '/university',
+  '/unauthorized',
+  '/verify',
+];
 const AUTH_ROUTES = ['/login', '/register', '/verify'];
 const PREMIUM_ROUTES = ['/courses/400', '/transcript/export', '/mentorship', '/capstone'];
 const ADMIN_ROUTES = ['/admin'];

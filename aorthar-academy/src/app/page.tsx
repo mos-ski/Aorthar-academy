@@ -5,7 +5,7 @@ import { ScrollReveal } from "@/components/landing/ScrollReveal";
 const imgWreathLeft = "https://www.figma.com/api/mcp/asset/7a76983c-5896-4a5b-ba23-dbc04dcfc0b6";
 const imgWreathRight = "https://www.figma.com/api/mcp/asset/13137131-1d86-45ad-b530-a809f78ee209";
 const imgStar = "https://www.figma.com/api/mcp/asset/948328a6-6b42-4267-babc-850273cb43f3";
-const imgFeatureArrow = "https://www.figma.com/api/mcp/asset/81fcfdef-cfdb-416f-8872-1f914de01889";
+
 const imgAortharIcon = "/Aorthar Logo long complete.svg";
 const imgHireTalent = "https://www.figma.com/api/mcp/asset/47912351-5be0-4e8b-8705-0bb0231fa472";
 const imgDeeXoptions = "/Frame 1.svg";
@@ -72,7 +72,7 @@ function FeatureTab({ title, description, ctaHref = "/register" }: FeatureTabPro
         style={{ color: "#a7d252" }}
       >
         Learn more
-        <img src={imgFeatureArrow} alt="" className="size-5" />
+        <span aria-hidden="true">→</span>
       </Link>
     </div>
   );
@@ -94,11 +94,11 @@ export default function HomePage() {
             <img src={imgAortharIcon} alt="Aorthar" className="h-7 sm:h-9 w-auto object-contain" />
           </Link>
           <div className="flex items-center gap-4 sm:gap-6">
-            <Link href="#about" className="text-sm text-white/70 hover:text-white transition-colors hidden sm:block">
+            <Link href="/about" className="text-sm text-white/70 hover:text-white transition-colors hidden sm:block">
               About us
             </Link>
             <Link
-              href="#hire"
+              href="https://www.motivv.co/post-job"
               className="text-xs sm:text-sm font-medium hover:opacity-80 transition-opacity whitespace-nowrap"
               style={{ color: "#a7d252" }}
             >
@@ -115,10 +115,11 @@ export default function HomePage() {
           {[
             { label: "Home", href: "/" },
             { label: "Join Us", href: "#join" },
-            { label: "Buy Course", href: "/pricing" },
-            { label: "Twitter", href: "#" },
-            { label: "Instagram", href: "#" },
-            { label: "Youtube", href: "#" },
+            { label: "University", href: "/university" },
+            { label: "Courses", href: "/explore-courses" },
+            { label: "X", href: "https://x.com/aorthar" },
+            { label: "Instagram", href: "https://instagram.com/aortharhq" },
+            { label: "YouTube", href: "https://youtube.com/@aorthar" },
           ].map(({ label, href }) => (
             <Link
               key={label}
@@ -290,22 +291,22 @@ export default function HomePage() {
             <FeatureTab
               title="Courses (Learn at Your Own Pace)"
               description="Pre-recorded courses designed to teach you essential product skills anytime, anywhere. Learn on your schedule with structured lessons, practical exercises, and real-world applications."
-              ctaHref="/courses"
+              ctaHref="/explore-courses"
             />
             <FeatureTab
               title="Internships (Free Program)"
               description="Apply twice a year for a 3-month real-world training with early startups. We train and place top 10-20 selected applicants in real product teams, giving them hands-on experience and career opportunities. If you excel, you could even secure a full-time role."
-              ctaHref="/register"
+              ctaHref="/internship"
             />
             <FeatureTab
-              title="Bootcamps (Premium Program)"
-              description="Join our 8-12 week live, immersive training where you'll work on real projects, collaborate with peers, and gain job-ready skills in Product Design, Product Management, QA, Scrum, and Tech Operations."
-              ctaHref="/register"
+              title="University (Guided Cohort Program)"
+              description="A structured, cohort-style path designed to replace bootcamps: practical learning, project-based collaboration, and clear progression across product tracks."
+              ctaHref="/university"
             />
             <FeatureTab
-              title="Mentorship (Exclusive Program)"
-              description="Get direct access to expert guidance, career strategy, and industry insights through our one-on-one mentorship program. If you're already earning but want to advance, this program provides personal coaching, career advice, and networking."
-              ctaHref="/register"
+              title="Hire Talent (Motivv)"
+              description="Looking to hire product talent? Post roles and discover qualified candidates via Motivv, our talent and placement partner."
+              ctaHref="https://www.motivv.co"
             />
           </div>
 
@@ -359,12 +360,13 @@ export default function HomePage() {
               </div>
             </div>
 
-            <button
+            <Link
               className="flex items-center justify-center text-white font-bold text-[14px] sm:text-[15px] transition-opacity hover:opacity-90 w-full sm:w-[260px]"
               style={{ backgroundColor: "#08694a", padding: "10px" }}
+              href="/about"
             >
               Contact Us
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -402,14 +404,14 @@ export default function HomePage() {
 
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <Link
-                href="/register"
+                href="/internship"
                 className="flex items-center justify-center font-bold text-[14px] sm:text-[15px] hover:opacity-90 transition-opacity"
                 style={{ backgroundColor: "#ffffff", color: "#18191a", padding: "10px", width: "min(177px, 100%)", alignSelf: "center" }}
               >
-                Shoot your Shot!
+                Apply for Internship
               </Link>
               <Link
-                href="https://wa.me/"
+                href="https://wa.me/2349058653400"
                 className="flex items-center justify-center font-bold text-[14px] sm:text-[15px] text-white hover:opacity-90 transition-opacity"
                 style={{ backgroundColor: "#08694a", padding: "10px", width: "min(162px, 100%)", alignSelf: "center" }}
               >
@@ -430,7 +432,7 @@ export default function HomePage() {
               </Link>
               <p className="text-[14px] sm:text-[16px] leading-6" style={{ color: "#e4e7ec" }}>
                 At Aorthar (/ay-OR-tar/), we don&apos;t just teach tech—we build careers. As a{" "}
-                <span style={{ color: "#a7d252" }}>full-service product agency →</span>
+                <Link href="/about" style={{ color: "#a7d252" }}>full-service product agency →</Link>
                 , we specialize in training world-class product talents and developing digital products for startups and businesses.
               </p>
             </div>
@@ -442,10 +444,10 @@ export default function HomePage() {
                 <p className="text-[13px] sm:text-[14px] leading-5 font-medium" style={{ color: "#d0d5dd" }}>Product</p>
                 <div className="flex flex-col gap-2 sm:gap-3">
                   {[
-                    { label: "Courses", href: "/courses" },
-                    { label: "Internship", href: "/register" },
-                    { label: "Bootcamps", href: "/register", badge: "New" },
-                    { label: "Mentorship", href: "/register" },
+                    { label: "Courses", href: "/explore-courses" },
+                    { label: "Internship", href: "/internship" },
+                    { label: "University", href: "/university", badge: "New" },
+                    { label: "Hire Talent", href: "https://www.motivv.co/post-job" },
                   ].map((link) => (
                     <div key={link.label} className="flex items-center gap-2">
                       <Link href={link.href} className="text-[14px] sm:text-[16px] leading-6 font-medium hover:opacity-80 transition-opacity whitespace-nowrap" style={{ color: "#e4e7ec" }}>
@@ -469,9 +471,9 @@ export default function HomePage() {
                 <p className="text-[13px] sm:text-[14px] leading-5 font-medium" style={{ color: "#d0d5dd" }}>Social</p>
                 <div className="flex flex-col gap-2 sm:gap-3">
                   {[
-                    { label: "Partnership", href: "#" },
-                    { label: "Donate", href: "#" },
-                    { label: "Community", href: "#" },
+                    { label: "Partnership", href: "/partnership" },
+                    { label: "Donate", href: "https://paystack.shop/pay/qzr1023ydq" },
+                    { label: "Community", href: "https://chat.whatsapp.com/BaZqymnCDKrEkiY00ED51K" },
                   ].map(({ label, href }) => (
                     <Link key={label} href={href} className="text-[14px] sm:text-[16px] leading-6 font-medium hover:opacity-80 transition-opacity whitespace-nowrap" style={{ color: "#e4e7ec" }}>
                       {label}
@@ -485,10 +487,10 @@ export default function HomePage() {
                 <p className="text-[13px] sm:text-[14px] leading-5 font-medium" style={{ color: "#d0d5dd" }}>Legal</p>
                 <div className="flex flex-col gap-2 sm:gap-3">
                   {[
-                    { label: "Terms", href: "#" },
-                    { label: "Privacy", href: "#" },
-                    { label: "Cookies", href: "#" },
-                    { label: "Contact", href: "#" },
+                    { label: "Terms", href: "/terms" },
+                    { label: "Privacy", href: "/privacy" },
+                    { label: "Cookies", href: "/cookies" },
+                    { label: "Contact", href: "/contact" },
                   ].map(({ label, href }) => (
                     <Link key={label} href={href} className="text-[14px] sm:text-[16px] leading-6 font-medium hover:opacity-80 transition-opacity whitespace-nowrap" style={{ color: "#e4e7ec" }}>
                       {label}
@@ -513,17 +515,22 @@ export default function HomePage() {
 
             {/* Social icons */}
             <div className="flex items-center gap-5 sm:gap-6">
-              <Link href="#" className="opacity-70 hover:opacity-100 transition-opacity" aria-label="X">
+              <Link href="https://x.com/aorthar" className="opacity-70 hover:opacity-100 transition-opacity" aria-label="X">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" fill="#d0d5dd" />
                 </svg>
               </Link>
-              <Link href="#" className="opacity-70 hover:opacity-100 transition-opacity" aria-label="LinkedIn">
+              <Link href="https://instagram.com/aortharhq" className="opacity-70 hover:opacity-100 transition-opacity" aria-label="Instagram">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm10 2H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3zm-5 3.5A5.5 5.5 0 1 1 6.5 13 5.5 5.5 0 0 1 12 7.5zm0 2A3.5 3.5 0 1 0 15.5 13 3.5 3.5 0 0 0 12 9.5zm5.75-3.35a1.25 1.25 0 1 1-1.25 1.25 1.25 1.25 0 0 1 1.25-1.25z" fill="#d0d5dd" />
+                </svg>
+              </Link>
+              <Link href="https://linkedin.com/company/aortharhq" className="opacity-70 hover:opacity-100 transition-opacity" aria-label="LinkedIn">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" fill="#d0d5dd" />
                 </svg>
               </Link>
-              <Link href="#" className="opacity-70 hover:opacity-100 transition-opacity" aria-label="Facebook">
+              <Link href="https://youtube.com/@aorthar" className="opacity-70 hover:opacity-100 transition-opacity" aria-label="YouTube">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" fill="#d0d5dd" />
                 </svg>
