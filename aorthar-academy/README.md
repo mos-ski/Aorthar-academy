@@ -34,3 +34,24 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Curriculum Seeding From Planned Markdown
+
+To load production curriculum data from the planned `.md` files, run:
+
+```bash
+bun run seed:curriculum
+```
+
+The script scans markdown files from the parent project directory, parses course blocks in the curriculum format (`YEAR`, `Semester`, `CODE — Title`, `Description`, and video resources), and idempotently upserts:
+
+- `years`
+- `semesters`
+- `courses`
+- `lessons` (overview lesson per course)
+- `resources` (from video links)
+
+Required environment variables:
+
+- `NEXT_PUBLIC_SUPABASE_URL` or `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY` or `SERVICE_ROLE_KEY`

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ScrollReveal } from "@/components/landing/ScrollReveal";
 
 // Figma asset URLs (valid 7 days)
 const imgWreathLeft = "https://www.figma.com/api/mcp/asset/7a76983c-5896-4a5b-ba23-dbc04dcfc0b6";
@@ -59,6 +60,7 @@ function FeatureTab({ title, description, ctaHref = "/register" }: FeatureTabPro
     <div
       className="flex flex-col gap-5 pl-6 py-4 w-full sm:w-[calc(50%-16px)]"
       style={{ borderLeft: "0.5px solid #f2f4f7" }}
+      data-reveal="left"
     >
       <div className="flex flex-col gap-2">
         <p className="text-[20px] leading-[30px] text-white font-medium">{title}</p>
@@ -79,9 +81,10 @@ function FeatureTab({ title, description, ctaHref = "/register" }: FeatureTabPro
 export default function HomePage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#18191a", color: "#ffffff" }}>
+      <ScrollReveal />
 
       {/* ── Navbar ── */}
-      <header style={{ backgroundColor: "#18191a" }}>
+      <header style={{ backgroundColor: "#18191a" }} data-reveal="zoom">
         {/* Top row: logo + right links */}
         <div
           className="flex items-center justify-between px-4 sm:px-8 h-12 border-b"
@@ -142,6 +145,7 @@ export default function HomePage() {
           <div
             className="inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-[10px] rounded-[131px]"
             style={{ backgroundColor: "rgba(255,255,255,0.1)" }}
+            data-reveal="zoom"
           >
             <span
               className="text-[13px] sm:text-[16px] leading-[1.4] font-bold text-white whitespace-nowrap"
@@ -166,6 +170,7 @@ export default function HomePage() {
               wordBreak: "break-word",
               width: "100%",
             }}
+            data-reveal
           >
             <span className="block">THE #1 PRODUCT INTERNSHIP</span>
             <span className="block">PROGRAM IN AFRICA</span>
@@ -174,19 +179,22 @@ export default function HomePage() {
           {/* CTA Button */}
           <Link
             href="/register"
-            className="flex items-center justify-center text-white font-bold text-[14px] sm:text-[15px] hover:opacity-90 transition-opacity"
+            className="landing-pulse flex items-center justify-center text-white font-bold text-[14px] sm:text-[15px] hover:opacity-90 transition-opacity"
             style={{ backgroundColor: "#08694a", padding: "10px", width: "min(273px, 100%)" }}
+            data-reveal="zoom"
           >
             Start your Career Journey
           </Link>
 
           {/* Ratings badge */}
-          <RatingsBadge />
+          <div data-reveal="zoom">
+            <RatingsBadge />
+          </div>
         </div>
       </section>
 
       {/* ── Partners ── */}
-      <section className="py-8 sm:py-10 px-4 sm:px-6" style={{ backgroundColor: "#101010" }}>
+      <section className="py-8 sm:py-10 px-4 sm:px-6" style={{ backgroundColor: "#101010" }} data-reveal>
         <p className="text-center text-xs sm:text-sm mb-6 sm:mb-8" style={{ color: "#888" }}>
           Start-Ups trust us to get best talent prospects
         </p>
@@ -206,7 +214,7 @@ export default function HomePage() {
       <section id="join" className="flex flex-col items-center justify-center text-center gap-6 px-4 sm:px-8 py-16 sm:py-28">
 
         {/* "JOIN US" sticker heading */}
-        <div className="relative shrink-0 select-none" style={{ height: "96px", width: "178px" }}>
+        <div className="landing-float relative shrink-0 select-none" style={{ height: "96px", width: "178px" }} data-reveal="zoom">
           {/* Rotated Impact text */}
           <div className="absolute inset-0 flex items-center justify-center">
             <p
@@ -237,6 +245,7 @@ export default function HomePage() {
         <div
           className="w-full max-w-[570px] text-center text-[16px] sm:text-[18px] leading-[1.5] sm:leading-[1.4] text-white"
           style={{ letterSpacing: "-0.02em" }}
+          data-reveal
         >
           <p className="mb-7 sm:mb-9">
             ...by becoming a part of Aorthar, you&apos;ll gain the freedom to learn how to design, manage, and build products—at your own pace, on your own terms. Whether you&apos;re just starting or looking to advance, our structured programs and supportive community will guide you every step of the way.
@@ -253,6 +262,7 @@ export default function HomePage() {
           href="/register"
           className="flex items-center justify-center text-white font-bold text-[14px] sm:text-[15px] hover:opacity-90 transition-opacity"
           style={{ backgroundColor: "#08694a", padding: "10px", width: "min(260px, 100%)" }}
+          data-reveal="zoom"
         >
           Join our Community —— for Free!
         </Link>
@@ -262,7 +272,7 @@ export default function HomePage() {
       <section className="flex flex-col gap-12 sm:gap-16 items-center py-16 sm:py-24 w-full">
 
         {/* Heading — max-w-[1280px] px-[32px] */}
-        <div className="w-full max-w-[1280px] mx-auto px-8">
+        <div className="w-full max-w-[1280px] mx-auto px-8" data-reveal>
           <div className="flex flex-col gap-3 max-w-[768px]">
             <p className="text-[16px] font-medium leading-6" style={{ color: "#a7d252" }}>
               Features
@@ -307,7 +317,7 @@ export default function HomePage() {
       {/* ── Hire Talent ── */}
       <section id="hire" className="flex flex-col lg:flex-row" style={{ backgroundColor: "#fcea2b" }}>
         {/* Left — yellow */}
-        <div className="flex-1 flex items-start lg:items-center justify-end py-12 sm:py-16 lg:py-24 px-5 sm:px-8 lg:pr-8">
+        <div className="flex-1 flex items-start lg:items-center justify-end py-12 sm:py-16 lg:py-24 px-5 sm:px-8 lg:pr-8" data-reveal="left">
           <div className="flex flex-col gap-8 sm:gap-12 items-start w-full max-w-[608px]">
             {/* Heading + check items */}
             <div className="flex flex-col gap-6 sm:gap-8 w-full">
@@ -361,7 +371,7 @@ export default function HomePage() {
         </div>
 
         {/* Right — photo */}
-        <div className="flex-1 min-h-[260px] sm:min-h-[360px] lg:min-h-0 relative overflow-hidden">
+        <div className="flex-1 min-h-[260px] sm:min-h-[360px] lg:min-h-0 relative overflow-hidden" data-reveal="right">
           <img
             src={imgHireTalent}
             alt="Product talent"
@@ -375,7 +385,7 @@ export default function HomePage() {
       <footer style={{ backgroundColor: "#18191a" }}>
 
         {/* CTA Banner */}
-        <div className="max-w-[1280px] mx-auto px-5 sm:px-8">
+        <div className="max-w-[1280px] mx-auto px-5 sm:px-8" data-reveal>
           <div
             className="flex flex-col items-center text-center gap-8 sm:gap-12 py-12 sm:py-16"
             style={{ borderBottom: "1px solid #3f3d56" }}
@@ -412,7 +422,7 @@ export default function HomePage() {
         </div>
 
         {/* Footer links */}
-        <div className="max-w-[1280px] mx-auto px-5 sm:px-8 py-12 sm:py-16">
+        <div className="max-w-[1280px] mx-auto px-5 sm:px-8 py-12 sm:py-16" data-reveal>
           <div className="flex flex-col lg:flex-row items-start justify-between gap-10">
 
             {/* Logo + tagline */}
