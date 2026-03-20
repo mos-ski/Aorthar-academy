@@ -14,7 +14,7 @@ export async function loadCourseViewerData(courseId: string, userId: string, sea
     .select(`
       id, code, name, description, credit_units, pass_mark, is_premium,
       semesters!inner(id, number, years!inner(id, level)),
-      lessons(id, title, description, sort_order, duration_minutes,
+      lessons(id, title, description:content, sort_order, duration_minutes,
         resources(id, type, title, url, sort_order)
       )
     `)

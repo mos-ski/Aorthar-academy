@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
   const [{ data: course }, { data: lesson }] = await Promise.all([
     supabase.from('courses').select('code, name').eq('id', courseId).single(),
-    supabase.from('lessons').select('id, title, description, resources(url, title, type)').eq('id', lessonId).single(),
+    supabase.from('lessons').select('id, title, description:content, resources(url, title, type)').eq('id', lessonId).single(),
   ]);
 
   if (!course || !lesson) return NextResponse.json({ error: 'Lesson not found' }, { status: 404 });
