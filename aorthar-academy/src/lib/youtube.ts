@@ -49,7 +49,11 @@ export async function searchYouTubeCandidateUrls(query: string, limit = 8): Prom
   try {
     const res = await fetch(endpoint, {
       signal: AbortSignal.timeout(9000),
-      headers: { 'User-Agent': 'aorthar-youtube-search/1.0' },
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
       cache: 'no-store',
     });
 

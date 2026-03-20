@@ -110,6 +110,7 @@ export default function CourseViewer({
   const [reactionCounts, setReactionCounts] = useState({ like: 0, dislike: 0 });
   const [reactionLoading, setReactionLoading] = useState(false);
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [autoSummarizing, setAutoSummarizing] = useState(false);
   const [summary, setSummary] = useState<{ summary_markdown: string; key_points: string[]; source: string } | null>(null);
   const [relatedLoading, setRelatedLoading] = useState(false);
   const [relatedVideos, setRelatedVideos] = useState<Array<{ title: string; url: string; thumbnail: string | null }>>([]);
@@ -165,24 +166,56 @@ export default function CourseViewer({
       ?? activeLesson?.resources.find((r) => r.url === url);
     return { title: match?.title ?? 'Resource', url };
   }).filter((r) => !/youtu\\.be|youtube\\.com/i.test(r.url));
-  const articleCards = (materialLinks.length > 0 ? materialLinks : [
-    {
-      title: `${activeLesson?.title ?? courseName}: Practical Notes`,
-      url: `https://www.google.com/search?q=${encodeURIComponent(`${courseCode} ${activeLesson?.title ?? courseName} article`)}`,
-    },
-    {
-      title: `${courseName} on Medium`,
-      url: `https://www.google.com/search?q=${encodeURIComponent(`${courseName} site:medium.com`)}`,
-    },
-    {
-      title: `${courseName} on Substack`,
-      url: `https://www.google.com/search?q=${encodeURIComponent(`${courseName} site:substack.com`)}`,
-    },
-  ]).map((item, idx) => ({
+  const lessonTopic = activeLesson?.title ?? courseName;
+  const codePrefix = courseCode.replace(/\d+$/, '').toUpperCase();
+  const DEPT_SOURCES: Record<string, Array<{ site: string; label: string; excerpt: string }>> = {
+    DES: [
+      { site: 'uxdesign.cc', label: 'UX Collective', excerpt: `In-depth design writing on ${lessonTopic} from practitioners.` },
+      { site: 'smashingmagazine.com', label: 'Smashing Magazine', excerpt: `Design tutorials and best practices covering ${lessonTopic}.` },
+      { site: 'medium.com', label: 'Medium', excerpt: `Community articles from designers working on ${lessonTopic}.` },
+      { site: 'figma.com/blog', label: 'Figma Blog', excerpt: `Official Figma insights on design workflows including ${lessonTopic}.` },
+    ],
+    DEV: [
+      { site: 'dev.to', label: 'DEV Community', excerpt: `Developer articles and tutorials on ${lessonTopic}.` },
+      { site: 'css-tricks.com', label: 'CSS-Tricks', excerpt: `Frontend-focused guides covering ${lessonTopic} techniques.` },
+      { site: 'medium.com', label: 'Medium', excerpt: `Engineering deep-dives on ${lessonTopic} from senior engineers.` },
+      { site: 'javascript.info', label: 'javascript.info', excerpt: `Modern JavaScript reference material related to ${lessonTopic}.` },
+    ],
+    PM: [
+      { site: 'medium.com', label: 'Medium', excerpt: `Product thinking articles on ${lessonTopic} from PMs at top companies.` },
+      { site: 'lenny.substack.com', label: 'Lenny\'s Newsletter', excerpt: `Practical PM insights on ${lessonTopic} from Lenny Rachitsky.` },
+      { site: 'svpg.com', label: 'SVPG', excerpt: `Marty Cagan's resources on product management including ${lessonTopic}.` },
+      { site: 'productboard.com/blog', label: 'Productboard Blog', excerpt: `Product strategy writing covering ${lessonTopic}.` },
+    ],
+    QA: [
+      { site: 'dev.to', label: 'DEV Community', excerpt: `Quality engineering articles on ${lessonTopic}.` },
+      { site: 'medium.com', label: 'Medium', excerpt: `Testing practices and case studies for ${lessonTopic}.` },
+      { site: 'stickyminds.com', label: 'StickyMinds', excerpt: `Software testing resources and techniques for ${lessonTopic}.` },
+      { site: 'ministryoftesting.com', label: 'Ministry of Testing', excerpt: `QA community articles on ${lessonTopic}.` },
+    ],
+    SCR: [
+      { site: 'medium.com', label: 'Medium', excerpt: `Agile and Scrum articles covering ${lessonTopic}.` },
+      { site: 'scrum.org/resources', label: 'Scrum.org', excerpt: `Official Scrum resources related to ${lessonTopic}.` },
+      { site: 'mountaingoatsoftware.com', label: 'Mountain Goat Software', excerpt: `Mike Cohn\'s guides on agile practices for ${lessonTopic}.` },
+      { site: 'atlassian.com/agile', label: 'Atlassian Agile', excerpt: `Practical agile guidance on ${lessonTopic}.` },
+    ],
+  };
+  const deptSources = DEPT_SOURCES[codePrefix] ?? [
+    { site: 'medium.com', label: 'Medium', excerpt: `In-depth articles on ${lessonTopic} from industry practitioners.` },
+    { site: 'dev.to', label: 'DEV Community', excerpt: `Community-written posts on ${lessonTopic}.` },
+    { site: 'substack.com', label: 'Substack', excerpt: `Newsletter deep-dives covering ${lessonTopic}.` },
+    { site: 'hashnode.com', label: 'Hashnode', excerpt: `Developer and product blogs focused on ${lessonTopic}.` },
+  ];
+  const articleCards = (materialLinks.length > 0 ? materialLinks.map((item, idx) => ({
     ...item,
     id: `${item.url}-${idx}`,
-    excerpt: `Article support material for ${courseCode} focused on ${activeLesson?.title ?? courseName}.`,
-  }));
+    excerpt: `Supplementary reading for ${courseCode} — ${lessonTopic}.`,
+  })) : deptSources.map((src, idx) => ({
+    id: `${courseCode}-${lessonTopic}-${idx}`,
+    title: `${lessonTopic} — ${src.label}`,
+    url: 'https://www.google.com/search?q=' + encodeURIComponent(lessonTopic + ' site:' + src.site),
+    excerpt: src.excerpt,
+  })));
 
   function selectLesson(id: string) {
     setSelectedId(id);
@@ -209,8 +242,12 @@ export default function CourseViewer({
       if (summaryRes.ok) {
         const json = await summaryRes.json();
         setSummary(json.summary ?? null);
+        if (!json.summary) {
+          void autoGenerateSummary();
+        }
       } else {
         setSummary(null);
+        void autoGenerateSummary();
       }
     } catch {
       // noop
@@ -334,6 +371,26 @@ export default function CourseViewer({
       toast.error(err instanceof Error ? err.message : 'Could not save reaction');
     } finally {
       setReactionLoading(false);
+    }
+  }
+
+  async function autoGenerateSummary() {
+    if (!activeLesson || autoSummarizing || summaryLoading) return;
+    setAutoSummarizing(true);
+    try {
+      const res = await fetch('/api/lessons/summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId, lessonId: activeLesson.id }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setSummary(json.summary ?? null);
+      }
+    } catch {
+      // silent — user can still click the button manually
+    } finally {
+      setAutoSummarizing(false);
     }
   }
 
@@ -546,8 +603,13 @@ export default function CourseViewer({
                         </ul>
                       ) : null}
                     </div>
+                  ) : autoSummarizing ? (
+                    <div className="flex items-center gap-2 text-sm text-white/50">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Generating AI summary for this lesson…
+                    </div>
                   ) : (
-                    <p className="text-sm text-white/65">No generated summary yet. Click “Summarize with AI”.</p>
+                    <p className="text-sm text-white/65">No summary yet. Click "Summarize with AI" to generate one.</p>
                   )}
                 </div>
               </>

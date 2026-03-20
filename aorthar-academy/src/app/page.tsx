@@ -95,21 +95,21 @@ export default function HomePage() {
       <header style={{ backgroundColor: "#18191a" }} data-reveal="zoom">
         {/* Top row: logo + right links */}
         <div
-          className="flex items-center justify-between px-4 sm:px-8 h-12 border-b"
+          className="flex items-center justify-between px-4 sm:px-8 py-3 border-b"
           style={{ borderColor: "rgba(255,255,255,0.08)" }}
         >
           <Link href="/" className="flex items-center gap-2 shrink-0">
-            <img src={imgAortharIcon} alt="Aorthar" className="h-7 sm:h-9 w-auto object-contain" />
+            <img src={imgAortharIcon} alt="Aorthar" className="h-9 sm:h-11 w-auto object-contain" />
           </Link>
           <div className="flex items-center gap-4 sm:gap-6">
-            <Link href="/about" className="text-sm text-white/70 hover:text-white transition-colors hidden sm:block">
+            <Link href="/about" className="text-base font-medium text-white/70 hover:text-[#a7d252] transition-colors hidden sm:block">
               About us
             </Link>
             <a
               href="https://www.motivv.co/post-job"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs sm:text-sm font-medium hover:opacity-80 transition-opacity whitespace-nowrap"
+              className="text-base font-medium hover:text-[#c8f060] transition-colors whitespace-nowrap"
               style={{ color: "#a7d252" }}
             >
               Hire from us
@@ -134,7 +134,7 @@ export default function HomePage() {
             <Link
               key={label}
               href={href}
-              className="text-xs sm:text-sm text-white/60 hover:text-white transition-colors whitespace-nowrap shrink-0"
+              className="text-[15px] font-medium text-white/60 hover:text-[#a7d252] transition-colors whitespace-nowrap shrink-0"
             >
               {label}
             </Link>
@@ -194,7 +194,7 @@ export default function HomePage() {
             style={{ backgroundColor: "#08694a", padding: "10px", width: "min(273px, 100%)" }}
             data-reveal="zoom"
           >
-            Start your Career Journey
+            Apply for the Internship →
           </Link>
 
           {/* Ratings badge */}
@@ -205,19 +205,42 @@ export default function HomePage() {
       </section>
 
       {/* ── Partners ── */}
-      <section className="py-8 sm:py-10 px-4 sm:px-6" style={{ backgroundColor: "#101010" }} data-reveal>
+      <section className="py-8 sm:py-10 px-4 sm:px-6 overflow-hidden" style={{ backgroundColor: "#101010" }} data-reveal>
         <p className="text-center text-xs sm:text-sm mb-6 sm:mb-8" style={{ color: "#888" }}>
           Start-Ups trust us to get best talent prospects
         </p>
-        <div
-          className="flex items-center gap-8 sm:flex-wrap sm:justify-center overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 max-w-5xl sm:mx-auto px-2 sm:px-0"
-          style={{ scrollbarWidth: "none" }}
-        >
-          <img src={imgDeeXoptions} alt="DeeXoptions" className="h-7 sm:h-8 w-auto object-contain shrink-0 opacity-80" />
-          <img src={imgNazza} alt="nazza" className="h-7 sm:h-8 w-auto object-contain shrink-0 opacity-80" />
-          <img src={imgSyarpa} alt="syarpa" className="h-7 sm:h-8 w-auto object-contain shrink-0 opacity-80" />
-          <img src={imgCeller} alt="celler" className="h-7 sm:h-8 w-auto object-contain shrink-0 opacity-80" />
-          <img src={imgDigitalAbundance} alt="Digital Abundance" className="h-8 sm:h-10 w-auto object-contain shrink-0 opacity-80" />
+        {/* Mobile: auto-scrolling marquee. Desktop: static row */}
+        <div className="sm:hidden relative">
+          <style>{`
+            @keyframes marquee { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+            .aorthar-marquee { animation: marquee 18s linear infinite; }
+            .aorthar-marquee:hover { animation-play-state: paused; }
+          `}</style>
+          <div className="flex overflow-hidden">
+            <div className="aorthar-marquee flex items-center gap-10 whitespace-nowrap">
+              {[
+                { src: imgDeeXoptions, alt: "DeeXoptions" },
+                { src: imgNazza, alt: "nazza" },
+                { src: imgSyarpa, alt: "syarpa" },
+                { src: imgCeller, alt: "celler" },
+                { src: imgDigitalAbundance, alt: "Digital Abundance" },
+                { src: imgDeeXoptions, alt: "DeeXoptions" },
+                { src: imgNazza, alt: "nazza" },
+                { src: imgSyarpa, alt: "syarpa" },
+                { src: imgCeller, alt: "celler" },
+                { src: imgDigitalAbundance, alt: "Digital Abundance" },
+              ].map(({ src, alt }, i) => (
+                <img key={i} src={src} alt={alt} className="h-7 w-auto object-contain shrink-0 opacity-80" />
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="hidden sm:flex items-center gap-8 flex-wrap justify-center max-w-5xl mx-auto">
+          <img src={imgDeeXoptions} alt="DeeXoptions" className="h-8 w-auto object-contain shrink-0 opacity-80" />
+          <img src={imgNazza} alt="nazza" className="h-8 w-auto object-contain shrink-0 opacity-80" />
+          <img src={imgSyarpa} alt="syarpa" className="h-8 w-auto object-contain shrink-0 opacity-80" />
+          <img src={imgCeller} alt="celler" className="h-8 w-auto object-contain shrink-0 opacity-80" />
+          <img src={imgDigitalAbundance} alt="Digital Abundance" className="h-10 w-auto object-contain shrink-0 opacity-80" />
         </div>
       </section>
 
@@ -277,7 +300,7 @@ export default function HomePage() {
           style={{ backgroundColor: "#08694a", padding: "10px", width: "min(260px, 100%)" }}
           data-reveal="zoom"
         >
-          Join our Community — for Free!
+          Join the Community — It&apos;s Free
         </a>
       </section>
 
@@ -417,7 +440,7 @@ export default function HomePage() {
           >
             <div className="flex flex-col gap-4 max-w-[768px]">
               <h2 className="text-[22px] sm:text-[30px] leading-[30px] sm:leading-[38px] font-medium text-white">
-                Next Cohort Opens Soon – Apply Now!
+                Next Internship Cohort — Applications Now Open
               </h2>
               <div className="text-[15px] sm:text-[20px] leading-[24px] sm:leading-[30px]" style={{ color: "#e4e7ec" }}>
                 <p className="mb-4 sm:mb-5">
@@ -427,21 +450,23 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <div className="flex flex-row gap-2">
               <Link
                 href="/internship"
-                className="flex items-center justify-center font-bold text-[14px] sm:text-[15px] hover:opacity-90 transition-opacity"
-                style={{ backgroundColor: "#ffffff", color: "#18191a", padding: "10px", width: "min(177px, 100%)", alignSelf: "center" }}
+                className="flex items-center justify-center font-bold text-[14px] sm:text-[15px] hover:opacity-90 transition-opacity whitespace-nowrap"
+                style={{ backgroundColor: "#ffffff", color: "#18191a", padding: "10px 18px" }}
               >
                 Apply for Internship
               </Link>
-              <Link
+              <a
                 href="https://wa.me/2349058653400"
-                className="flex items-center justify-center font-bold text-[14px] sm:text-[15px] text-white hover:opacity-90 transition-opacity"
-                style={{ backgroundColor: "#08694a", padding: "10px", width: "min(162px, 100%)", alignSelf: "center" }}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center font-bold text-[14px] sm:text-[15px] text-white hover:opacity-90 transition-opacity whitespace-nowrap"
+                style={{ backgroundColor: "#08694a", padding: "10px 18px" }}
               >
                 Chat on WhatsApp
-              </Link>
+              </a>
             </div>
           </div>
         </div>

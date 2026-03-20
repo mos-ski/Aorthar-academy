@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     amount_kobo: Math.round(plan.price * 100), // price stored in NGN → multiply by 100 for kobo
     reference,
     metadata: { user_id: user.id, plan_type: plan.plan_type },
-    callback_url: `${process.env.NEXTAUTH_URL}/dashboard?payment=success`,
+    callback_url: `${process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL ?? 'https://www.aorthar.academy'}/dashboard?payment=success`,
   });
 
   return NextResponse.json({ data: { authorization_url: result.data.authorization_url } });

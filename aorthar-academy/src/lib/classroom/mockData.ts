@@ -52,13 +52,24 @@ export function buildSampleComments(lessonId: string): MockComment[] {
   }));
 }
 
+const STUDY_SUFFIXES = [
+  'full course',
+  'tutorial for beginners',
+  'explained simply',
+  'in practice',
+  'tips and techniques',
+  'step by step',
+  'real world examples',
+  'deep dive',
+];
+
 export function buildSampleRelatedVideos(lessonTitle: string) {
-  return Array.from({ length: 8 }).map((_, i) => {
-    const id = ['dQw4w9WgXcQ', 'M7lc1UVf-VE', 'ysz5S6PUM-U', 'aqz-KE-bpKQ'][i % 4];
+  return STUDY_SUFFIXES.map((suffix) => {
+    const query = encodeURIComponent(`${lessonTitle} ${suffix}`);
     return {
-      title: `${lessonTitle} - Related Study Video ${i + 1}`,
-      url: `https://www.youtube.com/watch?v=${id}`,
-      thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+      title: `${lessonTitle} — ${suffix.charAt(0).toUpperCase() + suffix.slice(1)}`,
+      url: `https://www.youtube.com/results?search_query=${query}`,
+      thumbnail: null,
     };
   });
 }

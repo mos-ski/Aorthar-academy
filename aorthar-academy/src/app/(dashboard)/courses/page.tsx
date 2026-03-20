@@ -2,15 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/auth';
 import { formatYearLabel, formatSemesterLabel } from '@/utils/formatters';
 import { Badge } from '@/components/ui/badge';
-import { Lock, BookOpen, BookMarked, Layers, GraduationCap } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-
-const YEAR_ICONS: Record<number, LucideIcon> = {
-  100: BookOpen,
-  200: BookMarked,
-  300: Layers,
-  400: GraduationCap,
-};
+import { Lock } from 'lucide-react';
 import CourseCard from '@/components/courses/CourseCard';
 import { getDemoStudentSnapshot } from '@/lib/demo/studentSnapshot';
 import { isDemoMode, isExplicitLiveMode } from '@/lib/demo/mode';
@@ -73,20 +65,16 @@ export default async function CoursesPage() {
       </div>
 
       <Tabs defaultValue={defaultTab} className="space-y-5">
-        <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-xl border border-border bg-card p-1.5">
-          {(years ?? []).map((year) => {
-            const Icon = YEAR_ICONS[year.level] ?? BookOpen;
-            return (
-              <TabsTrigger
-                key={year.id}
-                value={`year-${year.level}`}
-                className="min-w-[120px] gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {formatYearLabel(year.level)}
-              </TabsTrigger>
-            );
-          })}
+        <TabsList className="h-auto w-full justify-start overflow-x-auto rounded-lg border border-border bg-card/50 p-1 gap-1">
+          {(years ?? []).map((year) => (
+            <TabsTrigger
+              key={year.id}
+              value={`year-${year.level}`}
+              className="flex-1 min-w-[110px] rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+            >
+              {formatYearLabel(year.level)}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         {(years ?? []).map((year) => (

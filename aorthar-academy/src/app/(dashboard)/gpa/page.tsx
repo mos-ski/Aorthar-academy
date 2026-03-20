@@ -36,8 +36,10 @@ export default async function GPAPage() {
       .maybeSingle(),
   ]);
   const isPremium = Boolean(subscription);
+  const isProduction = process.env.NEXT_PUBLIC_APP_ENV === 'production';
   const demo = getDemoStudentSnapshot();
-  const shouldUseDemo = forcedDemo || (!explicitLive && !cumGpa && (semGpas?.length ?? 0) === 0 && (grades?.length ?? 0) === 0);
+  // In production, never show demo data — show the real empty state instead
+  const shouldUseDemo = !isProduction && (forcedDemo || (!explicitLive && !cumGpa && (semGpas?.length ?? 0) === 0 && (grades?.length ?? 0) === 0));
   const shownCumGpa = shouldUseDemo ? demo.cumulativeGpa : cumGpa;
   const shownSemGpas = shouldUseDemo ? demo.semesterGpas : (semGpas ?? []);
   const shownGrades = shouldUseDemo ? demo.grades : (grades ?? []);
@@ -101,7 +103,14 @@ export default async function GPAPage() {
       )}
 
       {/* Grade Table */}
-      <GradeTable grades={shownGrades} />
+      {shownGrades.length === 0 && !shouldUseDemo ? (
+        <div className="rounded-xl border border-dashed border-border p-10 text-center text-muted-foreground">
+          <p className="font-medium text-base mb-1">No grades yet</p>
+          <p className="text-sm">Complete a quiz or exam to start building your academic record.</p>
+        </div>
+      ) : (
+        <GradeTable grades={shownGrades} />
+      )}
     </div>
   );
 }
