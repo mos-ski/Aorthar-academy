@@ -18,11 +18,11 @@ export const metadata: Metadata = {
     'Open-source, university-structured learning for designers, engineers, and product thinkers.',
   icons: {
     icon: [
-      { url: '/Aorthar Favion.svg', type: 'image/svg+xml' },
+      { url: '/aorthar-favicon.svg', type: 'image/svg+xml' },
       { url: '/icon-park_like.svg', type: 'image/svg+xml' },
     ],
-    shortcut: ['/icon-park_like.svg'],
-    apple: [{ url: '/Aorthar Favion.svg', type: 'image/svg+xml' }],
+    shortcut: ['/aorthar-favicon.svg'],
+    apple: [{ url: '/aorthar-favicon.svg', type: 'image/svg+xml' }],
   },
   openGraph: {
     title: 'Aorthar Academy',
@@ -30,9 +30,9 @@ export const metadata: Metadata = {
       'Open-source, university-structured learning for designers, engineers, and product thinkers.',
     images: [
       {
-        url: '/Banner.png',
-        width: 600,
-        height: 315,
+        url: '/banner-og.png',
+        width: 1200,
+        height: 630,
         alt: 'Aorthar Academy - We train the next generation of product talent',
       },
     ],
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     title: 'Aorthar Academy',
     description:
       'Open-source, university-structured learning for designers, engineers, and product thinkers.',
-    images: ['/Banner.png'],
+    images: ['/banner-og.png'],
   },
 };
 
