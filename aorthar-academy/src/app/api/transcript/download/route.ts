@@ -19,7 +19,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Premium subscription required.' }, { status: 403 });
   }
 
-  const [{ data: cumGpa }, { data: semGpas }, { data: grades }] = await Promise.all([
+  const [{ data: cumGpa }, , { data: grades }] = await Promise.all([
     supabase.from('cumulative_gpas').select('*').eq('user_id', user.id).maybeSingle(),
     supabase
       .from('semester_gpas')

@@ -19,11 +19,11 @@ export default function CurriculumPage() {
   const fetchYears = useCallback(async () => {
     const res = await fetch('/api/admin/curriculum');
     const json = await res.json();
-    setYears(json.data ?? []);
+    return (json.data ?? []) as Year[];
   }, []);
 
   useEffect(() => {
-    fetchYears().finally(() => setLoading(false));
+    fetchYears().then((data) => { setYears(data); setLoading(false); });
   }, [fetchYears]);
 
   const existingLevels = new Set(years.map((y) => y.level));
@@ -35,14 +35,14 @@ export default function CurriculumPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ level, name: `Year ${level}` }),
     });
-    if (res.ok) { toast.success(`Year ${level} added`); fetchYears(); }
+    if (res.ok) { toast.success(`Year ${level} added`); fetchYears().then(setYears); }
     else { const j = await res.json(); toast.error(j.error ?? 'Failed to add year'); }
   }
 
   async function deleteYear(yearId: string, level: number) {
     if (!confirm(`Delete Year ${level} and ALL its semesters and courses? This cannot be undone.`)) return;
     const res = await fetch(`/api/admin/years/${yearId}`, { method: 'DELETE' });
-    if (res.ok) { toast.success(`Year ${level} deleted`); fetchYears(); }
+    if (res.ok) { toast.success(`Year ${level} deleted`); fetchYears().then(setYears); }
     else { const j = await res.json(); toast.error(j.error ?? 'Failed to delete year'); }
   }
 
@@ -52,14 +52,14 @@ export default function CurriculumPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ year_id: yearId, number: semNumber }),
     });
-    if (res.ok) { toast.success(`Semester ${semNumber} added`); fetchYears(); }
+    if (res.ok) { toast.success(`Semester ${semNumber} added`); fetchYears().then(setYears); }
     else { const j = await res.json(); toast.error(j.error ?? 'Failed to add semester'); }
   }
 
   async function deleteSemester(semesterId: string, semNumber: number) {
     if (!confirm(`Delete Semester ${semNumber} and ALL its courses? This cannot be undone.`)) return;
     const res = await fetch(`/api/admin/semesters/${semesterId}`, { method: 'DELETE' });
-    if (res.ok) { toast.success(`Semester ${semNumber} deleted`); fetchYears(); }
+    if (res.ok) { toast.success(`Semester ${semNumber} deleted`); fetchYears().then(setYears); }
     else { const j = await res.json(); toast.error(j.error ?? 'Failed to delete semester'); }
   }
 

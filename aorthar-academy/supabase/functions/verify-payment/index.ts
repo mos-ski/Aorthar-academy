@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     );
 
     if (event.event === 'charge.success') {
-      const { reference, amount, currency, customer, metadata, paid_at } = event.data;
+      const { reference, amount, currency, metadata, paid_at } = event.data;
       const { user_id, plan_type } = metadata ?? {};
 
       if (!user_id || !plan_type) {

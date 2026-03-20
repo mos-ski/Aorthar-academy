@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -558,7 +559,11 @@ export default function CourseViewer({
                   <p className="text-sm text-white/60">Loading related videos...</p>
                 ) : relatedVideos.length > 0 ? relatedVideos.map((video) => (
                   <a key={video.url} href={video.url} target="_blank" rel="noreferrer" className="overflow-hidden rounded-lg border border-white/10 bg-[#121417] hover:bg-[#171b20]">
-                    {video.thumbnail ? <img src={video.thumbnail} alt={video.title} className="h-36 w-full object-cover" /> : null}
+                    {video.thumbnail ? (
+                      <div className="relative h-36 w-full">
+                        <Image src={video.thumbnail} alt={video.title} fill className="object-cover" unoptimized />
+                      </div>
+                    ) : null}
                     <div className="p-3 text-sm text-white/90">{video.title}</div>
                   </a>
                 )) : (

@@ -53,26 +53,30 @@ export default function AdminCourseDetailPage() {
   const fetchCourseData = useCallback(async () => {
     const res = await fetch(`/api/admin/courses/${courseId}`);
     const json = await res.json();
-    if (json.data) {
-      setCourse(json.data);
-      setSettingsDraft(json.data);
-    }
+    return (json.data ?? null) as Course | null;
   }, [courseId]);
 
   const fetchLessons = useCallback(async () => {
     const res = await fetch(`/api/admin/courses/${courseId}/lessons`);
     const json = await res.json();
-    setLessons(json.data ?? []);
+    return (json.data ?? []) as Lesson[];
   }, [courseId]);
 
   const fetchQuestions = useCallback(async () => {
     const res = await fetch(`/api/admin/courses/${courseId}/questions`);
     const json = await res.json();
-    setQuestions(json.data ?? []);
+    return (json.data ?? []) as Question[];
   }, [courseId]);
 
   useEffect(() => {
-    Promise.all([fetchCourseData(), fetchLessons(), fetchQuestions()]).finally(() => setLoading(false));
+    Promise.all([fetchCourseData(), fetchLessons(), fetchQuestions()]).then(
+      ([courseData, lessonsData, questionsData]) => {
+        if (courseData) { setCourse(courseData); setSettingsDraft(courseData); }
+        setLessons(lessonsData);
+        setQuestions(questionsData);
+        setLoading(false);
+      },
+    );
   }, [fetchCourseData, fetchLessons, fetchQuestions]);
 
   // ── Status toggle ───────────────────────────────────────────────────
@@ -119,7 +123,7 @@ export default function AdminCourseDetailPage() {
     if (res.ok) {
       setNewLesson({ title: '', duration_minutes: 45 });
       toast.success('Lesson added');
-      fetchLessons();
+      fetchLessons().then(setLessons);
     } else toast.error('Failed to add lesson');
   }
 
@@ -143,13 +147,13 @@ export default function AdminCourseDetailPage() {
     if (res.ok) {
       setEditingLessonId(null);
       toast.success('Lesson updated');
-      fetchLessons();
+      fetchLessons().then(setLessons);
     } else toast.error('Failed to update lesson');
   }
 
   async function deleteLesson(lessonId: string) {
     const res = await fetch(`/api/admin/lessons/${lessonId}`, { method: 'DELETE' });
-    if (res.ok) { toast.success('Lesson deleted'); fetchLessons(); }
+    if (res.ok) { toast.success('Lesson deleted'); fetchLessons().then(setLessons); }
     else toast.error('Failed to delete lesson');
   }
 
@@ -167,7 +171,7 @@ export default function AdminCourseDetailPage() {
     if (res.ok) {
       setNewResource((prev) => ({ ...prev, [lessonId]: { title: '', url: '', type: 'youtube' } }));
       toast.success('Resource added');
-      fetchLessons();
+      fetchLessons().then(setLessons);
     } else toast.error('Failed to add resource');
   }
 
@@ -185,13 +189,13 @@ export default function AdminCourseDetailPage() {
     if (res.ok) {
       setEditingResourceId(null);
       toast.success('Resource updated');
-      fetchLessons();
+      fetchLessons().then(setLessons);
     } else toast.error('Failed to update resource');
   }
 
   async function deleteResource(resourceId: string) {
     const res = await fetch(`/api/admin/resources/${resourceId}`, { method: 'DELETE' });
-    if (res.ok) { toast.success('Resource deleted'); fetchLessons(); }
+    if (res.ok) { toast.success('Resource deleted'); fetchLessons().then(setLessons); }
     else toast.error('Failed to delete resource');
   }
 
@@ -222,7 +226,7 @@ export default function AdminCourseDetailPage() {
     if (res.ok) {
       setEditingQuestionId(null);
       toast.success('Question updated');
-      fetchQuestions();
+      fetchQuestions().then(setQuestions);
     } else toast.error('Failed to update question');
   }
 
@@ -237,13 +241,13 @@ export default function AdminCourseDetailPage() {
     if (res.ok) {
       setNewQ({ question_text: '', options: emptyOptions, difficulty: 1 });
       toast.success('Question added');
-      fetchQuestions();
+      fetchQuestions().then(setQuestions);
     } else toast.error('Failed to add question');
   }
 
   async function deleteQuestion(questionId: string) {
     const res = await fetch(`/api/admin/questions/${questionId}`, { method: 'DELETE' });
-    if (res.ok) { toast.success('Question deleted'); fetchQuestions(); }
+    if (res.ok) { toast.success('Question deleted'); fetchQuestions().then(setQuestions); }
     else toast.error('Failed to delete question');
   }
 

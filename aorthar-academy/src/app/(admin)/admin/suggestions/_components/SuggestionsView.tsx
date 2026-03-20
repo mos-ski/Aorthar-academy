@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import SuggestionReview from '@/components/admin/SuggestionReview';
 import { formatDate } from '@/utils/formatters';
 import { Lightbulb, CheckCircle2, XCircle, Clock } from 'lucide-react';
@@ -40,7 +39,6 @@ export default function SuggestionsView({ suggestions }: Props) {
   const [tab, setTab] = useState<Tab>('pending');
 
   const filtered = tab === 'all' ? suggestions : suggestions.filter((s) => s.status === tab);
-  const pendingCount = suggestions.filter((s) => s.status === 'pending').length;
 
   return (
     <div className="space-y-4">
