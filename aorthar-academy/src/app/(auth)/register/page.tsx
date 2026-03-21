@@ -43,7 +43,8 @@ export default function RegisterPage() {
     });
 
     if (error) {
-      setError(error.message || error.name || JSON.stringify(error));
+      console.error('Supabase signUp error:', error);
+      setError(error.message || error.name || `Error ${error.status}: ${JSON.stringify(error)}`);
       setLoading(false);
       return;
     }
