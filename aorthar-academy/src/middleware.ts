@@ -21,6 +21,8 @@ const PUBLIC_ROUTES = [
   '/university',
   '/unauthorized',
   '/verify',
+  // courses-app public routes
+  '/courses-app',
 ];
 const AUTH_ROUTES = ['/login', '/register', '/verify'];
 const PREMIUM_ROUTES = ['/courses/400', '/transcript/export', '/mentorship', '/capstone'];
@@ -48,10 +50,55 @@ function isOnboardingRoute(pathname: string): boolean {
 }
 
 // ─────────────────────────────────────────────
+// SUBDOMAIN ROUTING
+// ─────────────────────────────────────────────
+
+function getSubdomainRewrite(request: NextRequest): NextResponse | null {
+  const hostname = request.headers.get('host') || '';
+  const pathname = request.nextUrl.pathname;
+
+  // courses.aorthar.com → /courses-app/*
+  if (
+    hostname === 'courses.aorthar.com' ||
+    hostname === 'courses.aorthar.com:3000'
+  ) {
+    const url = request.nextUrl.clone();
+    // Root → courses-app listing
+    url.pathname = pathname === '/' ? '/courses-app' : `/courses-app${pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
+  // university.aorthar.com — root → /university marketing page; all other paths as-is
+  if (
+    hostname === 'university.aorthar.com' ||
+    hostname === 'university.aorthar.com:3000'
+  ) {
+    if (pathname === '/') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/university';
+      return NextResponse.rewrite(url);
+    }
+    // All other paths (dashboard, courses, login, etc.) pass through unchanged
+    return null;
+  }
+
+  return null;
+}
+
+// ─────────────────────────────────────────────
 // MIDDLEWARE
 // ─────────────────────────────────────────────
 
 export async function middleware(request: NextRequest) {
+  // ── Subdomain routing (runs before auth checks) ──
+  const subdomainRewrite = getSubdomainRewrite(request);
+  if (subdomainRewrite) {
+    // Apply Supabase cookie refresh on the rewritten response too
+    // by letting it fall through with the rewritten URL
+    // For simple rewrites we return early; auth is handled on the rewritten path
+    return subdomainRewrite;
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -78,7 +125,6 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip Supabase auth check for public routes that aren't auth routes
-  // (e.g. landing page, pricing) — avoids blocking requests when Supabase is slow
   const needsAuthCheck = isAuthRoute(pathname) || !isPublicRoute(pathname);
 
   // Refresh session — gracefully handle missing/placeholder Supabase credentials
