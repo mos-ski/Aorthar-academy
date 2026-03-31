@@ -112,14 +112,24 @@ export default function HomePage() {
           style={{ scrollbarWidth: "none" }}
         >
           {[
-            { label: "Home", href: "/" },
-            { label: "Join Us", href: "#join" },
-            { label: "University", href: "https://university.aorthar.com" },
-            { label: "Courses", href: "https://courses.aorthar.com" },
-            { label: "X", href: "https://x.com/aorthar" },
-            { label: "Instagram", href: "https://instagram.com/aortharhq" },
-            { label: "YouTube", href: "https://youtube.com/@aorthar" },
-          ].map(({ label, href }) => (
+            { label: "Home", href: "/", external: false },
+            { label: "Join Us", href: "#join", external: false },
+            { label: "University", href: "https://university.aorthar.com", external: true },
+            { label: "Courses", href: "https://courses.aorthar.com", external: true },
+            { label: "X", href: "https://x.com/aorthar", external: true },
+            { label: "Instagram", href: "https://instagram.com/aortharhq", external: true },
+            { label: "YouTube", href: "https://youtube.com/@aorthar", external: true },
+          ].map(({ label, href, external }) => external ? (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[15px] font-medium text-white/60 hover:text-[#a7d252] transition-colors whitespace-nowrap shrink-0"
+            >
+              {label}
+            </a>
+          ) : (
             <Link
               key={label}
               href={href}
@@ -317,6 +327,7 @@ export default function HomePage() {
               description="Pre-recorded courses in Product Design, Management, QA, Scrum & Ops. Learn on your schedule with structured lessons and real-world exercises."
               ctaLabel="Browse Courses"
               ctaHref="https://courses.aorthar.com"
+              external
               borderTop={false}
             />
             <FeatureCard
@@ -332,6 +343,7 @@ export default function HomePage() {
               description="A structured 4-year product development curriculum with GPA tracking, quizzes, exams, and a capstone project. Year 400 is premium."
               ctaLabel="Explore University"
               ctaHref="https://university.aorthar.com"
+              external
               borderTop
             />
             <FeatureCard
@@ -483,15 +495,21 @@ export default function HomePage() {
                 <p className="text-[13px] sm:text-[14px] leading-5 font-medium" style={{ color: "#d0d5dd" }}>Product</p>
                 <div className="flex flex-col gap-2 sm:gap-3">
                   {[
-                    { label: "Courses", href: "https://courses.aorthar.com" },
-                    { label: "Internship", href: "/internship" },
-                    { label: "University", href: "https://university.aorthar.com", badge: "New" },
-                    { label: "Hire Talent", href: "https://www.motivv.co/post-job" },
+                    { label: "Courses", href: "https://courses.aorthar.com", external: true },
+                    { label: "Internship", href: "/internship", external: false },
+                    { label: "University", href: "https://university.aorthar.com", badge: "New", external: true },
+                    { label: "Hire Talent", href: "https://www.motivv.co/post-job", external: true },
                   ].map((link) => (
                     <div key={link.label} className="flex items-center gap-2">
-                      <Link href={link.href} className="text-[14px] sm:text-[16px] leading-6 font-medium hover:opacity-80 transition-opacity whitespace-nowrap" style={{ color: "#e4e7ec" }}>
-                        {link.label}
-                      </Link>
+                      {link.external ? (
+                        <a href={link.href} target="_blank" rel="noopener noreferrer" className="text-[14px] sm:text-[16px] leading-6 font-medium hover:opacity-80 transition-opacity whitespace-nowrap" style={{ color: "#e4e7ec" }}>
+                          {link.label}
+                        </a>
+                      ) : (
+                        <Link href={link.href} className="text-[14px] sm:text-[16px] leading-6 font-medium hover:opacity-80 transition-opacity whitespace-nowrap" style={{ color: "#e4e7ec" }}>
+                          {link.label}
+                        </Link>
+                      )}
                       {"badge" in link && link.badge && (
                         <span
                           className="text-[11px] sm:text-[12px] leading-[18px] font-medium px-2 py-0.5 rounded-full text-white whitespace-nowrap"

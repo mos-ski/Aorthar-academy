@@ -76,11 +76,21 @@ export default function AboutPage() {
           style={{ borderColor: 'rgba(255,255,255,0.06)', scrollbarWidth: 'none' }}
         >
           {[
-            { label: 'Home', href: '/' },
-            { label: 'University', href: '/university' },
-            { label: 'Courses', href: '/explore-courses' },
-            { label: 'Pricing', href: '/pricing' },
-          ].map(({ label, href }) => (
+            { label: 'Home', href: '/', external: false },
+            { label: 'University', href: 'https://university.aorthar.com', external: true },
+            { label: 'Courses', href: 'https://courses.aorthar.com', external: true },
+            { label: 'Pricing', href: '/pricing', external: false },
+          ].map(({ label, href, external }) => external ? (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[15px] font-medium text-white/60 hover:text-[#a7d252] transition-colors whitespace-nowrap shrink-0"
+            >
+              {label}
+            </a>
+          ) : (
             <Link
               key={label}
               href={href}
@@ -302,12 +312,14 @@ export default function AboutPage() {
             >
               Apply for Internship →
             </Link>
-            <Link
+            <a
               href="https://university.aorthar.com"
+              target="_blank"
+              rel="noopener noreferrer"
               className="px-5 py-2.5 rounded-md text-sm font-semibold text-white/80 border border-white/15 hover:border-[#a7d252] hover:text-white transition whitespace-nowrap"
             >
               Explore University
-            </Link>
+            </a>
           </div>
         </div>
       </section>
