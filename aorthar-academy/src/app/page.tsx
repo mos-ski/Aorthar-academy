@@ -2,13 +2,12 @@ import React from "react";
 import Link from "next/link";
 import { ScrollReveal } from "@/components/landing/ScrollReveal";
 
-// Figma asset URLs (valid 7 days)
-const imgWreathLeft = "https://www.figma.com/api/mcp/asset/7a76983c-5896-4a5b-ba23-dbc04dcfc0b6";
-const imgWreathRight = "https://www.figma.com/api/mcp/asset/13137131-1d86-45ad-b530-a809f78ee209";
-const imgStar = "https://www.figma.com/api/mcp/asset/948328a6-6b42-4267-babc-850273cb43f3";
+const imgWreathLeft = "/Wreath left.svg";
+const imgWreathRight = "/Vector.svg";
+const imgStars = "/Stars.svg";
 
 const imgAortharIcon = "/Aorthar Logo long complete.svg";
-const imgHireTalent = "https://www.figma.com/api/mcp/asset/47912351-5be0-4e8b-8705-0bb0231fa472";
+const imgHireTalent = "/Banner.png";
 const imgDeeXoptions = "/Frame 1.svg";
 const imgNazza = "/Nazza main 1 3.svg";
 const imgCeller = "/Combination mark.svg";
@@ -19,33 +18,23 @@ const imgAortharFooterIcon = "/Aorthar Logo long complete.svg";
 
 function RatingsBadge() {
   return (
-    <div className="flex items-center">
-      {/* Wreath left */}
-      <div className="relative shrink-0 h-[64px] w-[29px] sm:h-[80px] sm:w-[36px] -mr-1">
-        <img alt="" className="block w-full h-full" src={imgWreathLeft} />
-      </div>
+    <div className="flex items-center gap-0">
+      {/* Wreath left — 36×81 natural size */}
+      <img alt="" className="shrink-0 h-[81px] w-[36px] object-contain" src={imgWreathLeft} />
       {/* Center content */}
-      <div className="flex flex-col items-center gap-1 -mr-1">
-        {/* Stars */}
-        <div className="flex gap-0.5">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="relative size-3.5 sm:size-4 overflow-hidden">
-              <img alt="" className="absolute inset-0 w-full h-full" src={imgStar} />
-            </div>
-          ))}
-        </div>
+      <div className="flex flex-col items-center gap-1 px-2">
+        {/* Stars — single 88×16 image */}
+        <img alt="5 stars" className="h-4 w-auto" src={imgStars} />
         {/* Labels */}
-        <p className="text-[12px] sm:text-[14px] leading-5 font-medium whitespace-nowrap" style={{ color: "#ebefe0" }}>
+        <p className="text-[12px] leading-5 font-medium whitespace-nowrap" style={{ color: "#ebefe0" }}>
           Best Entry School
         </p>
-        <p className="text-[11px] sm:text-[12px] leading-[18px] font-medium whitespace-nowrap" style={{ color: "#a7d252" }}>
+        <p className="text-[11px] leading-[18px] font-medium whitespace-nowrap" style={{ color: "#a7d252" }}>
           2,000+ reviews
         </p>
       </div>
-      {/* Wreath right */}
-      <div className="relative shrink-0 h-[64px] w-[29px] sm:h-[80px] sm:w-[36px] -mr-1">
-        <img alt="" className="block w-full h-full" src={imgWreathRight} />
-      </div>
+      {/* Wreath right — 35×80 natural size */}
+      <img alt="" className="shrink-0 h-[80px] w-[35px] object-contain" src={imgWreathRight} />
     </div>
   );
 }
