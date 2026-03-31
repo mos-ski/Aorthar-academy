@@ -10,6 +10,9 @@
 .agents
 .claude
 
+# Worktrees
+.worktrees/
+
 # Dependencies and build (aorthar-academy)
 aorthar-academy/node_modules
 aorthar-academy/.next
