@@ -114,8 +114,8 @@ export default function HomePage() {
           {[
             { label: "Home", href: "/" },
             { label: "Join Us", href: "#join" },
-            { label: "University", href: "/university" },
-            { label: "Courses", href: "/explore-courses" },
+            { label: "University", href: "https://university.aorthar.com" },
+            { label: "Courses", href: "https://courses.aorthar.com" },
             { label: "X", href: "https://x.com/aorthar" },
             { label: "Instagram", href: "https://instagram.com/aortharhq" },
             { label: "YouTube", href: "https://youtube.com/@aorthar" },
@@ -316,7 +316,7 @@ export default function HomePage() {
               title="Courses (Learn at Your Own Pace)"
               description="Pre-recorded courses in Product Design, Management, QA, Scrum & Ops. Learn on your schedule with structured lessons and real-world exercises."
               ctaLabel="Browse Courses"
-              ctaHref="/explore-courses"
+              ctaHref="https://courses.aorthar.com"
               borderTop={false}
             />
             <FeatureCard
@@ -331,7 +331,7 @@ export default function HomePage() {
               title="University (Premium Program)"
               description="A structured 4-year product development curriculum with GPA tracking, quizzes, exams, and a capstone project. Year 400 is premium."
               ctaLabel="Explore University"
-              ctaHref="/university"
+              ctaHref="https://university.aorthar.com"
               borderTop
             />
             <FeatureCard
@@ -483,9 +483,9 @@ export default function HomePage() {
                 <p className="text-[13px] sm:text-[14px] leading-5 font-medium" style={{ color: "#d0d5dd" }}>Product</p>
                 <div className="flex flex-col gap-2 sm:gap-3">
                   {[
-                    { label: "Courses", href: "/explore-courses" },
+                    { label: "Courses", href: "https://courses.aorthar.com" },
                     { label: "Internship", href: "/internship" },
-                    { label: "University", href: "/university", badge: "New" },
+                    { label: "University", href: "https://university.aorthar.com", badge: "New" },
                     { label: "Hire Talent", href: "https://www.motivv.co/post-job" },
                   ].map((link) => (
                     <div key={link.label} className="flex items-center gap-2">

@@ -303,7 +303,7 @@ export default function AboutPage() {
               Apply for Internship →
             </Link>
             <Link
-              href="/university"
+              href="https://university.aorthar.com"
               className="px-5 py-2.5 rounded-md text-sm font-semibold text-white/80 border border-white/15 hover:border-[#a7d252] hover:text-white transition whitespace-nowrap"
             >
               Explore University
