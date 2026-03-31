@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 64" fill="none">
+  <!-- Stem -->
+  <path d="M22 8 Q18 32 22 56" stroke="#a7d252" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Leaf 1 (top) -->
+  <ellipse cx="14" cy="11" rx="7" ry="3.5" fill="#a7d252" transform="rotate(-40 14 11)"/>
+  <!-- Leaf 2 -->
+  <ellipse cx="11" cy="20" rx="7" ry="3.5" fill="#8bc34a" transform="rotate(-30 11 20)"/>
+  <!-- Leaf 3 -->
+  <ellipse cx="10" cy="29" rx="7" ry="3.5" fill="#a7d252" transform="rotate(-20 10 29)"/>
+  <!-- Leaf 4 -->
+  <ellipse cx="11" cy="38" rx="7" ry="3.5" fill="#8bc34a" transform="rotate(-10 11 38)"/>
+  <!-- Leaf 5 -->
+  <ellipse cx="13" cy="47" rx="7" ry="3.5" fill="#a7d252" transform="rotate(0 13 47)"/>
+  <!-- Leaf 6 (bottom) -->
+  <ellipse cx="16" cy="55" rx="7" ry="3.5" fill="#8bc34a" transform="rotate(15 16 55)"/>
+</svg>

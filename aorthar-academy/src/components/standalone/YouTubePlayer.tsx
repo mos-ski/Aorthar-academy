@@ -24,6 +24,7 @@ declare global {
     stopVideo(): void;
     playVideo(): void;
     seekTo(seconds: number, allowSeekAhead: boolean): void;
+    getCurrentTime(): number;
     destroy(): void;
   }
 }
@@ -35,6 +36,9 @@ interface Props {
   onEnded?: () => void;
   nextLesson?: NextLesson;
   className?: string;
+  /** If set, player pauses and shows paywall overlay after this many seconds */
+  previewSeconds?: number;
+  onPreviewExpired?: () => void;
 }
 
 let ytApiLoaded = false;
@@ -55,16 +59,27 @@ function loadYouTubeAPI(cb: () => void) {
   document.head.appendChild(script);
 }
 
-export default function YouTubePlayer({ videoId, onEnded, nextLesson, className }: Props) {
+export default function YouTubePlayer({ videoId, onEnded, nextLesson, className, previewSeconds, onPreviewExpired }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayer | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
   const [apiReady, setApiReady] = useState(false);
+  const [previewExpired, setPreviewExpired] = useState(false);
 
   const handleEnded = useCallback(() => {
     setShowOverlay(true);
     onEnded?.();
   }, [onEnded]);
+
+  const triggerPreviewExpired = useCallback(() => {
+    if (playerRef.current) {
+      try { playerRef.current.stopVideo(); } catch { /* ignore */ }
+    }
+    if (pollRef.current) clearInterval(pollRef.current);
+    setPreviewExpired(true);
+    onPreviewExpired?.();
+  }, [onPreviewExpired]);
 
   // Load YT API once
   useEffect(() => {
@@ -75,6 +90,8 @@ export default function YouTubePlayer({ videoId, onEnded, nextLesson, className 
   useEffect(() => {
     if (!apiReady || !containerRef.current) return;
     setShowOverlay(false);
+    setPreviewExpired(false);
+    if (pollRef.current) clearInterval(pollRef.current);
 
     // Destroy previous player
     if (playerRef.current) {
@@ -90,19 +107,30 @@ export default function YouTubePlayer({ videoId, onEnded, nextLesson, className 
     playerRef.current = new window.YT.Player(div, {
       videoId,
       playerVars: {
-        rel: 0,              // no related videos from other channels
-        modestbranding: 1,   // reduced YouTube logo
-        iv_load_policy: 3,   // no annotations
-        showinfo: 0,         // no video title overlay
+        rel: 0,
+        modestbranding: 1,
+        iv_load_policy: 3,
+        showinfo: 0,
         origin: window.location.origin,
         enablejsapi: 1,
-        // youtube-nocookie is set via the host parameter below
       },
       events: {
+        onReady() {
+          // Start polling for preview limit once playing
+          if (previewSeconds) {
+            pollRef.current = setInterval(() => {
+              try {
+                const t = playerRef.current?.getCurrentTime() ?? 0;
+                if (t >= previewSeconds) {
+                  triggerPreviewExpired();
+                }
+              } catch { /* ignore */ }
+            }, 500);
+          }
+        },
         onStateChange(event) {
-          // YT.PlayerState.ENDED = 0
           if (event.data === 0) {
-            event.target.stopVideo(); // dismiss recommendation grid
+            event.target.stopVideo();
             handleEnded();
           }
         },
@@ -110,6 +138,7 @@ export default function YouTubePlayer({ videoId, onEnded, nextLesson, className 
     });
 
     return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
       if (playerRef.current) {
         try { playerRef.current.destroy(); } catch { /* ignore */ }
         playerRef.current = null;
@@ -123,8 +152,24 @@ export default function YouTubePlayer({ videoId, onEnded, nextLesson, className 
       {/* YT iframe mounts here */}
       <div ref={containerRef} className="absolute inset-0 w-full h-full [&>div]:w-full [&>div]:h-full [&_iframe]:w-full [&_iframe]:h-full" />
 
+      {/* Preview expired paywall — rendered by parent via onPreviewExpired, this just dims */}
+      {previewExpired && (
+        <div className="absolute inset-0 z-10 bg-black/80 backdrop-blur-sm flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'rgba(167,210,82,0.15)', border: '1px solid rgba(167,210,82,0.3)' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a7d252" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <p className="text-white font-semibold text-lg mb-1">Preview ended</p>
+            <p className="text-white/50 text-sm">Purchase to continue watching</p>
+          </div>
+        </div>
+      )}
+
       {/* Custom end overlay — covers recommendation grid */}
-      {showOverlay && (
+      {showOverlay && !previewExpired && (
         <div
           className="absolute inset-0 flex flex-col items-center justify-center gap-6 z-10"
           style={{ backgroundColor: 'rgba(6,7,8,0.96)' }}
@@ -132,7 +177,7 @@ export default function YouTubePlayer({ videoId, onEnded, nextLesson, className 
           <div className="text-center">
             <p className="text-white/40 text-sm mb-1">Lesson complete</p>
             <p className="text-white font-semibold text-lg">
-              {nextLesson ? 'Up next' : 'You\'re done!'}
+              {nextLesson ? 'Up next' : "You're done!"}
             </p>
           </div>
 

@@ -58,13 +58,16 @@ function getSubdomainRewrite(request: NextRequest): NextResponse | null {
   const pathname = request.nextUrl.pathname;
 
   // courses.aorthar.com → /courses-app/*
+  // Strip any accidental /courses-app prefix that internal links may have added
   if (
     hostname === 'courses.aorthar.com' ||
     hostname === 'courses.aorthar.com:3000'
   ) {
     const url = request.nextUrl.clone();
-    // Root → courses-app listing
-    url.pathname = pathname === '/' ? '/courses-app' : `/courses-app${pathname}`;
+    const cleanPath = pathname.startsWith('/courses-app')
+      ? pathname.slice('/courses-app'.length) || '/'
+      : pathname;
+    url.pathname = cleanPath === '/' ? '/courses-app' : `/courses-app${cleanPath}`;
     return NextResponse.rewrite(url);
   }
 
