@@ -40,6 +40,7 @@ const adminNav = [
   { href: '/admin/suggestions', label: 'Suggestions', icon: Lightbulb },
   { href: '/admin/capstone', label: 'Capstone', icon: CheckSquare },
   { href: '/admin/payments', label: 'Payments', icon: CreditCard },
+  { href: '/admin/standalone-courses', label: 'Ext. Courses', icon: BookOpen },
 ];
 
 const mobileStudentNav = [

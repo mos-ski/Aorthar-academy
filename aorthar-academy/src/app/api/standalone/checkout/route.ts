@@ -1,0 +1,82 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { initiatePayment, generateReference } from '@/lib/paystack';
+
+export async function POST(request: NextRequest) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+  }
+
+  let slug: string;
+  try {
+    const body = await request.json();
+    slug = body.slug;
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+  }
+
+  if (!slug) {
+    return NextResponse.json({ error: 'Course slug required' }, { status: 400 });
+  }
+
+  // Load course
+  const { data: course } = await supabase
+    .from('standalone_courses')
+    .select('id, title, price_ngn, status')
+    .eq('slug', slug)
+    .eq('status', 'published')
+    .single();
+
+  if (!course) {
+    return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+  }
+
+  // Check if already purchased
+  const { data: existing } = await supabase
+    .from('standalone_purchases')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('course_id', course.id)
+    .maybeSingle();
+
+  if (existing) {
+    return NextResponse.json({ error: 'Already purchased' }, { status: 409 });
+  }
+
+  // Get user email
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  const email = user.email ?? '';
+  const reference = generateReference(user.id);
+  const amountKobo = course.price_ngn * 100; // NGN → kobo
+
+  const origin = request.headers.get('origin') ?? process.env.NEXTAUTH_URL ?? 'https://courses.aorthar.com';
+
+  try {
+    const paystack = await initiatePayment({
+      email,
+      amount_kobo: amountKobo,
+      reference,
+      metadata: {
+        type: 'standalone_course',
+        course_id: course.id,
+        course_slug: slug,
+        user_id: user.id,
+        user_name: profile?.full_name ?? '',
+      },
+      callback_url: `${origin}/courses-app/learn/${slug}`,
+    });
+
+    return NextResponse.json({ payment_url: paystack.data.authorization_url });
+  } catch (err) {
+    console.error('[standalone/checkout] Paystack error:', err);
+    return NextResponse.json({ error: 'Payment initiation failed' }, { status: 500 });
+  }
+}
