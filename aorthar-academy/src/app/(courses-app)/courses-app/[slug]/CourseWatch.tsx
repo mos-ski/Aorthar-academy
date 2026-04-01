@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import YouTubePlayer from '@/components/standalone/YouTubePlayer';
+import DrivePlayer from '@/components/standalone/DrivePlayer';
 
 type Lesson = { id: string; title: string; sort_order: number; youtube_url: string };
 
@@ -30,6 +31,26 @@ function extractYouTubeId(url: string): string | null {
   return m ? m[1] : null;
 }
 
+function extractDriveId(url: string): string | null {
+  if (!url) return null;
+  const m = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([A-Za-z0-9_-]+)/);
+  return m ? m[1] : null;
+}
+
+type VideoSource =
+  | { type: 'youtube'; id: string }
+  | { type: 'drive'; id: string }
+  | null;
+
+function detectVideo(url: string): VideoSource {
+  if (!url) return null;
+  const ytId = extractYouTubeId(url);
+  if (ytId) return { type: 'youtube', id: ytId };
+  const driveId = extractDriveId(url);
+  if (driveId) return { type: 'drive', id: driveId };
+  return null;
+}
+
 function getCompletedIds(lessons: Lesson[], activeId: string | undefined): Set<string> {
   const set = new Set<string>();
   for (const l of lessons) {
@@ -43,8 +64,8 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
   const [paywallVisible, setPaywallVisible] = useState(false);
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(firstLesson);
 
-  const videoId = activeLesson ? extractYouTubeId(activeLesson.youtube_url) : null;
-  const previewSeconds = !hasPurchased && videoId ? 60 : undefined;
+  const videoSource = activeLesson ? detectVideo(activeLesson.youtube_url) : null;
+  const previewSeconds = !hasPurchased && videoSource ? 60 : undefined;
 
   const activeLessonIdx = lessons.findIndex(l => l.id === activeLesson?.id);
   const nextLesson = lessons[activeLessonIdx + 1] ?? null;
@@ -216,18 +237,31 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
 
           {/* Video player */}
           <div className="relative rounded-xl overflow-hidden bg-black w-full">
-            {videoId ? (
+            {videoSource ? (
               <>
-                <YouTubePlayer
-                  videoId={videoId}
-                  previewSeconds={previewSeconds}
-                  onPreviewExpired={() => setPaywallVisible(true)}
-                  nextLesson={hasPurchased && nextLesson ? {
-                    title: nextLesson.title,
-                    href: `/courses-app/learn/${course.slug}/${nextLesson.id}`,
-                  } : undefined}
-                  className="w-full"
-                />
+                {videoSource.type === 'youtube' ? (
+                  <YouTubePlayer
+                    videoId={videoSource.id}
+                    previewSeconds={previewSeconds}
+                    onPreviewExpired={() => setPaywallVisible(true)}
+                    nextLesson={hasPurchased && nextLesson ? {
+                      title: nextLesson.title,
+                      href: `/courses-app/learn/${course.slug}/${nextLesson.id}`,
+                    } : undefined}
+                    className="w-full"
+                  />
+                ) : (
+                  <DrivePlayer
+                    fileId={videoSource.id}
+                    previewSeconds={previewSeconds}
+                    onPreviewExpired={() => setPaywallVisible(true)}
+                    nextLesson={hasPurchased && nextLesson ? {
+                      title: nextLesson.title,
+                      href: `/courses-app/learn/${course.slug}/${nextLesson.id}`,
+                    } : undefined}
+                    className="w-full"
+                  />
+                )}
 
                 {/* Paywall overlay */}
                 {paywallVisible && (
@@ -303,7 +337,7 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
           </div>
 
           {/* Free preview notice */}
-          {!hasPurchased && videoId && !paywallVisible && (
+          {!hasPurchased && videoSource && !paywallVisible && (
             <p className="text-xs text-white/35">
               Free 1-minute preview.{' '}
               {isLoggedIn ? (
