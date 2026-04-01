@@ -41,14 +41,15 @@ const studentNav = [
 ];
 
 const adminUniversityNav: NavItem[] = [
-  { href: '/admin/curriculum', label: 'Curriculum', icon: Layers },
-  { href: '/admin/courses', label: 'Courses', icon: BookOpen },
+  { href: '/university/courses', label: 'Courses', icon: BookOpen },
+  { href: '/university/student', label: 'Students', icon: Users },
+  { href: '/university/pricing', label: 'Pricing', icon: CreditCard },
+  { href: '/university/transaction', label: 'Transactions', icon: CreditCard },
   { href: '/admin/questions', label: 'Quiz & Questions', icon: FileQuestion },
-  { href: '/admin/users', label: 'Students', icon: Users },
+  { href: '/admin/curriculum', label: 'Curriculum', icon: Layers },
   { href: '/admin/departments', label: 'Departments', icon: Building2 },
   { href: '/admin/suggestions', label: 'Suggestions', icon: Lightbulb },
   { href: '/admin/capstone', label: 'Capstone', icon: CheckSquare },
-  { href: '/admin/payments', label: 'Pricing & Transactions', icon: CreditCard },
 ];
 
 const adminExternalNav: NavItem[] = [
@@ -86,7 +87,7 @@ const adminPrimaryModules: Array<{
   href: string;
 }> = [
   { key: 'overview', label: 'Overview', icon: LayoutDashboard, href: '/admin' },
-  { key: 'university', label: 'University', icon: Building2, href: '/admin/courses' },
+  { key: 'university', label: 'University', icon: Building2, href: '/university/courses' },
   { key: 'courses', label: 'Courses', icon: BookOpen, href: '/admin/standalone-courses' },
   { key: 'profile', label: 'Profile Settings', icon: CircleUser, href: '/settings' },
 ];
@@ -101,7 +102,7 @@ const mobileStudentNav = [
 
 const mobileAdminNav = [
   { href: '/admin', label: 'Overview', icon: LayoutDashboard },
-  { href: '/admin/courses', label: 'University', icon: Building2 },
+  { href: '/university/courses', label: 'University', icon: Building2 },
   { href: '/admin/standalone-courses', label: 'Courses', icon: BookOpen },
   { href: '/settings', label: 'Profile', icon: CircleUser },
 ];
@@ -122,7 +123,7 @@ export default function Sidebar({ role }: { role: Role }) {
     return isActivePath(pathOnly);
   }
 
-  const inUniversityPath = adminUniversityNav.some((item) => isNavItemActive(item));
+  const inUniversityPath = pathname.startsWith('/university/') || adminUniversityNav.some((item) => isNavItemActive(item));
   const inCoursesPath = pathname.startsWith('/admin/standalone-courses');
   const inProfilePath = pathname.startsWith('/settings');
 
