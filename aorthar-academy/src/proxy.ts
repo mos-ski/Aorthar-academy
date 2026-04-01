@@ -152,6 +152,15 @@ export async function proxy(request: NextRequest) {
 
   // Redirect logged-in users away from auth pages
   if (user && isAuthRoute(pathname)) {
+    const hostname = request.headers.get('host') ?? '';
+    const isCoursesDomain =
+      hostname === 'courses.aorthar.com' || hostname.startsWith('courses.aorthar.com:');
+    // On courses subdomain: honour ?next param, otherwise go to My Courses
+    const nextParam = request.nextUrl.searchParams.get('next');
+    if (isCoursesDomain) {
+      const dest = nextParam ?? '/courses-app/learn';
+      return NextResponse.redirect(new URL(dest, request.url));
+    }
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
