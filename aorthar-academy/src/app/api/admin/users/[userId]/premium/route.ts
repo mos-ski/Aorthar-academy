@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { mapAdminApiError, requireAdminApi } from '@/lib/admin/apiAuth';
+import { writeAuditLog } from '@/lib/admin/audit';
 
 // POST /api/admin/users/[userId]/premium — body: { action: 'grant' | 'revoke' }
 export async function POST(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
   try {
-    await requireAdminApi();
+    const { userId: performedBy } = await requireAdminApi();
     const supabase = createAdminClient();
     const { userId } = await params;
     const { action } = await req.json() as { action?: 'grant' | 'revoke' };
@@ -41,6 +42,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ use
         .single();
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+      await writeAuditLog({
+        action: 'subscription_created',
+        performedBy,
+        targetUser: userId,
+        entityType: 'subscription',
+        entityId: data.id,
+        metadata: { source: 'admin_premium_grant' },
+        req,
+      }, supabase);
+
       return NextResponse.json({ data });
     }
 
@@ -61,6 +73,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ use
         .eq('status', 'active');
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+      await writeAuditLog({
+        action: 'subscription_cancelled',
+        performedBy,
+        targetUser: userId,
+        entityType: 'subscription',
+        metadata: { source: 'admin_premium_revoke' },
+        req,
+      }, supabase);
+
       return NextResponse.json({ success: true });
     }
 

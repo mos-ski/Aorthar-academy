@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { mapAdminApiError, requireAdminApi } from '@/lib/admin/apiAuth';
+import { writeAuditLog } from '@/lib/admin/audit';
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ userId: string }> },
 ) {
   try {
-    await requireAdminApi();
+    const { userId: performedBy } = await requireAdminApi();
     const { userId } = await params;
     const { action, courseId } = await req.json() as {
       action?: 'grant' | 'revoke';
@@ -34,6 +35,16 @@ export async function POST(
       if (error && error.code !== '23505') {
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
+
+      await writeAuditLog({
+        action: 'standalone_access_granted',
+        performedBy,
+        targetUser: userId,
+        entityType: 'standalone_course',
+        entityId: courseId,
+        metadata: { source: 'admin_grant' },
+        req,
+      }, admin);
     }
 
     if (action === 'revoke') {
@@ -46,6 +57,16 @@ export async function POST(
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
+
+      await writeAuditLog({
+        action: 'standalone_access_revoked',
+        performedBy,
+        targetUser: userId,
+        entityType: 'standalone_course',
+        entityId: courseId,
+        metadata: { source: 'admin_revoke' },
+        req,
+      }, admin);
     }
 
     return NextResponse.json({ success: true });

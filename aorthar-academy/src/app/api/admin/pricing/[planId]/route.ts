@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { mapAdminApiError, requireAdminApi } from '@/lib/admin/apiAuth';
+import { writeAuditLog } from '@/lib/admin/audit';
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ planId: string }> },
 ) {
   try {
-    await requireAdminApi();
+    const { userId: performedBy } = await requireAdminApi();
     const { planId } = await params;
     const body = await req.json();
 
@@ -33,6 +34,12 @@ export async function PATCH(
     }
 
     const supabase = createAdminClient();
+    const { data: before } = await supabase
+      .from('plans')
+      .select('name, description, price, currency, is_active, access_scope')
+      .eq('id', planId)
+      .maybeSingle();
+
     const { data, error } = await supabase
       .from('plans')
       .update({
@@ -50,6 +57,23 @@ export async function PATCH(
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    await writeAuditLog({
+      action: 'plan_updated',
+      performedBy,
+      entityType: 'plan',
+      entityId: planId,
+      oldValue: before,
+      newValue: {
+        name,
+        description,
+        price,
+        currency,
+        is_active: isActive,
+        access_scope: accessScope,
+      },
+      req,
+    }, supabase);
 
     return NextResponse.json({ data });
   } catch (error) {

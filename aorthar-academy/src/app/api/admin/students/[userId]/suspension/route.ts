@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { mapAdminApiError, requireAdminApi } from '@/lib/admin/apiAuth';
+import { writeAuditLog } from '@/lib/admin/audit';
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ userId: string }> },
 ) {
   try {
-    await requireAdminApi();
+    const { userId: performedBy } = await requireAdminApi();
     const { userId } = await params;
     const { action } = await req.json() as { action?: 'suspend' | 'unsuspend' };
 
@@ -30,6 +31,15 @@ export async function POST(
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    await writeAuditLog({
+      action: isSuspended ? 'student_suspended' : 'student_unsuspended',
+      performedBy,
+      targetUser: userId,
+      entityType: 'profile',
+      metadata: { source: 'admin_suspension' },
+      req,
+    }, admin);
 
     return NextResponse.json({ success: true });
   } catch (error) {

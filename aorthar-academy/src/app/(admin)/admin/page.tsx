@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Users, BookOpen, CreditCard, Lightbulb, CheckSquare,
-  TrendingUp, ArrowRight, AlertTriangle, Layers, Building2,
+  Users, BookOpen, CreditCard, Lightbulb,
+  TrendingUp, ArrowRight, AlertTriangle, Layers, Building2, ShieldCheck, ClipboardList,
 } from 'lucide-react';
 import Link from 'next/link';
 import { DEMO_OVERVIEW } from '@/lib/demo/adminSnapshot';
@@ -19,14 +19,12 @@ export default async function AdminDashboardPage() {
     { count: _totalUsers },
     { count: _totalCourses },
     { count: _pendingSuggestions },
-    { count: _pendingCapstones },
     { count: _activeSubscriptions },
     { count: _totalTransactions },
   ] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
     supabase.from('courses').select('*', { count: 'exact', head: true }),
     supabase.from('suggestions').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-    supabase.from('capstone_submissions').select('*', { count: 'exact', head: true }).eq('status', 'submitted'),
     supabase.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('transactions').select('*', { count: 'exact', head: true }).eq('status', 'success'),
   ]);
@@ -36,11 +34,10 @@ export default async function AdminDashboardPage() {
   const totalUsers = isLive ? (_totalUsers ?? 0) : DEMO_OVERVIEW.totalUsers;
   const totalCourses = isLive ? (_totalCourses ?? 0) : DEMO_OVERVIEW.totalCourses;
   const pendingSuggestions = isLive ? (_pendingSuggestions ?? 0) : DEMO_OVERVIEW.pendingSuggestions;
-  const pendingCapstones = isLive ? (_pendingCapstones ?? 0) : DEMO_OVERVIEW.pendingCapstones;
   const activeSubscriptions = isLive ? (_activeSubscriptions ?? 0) : DEMO_OVERVIEW.activeSubscriptions;
   const totalTransactions = isLive ? (_totalTransactions ?? 0) : DEMO_OVERVIEW.totalTransactions;
 
-  const hasPendingActions = pendingSuggestions > 0 || pendingCapstones > 0;
+  const hasPendingActions = pendingSuggestions > 0;
 
   return (
     <div className="space-y-6">
@@ -62,17 +59,6 @@ export default async function AdminDashboardPage() {
                 <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
                 <p className="flex-1 text-sm font-medium text-amber-800 dark:text-amber-300">
                   {pendingSuggestions} suggestion{pendingSuggestions > 1 ? 's' : ''} awaiting review
-                </p>
-                <ArrowRight className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
-              </div>
-            </Link>
-          )}
-          {pendingCapstones > 0 && (
-            <Link href="/admin/capstone" className="flex-1">
-              <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30 px-4 py-3 hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors">
-                <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                <p className="flex-1 text-sm font-medium text-amber-800 dark:text-amber-300">
-                  {pendingCapstones} capstone{pendingCapstones > 1 ? 's' : ''} awaiting review
                 </p>
                 <ArrowRight className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
               </div>
@@ -150,17 +136,15 @@ export default async function AdminDashboardPage() {
           </Card>
         </Link>
 
-        <Link href="/admin/capstone">
-          <Card className={`hover:border-primary/50 transition-colors cursor-pointer ${pendingCapstones > 0 ? 'border-amber-300 dark:border-amber-700' : ''}`}>
+        <Link href="/admin/admin-access">
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Capstones to Review</CardTitle>
-              <CheckSquare className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Admin Access</CardTitle>
+              <ShieldCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{pendingCapstones.toLocaleString()}</p>
-              {pendingCapstones > 0
-                ? <Badge variant="destructive" className="text-xs mt-1">Needs review</Badge>
-                : <p className="text-xs text-muted-foreground mt-1">all reviewed</p>}
+              <p className="text-3xl font-bold">Manage</p>
+              <p className="text-xs text-muted-foreground mt-1">invite and grant admins</p>
             </CardContent>
           </Card>
         </Link>
@@ -169,7 +153,7 @@ export default async function AdminDashboardPage() {
       {/* Quick actions */}
       <div>
         <h3 className="text-sm font-medium text-muted-foreground mb-3">Quick Actions</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           <Button asChild variant="outline" size="sm" className="justify-start gap-2">
             <Link href="/admin/curriculum">
               <Layers className="h-4 w-4" />Curriculum
@@ -188,6 +172,11 @@ export default async function AdminDashboardPage() {
           <Button asChild variant="outline" size="sm" className="justify-start gap-2">
             <Link href="/admin/users">
               <Users className="h-4 w-4" />Users
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm" className="justify-start gap-2">
+            <Link href="/admin/audit-logs">
+              <ClipboardList className="h-4 w-4" />Audit Logs
             </Link>
           </Button>
         </div>

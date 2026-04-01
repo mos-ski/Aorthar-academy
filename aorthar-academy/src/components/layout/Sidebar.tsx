@@ -5,17 +5,20 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   BookOpen,
+  BadgeDollarSign,
   BriefcaseBusiness,
+  ClipboardList,
   ChevronRight,
   CircleUser,
   CreditCard,
   FileQuestion,
   Layers,
   Lightbulb,
-  CheckSquare,
   LayoutDashboard,
   LucideIcon,
+  ShieldCheck,
   Settings,
+  ScrollText,
   Users,
   TrendingUp,
   Award,
@@ -60,15 +63,15 @@ const adminUniversityNav: NavItem[] = [
   },
   {
     href: '/admin/pricing?module=university',
-    label: 'Pricing',
-    icon: CreditCard,
+    label: 'Plans',
+    icon: ScrollText,
     match: (pathname, _tab, _courseTab, moduleParam) =>
       pathname === '/admin/pricing' && moduleParam === 'university',
   },
   {
     href: '/admin/payments?module=university',
     label: 'Transactions',
-    icon: CreditCard,
+    icon: ClipboardList,
     match: (pathname, _tab, _courseTab, moduleParam) =>
       pathname === '/admin/payments' && moduleParam === 'university',
   },
@@ -76,7 +79,8 @@ const adminUniversityNav: NavItem[] = [
   { href: '/admin/curriculum', label: 'Curriculum', icon: Layers },
   { href: '/admin/departments', label: 'Departments', icon: Building2 },
   { href: '/admin/suggestions', label: 'Suggestions', icon: Lightbulb },
-  { href: '/admin/capstone', label: 'Capstone', icon: CheckSquare },
+  { href: '/admin/admin-access', label: 'Admin Access', icon: ShieldCheck },
+  { href: '/admin/audit-logs', label: 'Audit Logs', icon: ScrollText },
 ];
 
 const adminExternalNav: NavItem[] = [
@@ -91,17 +95,19 @@ const adminExternalNav: NavItem[] = [
   {
     href: '/admin/pricing?module=courses',
     label: 'Pricing',
-    icon: CreditCard,
+    icon: BadgeDollarSign,
     match: (pathname, _tab, _courseTab, moduleParam) =>
       pathname === '/admin/pricing' && moduleParam === 'courses',
   },
   {
     href: '/admin/payments?module=courses',
     label: 'Transactions',
-    icon: CreditCard,
+    icon: ClipboardList,
     match: (pathname, _tab, _courseTab, moduleParam) =>
       pathname === '/admin/payments' && moduleParam === 'courses',
   },
+  { href: '/admin/admin-access', label: 'Admin Access', icon: ShieldCheck },
+  { href: '/admin/audit-logs', label: 'Audit Logs', icon: ScrollText },
 ];
 
 const adminOverviewNav: NavItem[] = [
@@ -117,7 +123,7 @@ const adminPrimaryModules: Array<{
 }> = [
   { key: 'overview', label: 'Overview', icon: LayoutDashboard, href: '/admin' },
   { key: 'university', label: 'University', icon: Building2, href: '/admin/courses' },
-  { key: 'courses', label: 'Courses', icon: BookOpen, href: '/admin/standalone-courses' },
+  { key: 'courses', label: 'External Courses', icon: BookOpen, href: '/admin/standalone-courses' },
   { key: 'profile', label: 'Profile Settings', icon: CircleUser, href: '/settings' },
 ];
 
@@ -132,7 +138,7 @@ const mobileStudentNav = [
 const mobileAdminNav = [
   { href: '/admin', label: 'Overview', icon: LayoutDashboard },
   { href: '/admin/courses', label: 'University', icon: Building2 },
-  { href: '/admin/standalone-courses', label: 'Courses', icon: BookOpen },
+  { href: '/admin/standalone-courses', label: 'External', icon: BookOpen },
   { href: '/settings', label: 'Profile', icon: CircleUser },
 ];
 
@@ -169,7 +175,8 @@ export default function Sidebar({ role }: { role: Role }) {
     || pathname.startsWith('/admin/curriculum')
     || pathname.startsWith('/admin/departments')
     || pathname.startsWith('/admin/suggestions')
-    || pathname.startsWith('/admin/capstone')
+    || pathname.startsWith('/admin/admin-access')
+    || pathname.startsWith('/admin/audit-logs')
     || pathname.startsWith('/university/')
     || adminUniversityNav.some((item) => isNavItemActive(item))
     || (pathname === '/admin/ops' && tab === 'courses' && courseTab !== 'external');
@@ -207,8 +214,8 @@ export default function Sidebar({ role }: { role: Role }) {
   const secondaryTitle =
     activeModule === 'university'
       ? 'University'
-      : activeModule === 'courses'
-      ? 'Courses'
+    : activeModule === 'courses'
+      ? 'External Courses'
       : activeModule === 'profile'
       ? 'Profile Settings'
       : 'Admin';

@@ -80,9 +80,10 @@ export default function Navbar({ user, isDemoMode = false, appEnv = 'development
     '/admin/users': 'University Students',
     '/admin/departments': 'Departments',
     '/admin/suggestions': 'University Suggestions',
-    '/admin/capstone': 'University Capstone Reviews',
+    '/admin/admin-access': 'Admin Access',
+    '/admin/audit-logs': 'Audit Logs',
     '/admin/payments': 'Transactions',
-    '/admin/standalone-courses': 'External Course',
+    '/admin/standalone-courses': 'External Courses',
     '/admin/settings': 'Settings',
   };
   const pageTitle = PAGE_TITLES[pathname] ?? PAGE_TITLES[Object.keys(PAGE_TITLES).find((k) => pathname.startsWith(k + '/')) ?? ''] ?? '';
