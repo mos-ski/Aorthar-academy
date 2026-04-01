@@ -91,15 +91,13 @@ function getSubdomainRewrite(request: NextRequest): NextResponse | null {
     return NextResponse.rewrite(url);
   }
 
-  // university.aorthar.com — root → /university marketing page; all other paths as-is
+  // university.aorthar.com — root → /dashboard (or /login if not authenticated)
   if (
     hostname === 'university.aorthar.com' ||
     hostname === 'university.aorthar.com:3000'
   ) {
     if (pathname === '/') {
-      const url = request.nextUrl.clone();
-      url.pathname = '/university';
-      return NextResponse.rewrite(url);
+      return NextResponse.redirect(new URL('/dashboard', request.url));
     }
     // All other paths (dashboard, courses, login, etc.) pass through unchanged
     return null;
