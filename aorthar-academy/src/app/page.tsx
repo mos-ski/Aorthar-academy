@@ -7,7 +7,7 @@ const imgWreathRight = "/Vector.svg";
 const imgStars = "/Stars.svg";
 
 const imgAortharIcon = "/Aorthar Logo long complete.svg";
-const imgHireTalent = "/Banner.png";
+const imgHireTalent = "/Image.png";
 const imgDeeXoptions = "/Frame 1.svg";
 const imgNazza = "/Nazza main 1 3.svg";
 const imgCeller = "/Combination mark.svg";

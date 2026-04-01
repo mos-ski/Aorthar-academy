@@ -82,6 +82,17 @@ function RegisterForm() {
       return;
     }
 
+    // Fire welcome email — best-effort, don't block navigation
+    fetch('/api/auth/send-welcome', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: values.email,
+        firstName: values.full_name.split(' ')[0],
+        isCourses,
+      }),
+    }).catch(() => {});
+
     const verifyNext = next ? `&next=${encodeURIComponent(next)}` : '';
     router.push(`/verify?email=${encodeURIComponent(values.email)}${verifyNext}`);
   }

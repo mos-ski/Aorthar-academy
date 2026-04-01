@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyWebhookSignature } from '@/lib/paystack';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { sendEmail } from '@/lib/email';
+import {
+  purchaseConfirmationHtml,
+  purchaseConfirmationSubject,
+} from '@/lib/email/templates/purchase-confirmation';
 
 // POST /api/webhooks/paystack
 // Handles both university subscription payments (via Edge Function) and
@@ -39,10 +44,10 @@ export async function POST(req: NextRequest) {
 
     const adminSupabase = createAdminClient();
 
-    // Fetch course price for recording
+    // Fetch course details for recording + email
     const { data: course } = await adminSupabase
       .from('standalone_courses')
-      .select('price_ngn')
+      .select('price_ngn, title')
       .eq('id', course_id)
       .single();
 
@@ -64,6 +69,37 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'DB insert failed' }, { status: 500 });
     }
 
+    // Send purchase confirmation email (fire-and-forget, don't block response)
+    void (async () => {
+      try {
+        const { data: userRecord } = await adminSupabase.auth.admin.getUserById(user_id);
+        const userEmail = userRecord?.user?.email;
+        const { data: profileRecord } = await adminSupabase
+          .from('profiles')
+          .select('full_name')
+          .eq('user_id', user_id)
+          .maybeSingle();
+        const firstName = profileRecord?.full_name?.split(' ')[0] ?? 'there';
+        const courseName = course?.title ?? 'your course';
+
+        if (userEmail) {
+          await sendEmail({
+            to: userEmail,
+            subject: purchaseConfirmationSubject('course', courseName),
+            html: purchaseConfirmationHtml({
+              firstName,
+              purchaseType: 'course',
+              itemName: courseName,
+              amountNgn: course?.price_ngn ?? 0,
+              dashboardUrl: 'https://courses.aorthar.com',
+            }),
+          });
+        }
+      } catch (emailErr) {
+        console.error('[webhook/paystack] purchase confirmation email failed:', emailErr);
+      }
+    })();
+
     return NextResponse.json({ ok: true, type: 'standalone_course' });
   }
 
@@ -82,5 +118,62 @@ export async function POST(req: NextRequest) {
   );
 
   const data = await res.json();
+
+  // Send purchase confirmation email for successful subscription charges
+  if (
+    res.ok &&
+    event.event === 'charge.success' &&
+    event.data.status === 'success'
+  ) {
+    const subscriptionEvent = event as typeof event & {
+      data: {
+        amount: number;
+        metadata?: { user_id?: string; plan_type?: string };
+        customer?: { email?: string };
+      };
+    };
+    void (async () => {
+      try {
+        const userId = subscriptionEvent.data.metadata?.user_id;
+        const planType = subscriptionEvent.data.metadata?.plan_type ?? 'Premium';
+        const amountNgn = Math.round((subscriptionEvent.data.amount ?? 0) / 100);
+
+        let userEmail = subscriptionEvent.data.customer?.email;
+        let firstName = 'there';
+
+        if (userId) {
+          const adminSupabase = createAdminClient();
+          const { data: userRecord } = await adminSupabase.auth.admin.getUserById(userId);
+          userEmail ??= userRecord?.user?.email;
+          const { data: profileRecord } = await adminSupabase
+            .from('profiles')
+            .select('full_name')
+            .eq('user_id', userId)
+            .maybeSingle();
+          firstName = profileRecord?.full_name?.split(' ')[0] ?? 'there';
+        }
+
+        const planLabel =
+          planType === 'yearly' ? 'Aorthar Academy Premium (Yearly)' : 'Aorthar Academy Premium';
+
+        if (userEmail) {
+          await sendEmail({
+            to: userEmail,
+            subject: purchaseConfirmationSubject('subscription', planLabel),
+            html: purchaseConfirmationHtml({
+              firstName,
+              purchaseType: 'subscription',
+              itemName: planLabel,
+              amountNgn,
+              dashboardUrl: 'https://www.aorthar.academy/dashboard',
+            }),
+          });
+        }
+      } catch (emailErr) {
+        console.error('[webhook/paystack] subscription confirmation email failed:', emailErr);
+      }
+    })();
+  }
+
   return NextResponse.json(data, { status: res.ok ? 200 : res.status });
 }

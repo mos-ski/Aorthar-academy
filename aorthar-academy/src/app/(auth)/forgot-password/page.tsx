@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createClient } from '@/lib/supabase/client';
 import { forgotPasswordSchema, type ForgotPasswordInput } from '@/utils/validators';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,14 +23,14 @@ export default function ForgotPasswordPage() {
   async function onSubmit(values: ForgotPasswordInput) {
     setLoading(true);
     setError(null);
-    const supabase = createClient();
-
-    const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: values.email }),
     });
 
-    if (error) {
-      setError(error.message);
+    if (!res.ok) {
+      setError('Something went wrong. Please try again.');
       setLoading(false);
       return;
     }
