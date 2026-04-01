@@ -1,8 +1,10 @@
 import { createAdminClient } from '@/lib/supabase/admin';
-import { requireRole } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDateTime } from '@/utils/formatters';
+import { hasAdminPermission, normalizeAdminLevel } from '@/lib/admin/permissions';
+import { redirect } from 'next/navigation';
 
 type AuditRow = {
   id: string;
@@ -16,7 +18,11 @@ type AuditRow = {
 };
 
 export default async function AdminAuditLogsPage() {
-  await requireRole('admin');
+  const { profile } = await requireAuth();
+  if (profile?.role !== 'admin') redirect('/unauthorized');
+  const adminLevel = normalizeAdminLevel((profile as { admin_level?: string | null }).admin_level ?? null);
+  if (!hasAdminPermission(adminLevel, 'audit')) redirect('/unauthorized');
+
   const admin = createAdminClient();
 
   const { data: logs } = await admin

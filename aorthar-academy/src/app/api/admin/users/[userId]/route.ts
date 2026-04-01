@@ -6,7 +6,7 @@ import { writeAuditLog } from '@/lib/admin/audit';
 // PATCH /api/admin/users/[userId] — change role, department, block etc.
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
   try {
-    const { userId: performedBy } = await requireAdminApi();
+    const { userId: performedBy } = await requireAdminApi('admin_management');
     const supabase = createAdminClient();
     const { userId } = await params;
     const body = await req.json();

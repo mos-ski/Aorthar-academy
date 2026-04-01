@@ -3,29 +3,36 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { mapAdminApiError, requireAdminApi } from '@/lib/admin/apiAuth';
 import { writeAuditLog } from '@/lib/admin/audit';
 
-export async function POST(
+type AdminLevel = 'super_admin' | 'content_admin' | 'finance_admin';
+
+export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ userId: string }> },
 ) {
   try {
     const { userId: performedBy } = await requireAdminApi('admin_management');
+    const admin = createAdminClient();
     const { userId } = await params;
-    const { action } = await req.json() as { action?: 'suspend' | 'unsuspend' };
+    const body = await req.json() as { admin_level?: AdminLevel };
+    const adminLevel = body.admin_level;
 
-    if (action !== 'suspend' && action !== 'unsuspend') {
-      return NextResponse.json({ error: 'action must be suspend or unsuspend' }, { status: 400 });
+    if (!adminLevel || !['super_admin', 'content_admin', 'finance_admin'].includes(adminLevel)) {
+      return NextResponse.json({ error: 'admin_level is required' }, { status: 400 });
     }
 
-    const admin = createAdminClient();
-    const isSuspended = action === 'suspend';
-    const suspendedAt = isSuspended ? new Date().toISOString() : null;
+    if (performedBy === userId) {
+      return NextResponse.json({ error: 'You cannot change your own admin level' }, { status: 400 });
+    }
+
+    const { data: before } = await admin
+      .from('profiles')
+      .select('role, admin_level')
+      .eq('user_id', userId)
+      .maybeSingle();
 
     const { error } = await admin
       .from('profiles')
-      .update({
-        is_suspended: isSuspended,
-        suspended_at: suspendedAt,
-      })
+      .update({ role: 'admin', admin_level: adminLevel })
       .eq('user_id', userId);
 
     if (error) {
@@ -33,11 +40,13 @@ export async function POST(
     }
 
     await writeAuditLog({
-      action: isSuspended ? 'student_suspended' : 'student_unsuspended',
+      action: 'admin_role_granted',
       performedBy,
       targetUser: userId,
       entityType: 'profile',
-      metadata: { source: 'admin_suspension' },
+      oldValue: before,
+      newValue: { role: 'admin', admin_level: adminLevel },
+      metadata: { source: 'admin_level_update' },
       req,
     }, admin);
 

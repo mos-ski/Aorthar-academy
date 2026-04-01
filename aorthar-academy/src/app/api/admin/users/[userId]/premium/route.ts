@@ -6,7 +6,7 @@ import { writeAuditLog } from '@/lib/admin/audit';
 // POST /api/admin/users/[userId]/premium — body: { action: 'grant' | 'revoke' }
 export async function POST(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
   try {
-    const { userId: performedBy } = await requireAdminApi();
+    const { userId: performedBy } = await requireAdminApi('admin_management');
     const supabase = createAdminClient();
     const { userId } = await params;
     const { action } = await req.json() as { action?: 'grant' | 'revoke' };

@@ -23,10 +23,11 @@ async function findUserIdByEmail(admin: ReturnType<typeof createAdminClient>, em
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId: performedBy } = await requireAdminApi();
+    const { userId: performedBy } = await requireAdminApi('admin_management');
     const admin = createAdminClient();
-    const body = await req.json() as { email?: string };
+    const body = await req.json() as { email?: string; admin_level?: 'super_admin' | 'content_admin' | 'finance_admin' };
     const email = String(body.email ?? '').trim().toLowerCase();
+    const adminLevel = body.admin_level ?? 'content_admin';
 
     if (!email) {
       return NextResponse.json({ error: 'email is required' }, { status: 400 });
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
 
     const { error } = await admin
       .from('profiles')
-      .update({ role: 'admin' })
+      .update({ role: 'admin', admin_level: adminLevel })
       .eq('user_id', targetUserId);
 
     if (error) {
@@ -58,8 +59,8 @@ export async function POST(req: NextRequest) {
       targetUser: targetUserId,
       entityType: 'profile',
       oldValue: before,
-      newValue: { role: 'admin' },
-      metadata: { email },
+      newValue: { role: 'admin', admin_level: adminLevel },
+      metadata: { email, admin_level: adminLevel },
       req,
     }, admin);
 

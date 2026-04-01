@@ -8,7 +8,7 @@ export async function PATCH(
   { params }: { params: Promise<{ planId: string }> },
 ) {
   try {
-    const { userId: performedBy } = await requireAdminApi();
+    const { userId: performedBy } = await requireAdminApi('finance');
     const { planId } = await params;
     const body = await req.json();
 

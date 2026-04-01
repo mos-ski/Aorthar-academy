@@ -5,6 +5,7 @@
 // ── RBAC ─────────────────────────────────────
 
 export type Role = 'student' | 'contributor' | 'admin';
+export type AdminLevel = 'super_admin' | 'content_admin' | 'finance_admin';
 
 // ── USER & PROFILE ────────────────────────────
 
@@ -18,6 +19,7 @@ export interface Profile {
   department: string | null;
   onboarding_completed_at: string | null;
   role: Role;
+  admin_level?: AdminLevel | null;
   bio: string | null;
   created_at: string;
   updated_at: string;

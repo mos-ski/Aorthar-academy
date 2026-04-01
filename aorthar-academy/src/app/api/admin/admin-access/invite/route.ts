@@ -5,12 +5,13 @@ import { writeAuditLog } from '@/lib/admin/audit';
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId: performedBy } = await requireAdminApi();
+    const { userId: performedBy } = await requireAdminApi('admin_management');
     const admin = createAdminClient();
-    const body = await req.json() as { email?: string; full_name?: string };
+    const body = await req.json() as { email?: string; full_name?: string; admin_level?: 'super_admin' | 'content_admin' | 'finance_admin' };
 
     const email = String(body.email ?? '').trim().toLowerCase();
     const fullName = String(body.full_name ?? '').trim();
+    const adminLevel = body.admin_level ?? 'content_admin';
 
     if (!email || !fullName) {
       return NextResponse.json({ error: 'email and full_name are required' }, { status: 400 });
@@ -42,6 +43,7 @@ export async function POST(req: NextRequest) {
         user_id: invitedUserId,
         full_name: fullName,
         role: 'admin',
+        admin_level: adminLevel,
       }, { onConflict: 'user_id' });
 
     if (profileError) {
@@ -53,7 +55,7 @@ export async function POST(req: NextRequest) {
       performedBy,
       targetUser: invitedUserId,
       entityType: 'profile',
-      metadata: { email },
+      metadata: { email, admin_level: adminLevel },
       req,
     }, admin);
 

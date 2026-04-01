@@ -8,7 +8,7 @@ export async function POST(
   { params }: { params: Promise<{ userId: string }> },
 ) {
   try {
-    const { userId: performedBy } = await requireAdminApi();
+    const { userId: performedBy } = await requireAdminApi('admin_management');
     const { userId } = await params;
     const { action, courseId } = await req.json() as {
       action?: 'grant' | 'revoke';

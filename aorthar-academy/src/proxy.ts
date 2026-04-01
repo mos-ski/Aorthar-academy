@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { getPermissionForPath, hasAdminPermission, normalizeAdminLevel } from '@/lib/admin/permissions';
 
 // ─────────────────────────────────────────────
 // ROUTE CATEGORIES
@@ -186,6 +187,7 @@ export async function proxy(request: NextRequest) {
 
   let profile: {
     role: 'student' | 'contributor' | 'admin';
+    admin_level: 'super_admin' | 'content_admin' | 'finance_admin' | null;
     department: string | null;
     onboarding_completed_at: string | null;
     is_suspended: boolean;
@@ -194,7 +196,7 @@ export async function proxy(request: NextRequest) {
   if (user) {
     const { data } = await supabase
       .from('profiles')
-      .select('role, department, onboarding_completed_at, is_suspended')
+      .select('role, admin_level, department, onboarding_completed_at, is_suspended')
       .eq('user_id', user.id)
       .maybeSingle();
     profile = data;
@@ -233,9 +235,19 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // Admin route protection — disabled in development, enforced in staging + production
-  if (process.env.NEXT_PUBLIC_APP_ENV !== 'development' && user && isAdminRoute(pathname)) {
+  // Admin route protection
+  if (user && isAdminRoute(pathname)) {
     if (profile?.role !== 'admin') {
+      return NextResponse.redirect(new URL('/unauthorized', request.url));
+    }
+
+    const requiredPermission = getPermissionForPath(pathname);
+    const adminLevel = normalizeAdminLevel(profile?.admin_level ?? null);
+    if (requiredPermission && !hasAdminPermission(adminLevel, requiredPermission)) {
+      const isApiRoute = pathname.startsWith('/api/');
+      if (isApiRoute) {
+        return NextResponse.json({ error: 'Permission denied for this action' }, { status: 403 });
+      }
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
   }
