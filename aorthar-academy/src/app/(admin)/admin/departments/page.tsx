@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { createClient } from '@/lib/supabase/server';
 import { AORTHAR_DEPARTMENTS } from '@/lib/academics/departments';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

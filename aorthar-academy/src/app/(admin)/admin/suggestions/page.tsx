@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { createClient } from '@/lib/supabase/server';
 import SuggestionsView from './_components/SuggestionsView';
 import { DEMO_SUGGESTIONS } from '@/lib/demo/adminSnapshot';

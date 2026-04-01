@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { createClient } from '@/lib/supabase/server';
 import CapstoneView from './_components/CapstoneView';
 import { DEMO_CAPSTONES } from '@/lib/demo/adminSnapshot';

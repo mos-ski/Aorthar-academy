@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { createClient } from '@/lib/supabase/server';
 import OpsHubClient, { type ExternalCourseRow, type StudentRow, type UniversityCourseRow } from './ops-hub-client';
 

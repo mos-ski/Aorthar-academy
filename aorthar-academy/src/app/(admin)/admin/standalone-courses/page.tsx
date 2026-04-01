@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { createClient } from '@/lib/supabase/server';
 import { requireRole } from '@/lib/auth';
 import StandaloneCoursesAdmin from './StandaloneCoursesAdmin';
