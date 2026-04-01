@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   BookOpen,
@@ -27,7 +27,12 @@ type NavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
-  match?: (pathname: string, tab: string | null, courseTab: string | null) => boolean;
+  match?: (
+    pathname: string,
+    tab: string | null,
+    courseTab: string | null,
+    moduleParam: string | null,
+  ) => boolean;
 };
 
 const studentNav = [
@@ -41,10 +46,37 @@ const studentNav = [
 ];
 
 const adminUniversityNav: NavItem[] = [
-  { href: '/university/courses', label: 'Courses', icon: BookOpen },
-  { href: '/university/student', label: 'Students', icon: Users },
-  { href: '/university/pricing', label: 'Pricing', icon: CreditCard },
-  { href: '/university/transaction', label: 'Transactions', icon: CreditCard },
+  {
+    href: '/admin/ops?tab=courses&courseTab=university&module=university',
+    label: 'Courses',
+    icon: BookOpen,
+    match: (pathname, tab, courseTab, moduleParam) =>
+      pathname === '/admin/ops'
+      && tab === 'courses'
+      && courseTab === 'university'
+      && moduleParam === 'university',
+  },
+  {
+    href: '/admin/ops?tab=students&module=university',
+    label: 'Students',
+    icon: Users,
+    match: (pathname, tab, _courseTab, moduleParam) =>
+      pathname === '/admin/ops' && tab === 'students' && moduleParam === 'university',
+  },
+  {
+    href: '/admin/ops?tab=transactions&module=university',
+    label: 'Pricing',
+    icon: CreditCard,
+    match: (pathname, tab, _courseTab, moduleParam) =>
+      pathname === '/admin/ops' && tab === 'transactions' && moduleParam === 'university',
+  },
+  {
+    href: '/admin/ops?tab=transactions&module=university',
+    label: 'Transactions',
+    icon: CreditCard,
+    match: (pathname, tab, _courseTab, moduleParam) =>
+      pathname === '/admin/ops' && tab === 'transactions' && moduleParam === 'university',
+  },
   { href: '/admin/questions', label: 'Quiz & Questions', icon: FileQuestion },
   { href: '/admin/curriculum', label: 'Curriculum', icon: Layers },
   { href: '/admin/departments', label: 'Departments', icon: Building2 },
@@ -58,20 +90,25 @@ const adminExternalNav: NavItem[] = [
     href: '/admin/ops?tab=students',
     label: 'Students',
     icon: Users,
-    match: (pathname, tab) => pathname === '/admin/ops' && tab === 'students',
+    match: (pathname, tab, _courseTab, moduleParam) =>
+      pathname === '/admin/ops' && tab === 'students' && moduleParam !== 'university',
   },
   {
     href: '/admin/ops?tab=transactions',
     label: 'Transactions',
     icon: CreditCard,
-    match: (pathname, tab) => pathname === '/admin/ops' && tab === 'transactions',
+    match: (pathname, tab, _courseTab, moduleParam) =>
+      pathname === '/admin/ops' && tab === 'transactions' && moduleParam !== 'university',
   },
   {
     href: '/admin/ops?tab=courses&courseTab=external',
     label: 'Course Manager',
     icon: BriefcaseBusiness,
-    match: (pathname, tab, courseTab) =>
-      pathname === '/admin/ops' && tab === 'courses' && courseTab === 'external',
+    match: (pathname, tab, courseTab, moduleParam) =>
+      pathname === '/admin/ops'
+      && tab === 'courses'
+      && courseTab === 'external'
+      && moduleParam !== 'university',
   },
 ];
 
@@ -87,7 +124,12 @@ const adminPrimaryModules: Array<{
   href: string;
 }> = [
   { key: 'overview', label: 'Overview', icon: LayoutDashboard, href: '/admin' },
-  { key: 'university', label: 'University', icon: Building2, href: '/university/courses' },
+  {
+    key: 'university',
+    label: 'University',
+    icon: Building2,
+    href: '/admin/ops?tab=courses&courseTab=university&module=university',
+  },
   { key: 'courses', label: 'Courses', icon: BookOpen, href: '/admin/standalone-courses' },
   { key: 'profile', label: 'Profile Settings', icon: CircleUser, href: '/settings' },
 ];
@@ -102,13 +144,17 @@ const mobileStudentNav = [
 
 const mobileAdminNav = [
   { href: '/admin', label: 'Overview', icon: LayoutDashboard },
-  { href: '/university/courses', label: 'University', icon: Building2 },
+  { href: '/admin/ops?tab=courses&courseTab=university&module=university', label: 'University', icon: Building2 },
   { href: '/admin/standalone-courses', label: 'Courses', icon: BookOpen },
   { href: '/settings', label: 'Profile', icon: CircleUser },
 ];
 
 export default function Sidebar({ role }: { role: Role }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tab = searchParams.get('tab');
+  const courseTab = searchParams.get('courseTab');
+  const moduleParam = searchParams.get('module');
   const mobileNav = role === 'admin' ? mobileAdminNav : mobileStudentNav;
   const isAdmin = role === 'admin';
   const nav = studentNav;
@@ -118,13 +164,27 @@ export default function Sidebar({ role }: { role: Role }) {
   }
 
   function isNavItemActive(item: NavItem): boolean {
-    if (item.match) return item.match(pathname, null, null);
+    if (item.match) return item.match(pathname, tab, courseTab, moduleParam);
     const [pathOnly] = item.href.split('?');
     return isActivePath(pathOnly);
   }
 
-  const inUniversityPath = pathname.startsWith('/university/') || adminUniversityNav.some((item) => isNavItemActive(item));
-  const inCoursesPath = pathname.startsWith('/admin/standalone-courses');
+  const inUniversityPath =
+    moduleParam === 'university'
+    || pathname.startsWith('/admin/questions')
+    || pathname.startsWith('/admin/curriculum')
+    || pathname.startsWith('/admin/departments')
+    || pathname.startsWith('/admin/suggestions')
+    || pathname.startsWith('/admin/capstone')
+    || pathname.startsWith('/university/')
+    || adminUniversityNav.some((item) => isNavItemActive(item))
+    || (pathname === '/admin/ops' && tab === 'courses' && courseTab !== 'external');
+  const inCoursesPath =
+    moduleParam === 'courses'
+    || pathname.startsWith('/admin/standalone-courses')
+    || (pathname === '/admin/ops'
+      && (tab === 'transactions' || tab === 'students' || courseTab === 'external')
+      && moduleParam !== 'university');
   const inProfilePath = pathname.startsWith('/settings');
 
   const activeModule: 'overview' | 'university' | 'courses' | 'profile' = inProfilePath
@@ -202,8 +262,8 @@ export default function Sidebar({ role }: { role: Role }) {
                 <h3 className="text-2xl font-semibold text-foreground tracking-tight">{secondaryTitle}</h3>
               </div>
               <nav className="p-4 space-y-1 overflow-y-auto">
-                {secondaryNav.map(({ href, label, icon: Icon }) => {
-                  const active = isNavItemActive({ href, label, icon: Icon });
+                {secondaryNav.map(({ href, label, icon: Icon, match }) => {
+                  const active = isNavItemActive({ href, label, icon: Icon, match });
                   return (
                     <Link
                       key={href}

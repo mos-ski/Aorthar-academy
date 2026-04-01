@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
 export default function UniversityStudentAliasPage() {
-  redirect('/admin/users');
+  redirect('/admin/ops?tab=students&module=university');
 }

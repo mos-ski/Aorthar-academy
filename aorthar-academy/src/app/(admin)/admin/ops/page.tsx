@@ -101,6 +101,7 @@ export default async function AdminOpsPage({
 
   return (
     <OpsHubClient
+      key={`${initialTab}:${initialCourseTab}`}
       initialStudents={students}
       universityCourses={universityCourses}
       externalCourses={externalCourses}

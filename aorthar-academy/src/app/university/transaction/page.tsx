@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
 export default function UniversityTransactionAliasPage() {
-  redirect('/admin/payments');
+  redirect('/admin/ops?tab=transactions&module=university');
 }
