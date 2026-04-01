@@ -1,7 +1,7 @@
 export const maxDuration = 30;
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { sendEmail } from '@/lib/email';
 import { forgotPasswordHtml } from '@/lib/email/templates/forgot-password';
 
@@ -11,52 +11,39 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     email = body.email ?? '';
   } catch {
-    return NextResponse.json({ ok: false, error: 'Invalid request' }, { status: 400 });
+    return NextResponse.json({ ok: true });
   }
 
   if (!email) {
-    return NextResponse.json({ ok: false, error: 'Email required' }, { status: 400 });
+    return NextResponse.json({ ok: true });
   }
 
-  let step = 'start';
   try {
     const origin = new URL(request.url).origin;
-    const adminSupabase = createAdminClient();
+    const supabase = await createClient();
 
-    step = 'generateLink';
-    const { data, error } = await adminSupabase.auth.admin.generateLink({
-      type: 'recovery',
-      email,
-      options: { redirectTo: `${origin}/reset-password` },
+    // Generate reset link — works with anon key, no service role needed
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${origin}/reset-password`,
     });
 
-    console.log('[forgot-password] generateLink result:', { error, hasActionLink: !!data?.properties?.action_link });
-    console.log('[forgot-password] user:', data?.user?.id);
-
-    if (error || !data?.properties?.action_link) {
-      console.log('[forgot-password] skipping email send - no link generated');
-      return NextResponse.json({ ok: true, debug: { error: error?.message, step } });
+    if (error) {
+      console.error('[forgot-password] resetPasswordForEmail error:', error.message);
+      // Still return ok — don't reveal if email exists
+      return NextResponse.json({ ok: true });
     }
 
-    const { data: profile } = await adminSupabase
-      .from('profiles')
-      .select('full_name')
-      .eq('user_id', data.user.id)
-      .maybeSingle();
-    const firstName = profile?.full_name?.split(' ')[0] ?? 'there';
+    // Try to send branded email via Resend
+    // resetPasswordForEmail also sends Supabase's default email — we override it
+    // by using the OTP token approach isn't available here, so we send a separate
+    // branded notification. The reset link itself comes from Supabase.
+    // For a fully custom email, use admin.generateLink — but that requires service role.
+    // For now: Supabase sends the functional reset link, we skip the branded overlay.
 
-    step = 'sendEmail';
-    await sendEmail({
-      to: email,
-      subject: 'Reset your Aorthar Academy password',
-      html: forgotPasswordHtml({ firstName, resetUrl: data.properties.action_link }),
-    });
-
-    console.log('[forgot-password] email sent successfully');
+    console.log('[forgot-password] reset email sent via Supabase for:', email);
   } catch (err) {
-    console.error('[forgot-password] error at step:', step, err);
-    return NextResponse.json({ ok: false, error: 'Internal error', step }, { status: 500 });
+    console.error('[forgot-password] error:', err);
   }
 
-  return NextResponse.json({ ok: true, step: 'done' });
+  return NextResponse.json({ ok: true });
 }
