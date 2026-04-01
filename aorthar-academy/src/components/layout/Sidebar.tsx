@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import {
   BookOpen,
   BriefcaseBusiness,
+  ChevronDown,
   LayoutDashboard,
   TrendingUp,
   Award,
@@ -34,15 +35,21 @@ const studentNav = [
 const adminNav = [
   { href: '/admin', label: 'Overview', icon: Shield },
   { href: '/admin/ops', label: 'Ops Hub', icon: BriefcaseBusiness },
+];
+
+const adminUniversityNav = [
   { href: '/admin/curriculum', label: 'Curriculum', icon: Layers },
   { href: '/admin/courses', label: 'Courses', icon: BookOpen },
-  { href: '/admin/questions', label: 'Questions', icon: FileQuestion },
-  { href: '/admin/users', label: 'Users', icon: Users },
+  { href: '/admin/questions', label: 'Quiz & Questions', icon: FileQuestion },
+  { href: '/admin/users', label: 'Students', icon: Users },
   { href: '/admin/departments', label: 'Departments', icon: Building2 },
   { href: '/admin/suggestions', label: 'Suggestions', icon: Lightbulb },
   { href: '/admin/capstone', label: 'Capstone', icon: CheckSquare },
-  { href: '/admin/payments', label: 'Payments', icon: CreditCard },
-  { href: '/admin/standalone-courses', label: 'Ext. Courses', icon: BookOpen },
+  { href: '/admin/payments', label: 'Pricing & Transactions', icon: CreditCard },
+];
+
+const adminExternalNav = [
+  { href: '/admin/standalone-courses', label: 'External Course', icon: BookOpen },
 ];
 
 const mobileStudentNav = [
@@ -56,16 +63,19 @@ const mobileStudentNav = [
 const mobileAdminNav = [
   { href: '/admin', label: 'Overview', icon: Shield },
   { href: '/admin/ops', label: 'Ops', icon: BriefcaseBusiness },
-  { href: '/admin/courses', label: 'Courses', icon: BookOpen },
-  { href: '/admin/questions', label: 'Questions', icon: FileQuestion },
-  { href: '/admin/users', label: 'Users', icon: Users },
-  { href: '/admin/curriculum', label: 'Curriculum', icon: Layers },
+  { href: '/admin/courses', label: 'University', icon: Building2 },
+  { href: '/admin/standalone-courses', label: 'External', icon: BookOpen },
 ];
 
 export default function Sidebar({ role }: { role: Role }) {
   const pathname = usePathname();
-  const nav = role === 'admin' ? adminNav : studentNav;
   const mobileNav = role === 'admin' ? mobileAdminNav : mobileStudentNav;
+  const isAdmin = role === 'admin';
+  const nav = isAdmin ? adminNav : studentNav;
+
+  function isActivePath(href: string): boolean {
+    return pathname === href || pathname.startsWith(href + '/');
+  }
 
   return (
     <>
@@ -77,26 +87,111 @@ export default function Sidebar({ role }: { role: Role }) {
           </Link>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
-          {nav.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href || pathname.startsWith(href + '/');
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                  active
-                    ? 'bg-foreground text-background'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                <span>{label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+        {isAdmin ? (
+          <nav className="flex-1 p-4 space-y-3 overflow-y-auto">
+            <div className="space-y-1">
+              {adminNav.map(({ href, label, icon: Icon }) => {
+                const active = isActivePath(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={cn(
+                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      active
+                        ? 'bg-foreground text-background'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            <details
+              className="group rounded-lg border"
+              open={adminUniversityNav.some((item) => isActivePath(item.href))}
+            >
+              <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted/50">
+                <span>University Module</span>
+                <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="space-y-1 p-2 pt-1">
+                {adminUniversityNav.map(({ href, label, icon: Icon }) => {
+                  const active = isActivePath(href);
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      className={cn(
+                        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                        active
+                          ? 'bg-foreground text-background'
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </details>
+
+            <details
+              className="group rounded-lg border"
+              open={adminExternalNav.some((item) => isActivePath(item.href))}
+            >
+              <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted/50">
+                <span>External Course Module</span>
+                <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="space-y-1 p-2 pt-1">
+                {adminExternalNav.map(({ href, label, icon: Icon }) => {
+                  const active = isActivePath(href);
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      className={cn(
+                        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                        active
+                          ? 'bg-foreground text-background'
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </details>
+          </nav>
+        ) : (
+          <nav className="flex-1 p-4 space-y-1">
+            {nav.map(({ href, label, icon: Icon }) => {
+              const active = isActivePath(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                    active
+                      ? 'bg-foreground text-background'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        )}
       </aside>
 
       {/* Mobile bottom navigation */}
