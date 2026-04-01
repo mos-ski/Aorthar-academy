@@ -85,7 +85,7 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#0f1011', color: '#fff' }}>
+    <div className="min-h-screen md:h-[100dvh] md:overflow-hidden flex flex-col" style={{ backgroundColor: '#0f1011', color: '#fff' }}>
 
       {/* Top nav */}
       <header
@@ -128,20 +128,20 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
       </header>
 
       {/* Body */}
-      <div className="flex flex-1 gap-6 px-6 sm:px-10 py-7 max-w-[1280px] mx-auto w-full">
+      <div className="flex flex-1 md:min-h-0 md:overflow-hidden gap-6 px-6 sm:px-10 py-7 max-w-[1280px] mx-auto w-full">
 
         {/* Left: Course Menu */}
-        <div className="w-[320px] shrink-0 flex flex-col gap-3 hidden md:flex">
+        <div className="w-[320px] shrink-0 flex-col gap-3 hidden md:flex md:min-h-0">
           <h2 className="text-sm font-semibold text-white/50 uppercase tracking-widest">Course Menu</h2>
 
           <div
-            className="rounded-xl border overflow-hidden"
+            className="rounded-xl border overflow-hidden flex-1 min-h-0"
             style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: '#18191a' }}
           >
             {lessons.length === 0 ? (
               <div className="px-5 py-8 text-center text-sm text-white/30">Lessons coming soon</div>
             ) : (
-              <ul>
+              <ul className="h-full overflow-y-auto">
                 {lessons.map((lesson, i) => {
                   const isActive = activeLesson?.id === lesson.id;
                   const isDone = completedIds.has(lesson.id);
@@ -241,7 +241,7 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
         </div>
 
         {/* Right: Video + title */}
-        <div className="flex-1 flex flex-col gap-4 min-w-0">
+        <div className="flex-1 flex flex-col gap-4 min-w-0 md:h-full md:overflow-hidden md:sticky md:top-0 self-start">
           <h1 className="text-base font-semibold text-white/90">
             {activeLesson?.title ?? course.title}
           </h1>
