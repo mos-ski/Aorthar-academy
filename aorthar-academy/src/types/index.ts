@@ -13,6 +13,8 @@ export interface Profile {
   user_id: string;
   full_name: string;
   avatar_url: string | null;
+  is_suspended: boolean;
+  suspended_at: string | null;
   department: string | null;
   onboarding_completed_at: string | null;
   role: Role;

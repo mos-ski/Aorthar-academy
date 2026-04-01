@@ -1,13 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { initiatePayment, generateReference } from '@/lib/paystack';
+import { requireApiAuthNotSuspended } from '@/lib/auth';
 
 // POST /api/payments/checkout — Create Paystack checkout session
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  let userId: string;
+  try {
+    const auth = await requireApiAuthNotSuspended();
+    userId = auth.userId;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unauthorized';
+    if (message === 'UNAUTHORIZED') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (message === 'SUSPENDED') {
+      return NextResponse.json({ error: 'Account suspended' }, { status: 403 });
+    }
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user || user.id !== userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { plan_id } = await req.json();
 

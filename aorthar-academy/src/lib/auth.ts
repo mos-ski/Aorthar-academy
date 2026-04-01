@@ -36,7 +36,40 @@ export async function requireAuth() {
     .eq('user_id', user.id)
     .single();
 
+  if ((profile as { is_suspended?: boolean } | null)?.is_suspended) {
+    redirect('/suspended');
+  }
+
   return { user, profile };
+}
+
+export async function isUserSuspended(userId: string): Promise<boolean> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('profiles')
+    .select('is_suspended')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  return Boolean(data?.is_suspended);
+}
+
+export async function requireApiAuthNotSuspended(): Promise<{ userId: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error('UNAUTHORIZED');
+  }
+
+  const suspended = await isUserSuspended(user.id);
+  if (suspended) {
+    throw new Error('SUSPENDED');
+  }
+
+  return { userId: user.id };
 }
 
 /**

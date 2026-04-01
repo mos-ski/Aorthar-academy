@@ -20,6 +20,7 @@ const PUBLIC_ROUTES = [
   '/terms',
   '/university',
   '/unauthorized',
+  '/suspended',
   '/verify',
   // courses-app public routes
   '/courses-app',
@@ -28,6 +29,7 @@ const AUTH_ROUTES = ['/login', '/register', '/verify'];
 const PREMIUM_ROUTES = ['/courses/400', '/transcript/export', '/mentorship', '/capstone'];
 const ADMIN_ROUTES = ['/admin'];
 const ONBOARDING_ROUTE = '/onboarding';
+const SUSPENDED_ROUTE = '/suspended';
 
 function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'));
@@ -47,6 +49,10 @@ function isAdminRoute(pathname: string): boolean {
 
 function isOnboardingRoute(pathname: string): boolean {
   return pathname === ONBOARDING_ROUTE || pathname.startsWith(`${ONBOARDING_ROUTE}/`);
+}
+
+function isSuspendedRoute(pathname: string): boolean {
+  return pathname === SUSPENDED_ROUTE || pathname.startsWith(`${SUSPENDED_ROUTE}/`);
 }
 
 // ─────────────────────────────────────────────
@@ -175,15 +181,33 @@ export async function proxy(request: NextRequest) {
     role: 'student' | 'contributor' | 'admin';
     department: string | null;
     onboarding_completed_at: string | null;
+    is_suspended: boolean;
   } | null = null;
 
   if (user) {
     const { data } = await supabase
       .from('profiles')
-      .select('role, department, onboarding_completed_at')
+      .select('role, department, onboarding_completed_at, is_suspended')
       .eq('user_id', user.id)
       .maybeSingle();
     profile = data;
+  }
+
+  // Suspended account guard
+  if (user && profile?.is_suspended) {
+    const isApiRoute = pathname.startsWith('/api/');
+
+    if (isApiRoute) {
+      return NextResponse.json({ error: 'Account suspended' }, { status: 403 });
+    }
+
+    if (!isSuspendedRoute(pathname) && !isAuthRoute(pathname)) {
+      return NextResponse.redirect(new URL(SUSPENDED_ROUTE, request.url));
+    }
+  }
+
+  if (user && !profile?.is_suspended && isSuspendedRoute(pathname)) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   // Student onboarding gate — skip entirely on courses subdomain

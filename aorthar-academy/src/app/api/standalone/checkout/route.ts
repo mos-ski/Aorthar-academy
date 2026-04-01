@@ -1,12 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { initiatePayment, generateReference } from '@/lib/paystack';
+import { requireApiAuthNotSuspended } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
+  let userId: string;
+  try {
+    const auth = await requireApiAuthNotSuspended();
+    userId = auth.userId;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Not authenticated';
+    if (message === 'UNAUTHORIZED') {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+    if (message === 'SUSPENDED') {
+      return NextResponse.json({ error: 'Account suspended' }, { status: 403 });
+    }
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!user || user.id !== userId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
 

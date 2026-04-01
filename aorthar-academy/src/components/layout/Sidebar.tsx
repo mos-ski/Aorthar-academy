@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   BookOpen,
+  BriefcaseBusiness,
   LayoutDashboard,
   TrendingUp,
   Award,
@@ -32,6 +33,7 @@ const studentNav = [
 
 const adminNav = [
   { href: '/admin', label: 'Overview', icon: Shield },
+  { href: '/admin/ops', label: 'Ops Hub', icon: BriefcaseBusiness },
   { href: '/admin/curriculum', label: 'Curriculum', icon: Layers },
   { href: '/admin/courses', label: 'Courses', icon: BookOpen },
   { href: '/admin/questions', label: 'Questions', icon: FileQuestion },
@@ -53,6 +55,7 @@ const mobileStudentNav = [
 
 const mobileAdminNav = [
   { href: '/admin', label: 'Overview', icon: Shield },
+  { href: '/admin/ops', label: 'Ops', icon: BriefcaseBusiness },
   { href: '/admin/courses', label: 'Courses', icon: BookOpen },
   { href: '/admin/questions', label: 'Questions', icon: FileQuestion },
   { href: '/admin/users', label: 'Users', icon: Users },
