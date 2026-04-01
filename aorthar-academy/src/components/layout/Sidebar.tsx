@@ -1,24 +1,25 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   BookOpen,
   BriefcaseBusiness,
-  Building2,
-  CheckSquare,
+  ChevronRight,
+  CircleUser,
   CreditCard,
   FileQuestion,
-  LayoutDashboard,
   Layers,
   Lightbulb,
+  CheckSquare,
+  LayoutDashboard,
   LucideIcon,
-  Shield,
+  Settings,
   Users,
   TrendingUp,
   Award,
-  Settings,
+  Building2,
 } from 'lucide-react';
 import type { Role } from '@/types';
 
@@ -74,24 +75,20 @@ const adminExternalNav: NavItem[] = [
 ];
 
 const adminOverviewNav: NavItem[] = [
-  { href: '/admin', label: 'Overview', icon: Shield },
-  {
-    href: '/admin/ops',
-    label: 'Ops Hub',
-    icon: BriefcaseBusiness,
-    match: (pathname) => pathname === '/admin/ops',
-  },
+  { href: '/admin', label: 'Dashboard Metrics', icon: LayoutDashboard },
+  { href: '/admin/ops', label: 'Ops Hub (Quick CTAs)', icon: BriefcaseBusiness },
 ];
 
 const adminPrimaryModules: Array<{
-  key: 'overview' | 'university' | 'external';
+  key: 'overview' | 'university' | 'courses' | 'profile';
   label: string;
   icon: LucideIcon;
   href: string;
 }> = [
-  { key: 'overview', label: 'Overview', icon: Shield, href: '/admin' },
+  { key: 'overview', label: 'Overview', icon: LayoutDashboard, href: '/admin' },
   { key: 'university', label: 'University', icon: Building2, href: '/admin/courses' },
-  { key: 'external', label: 'External Course', icon: BookOpen, href: '/admin/standalone-courses' },
+  { key: 'courses', label: 'Courses', icon: BookOpen, href: '/admin/standalone-courses' },
+  { key: 'profile', label: 'Profile Settings', icon: CircleUser, href: '/settings' },
 ];
 
 const mobileStudentNav = [
@@ -103,17 +100,14 @@ const mobileStudentNav = [
 ];
 
 const mobileAdminNav = [
-  { href: '/admin', label: 'Overview', icon: Shield },
-  { href: '/admin/ops', label: 'Ops', icon: BriefcaseBusiness },
+  { href: '/admin', label: 'Overview', icon: LayoutDashboard },
   { href: '/admin/courses', label: 'University', icon: Building2 },
-  { href: '/admin/standalone-courses', label: 'External', icon: BookOpen },
+  { href: '/admin/standalone-courses', label: 'Courses', icon: BookOpen },
+  { href: '/settings', label: 'Profile', icon: CircleUser },
 ];
 
 export default function Sidebar({ role }: { role: Role }) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const tab = searchParams.get('tab');
-  const courseTab = searchParams.get('courseTab');
   const mobileNav = role === 'admin' ? mobileAdminNav : mobileStudentNav;
   const isAdmin = role === 'admin';
   const nav = studentNav;
@@ -123,16 +117,19 @@ export default function Sidebar({ role }: { role: Role }) {
   }
 
   function isNavItemActive(item: NavItem): boolean {
-    if (item.match) return item.match(pathname, tab, courseTab);
+    if (item.match) return item.match(pathname, null, null);
     const [pathOnly] = item.href.split('?');
     return isActivePath(pathOnly);
   }
 
   const inUniversityPath = adminUniversityNav.some((item) => isNavItemActive(item));
-  const inExternalPath = pathname.startsWith('/admin/standalone-courses') || courseTab === 'external';
+  const inCoursesPath = pathname.startsWith('/admin/standalone-courses');
+  const inProfilePath = pathname.startsWith('/settings');
 
-  const activeModule: 'overview' | 'university' | 'external' = inExternalPath
-    ? 'external'
+  const activeModule: 'overview' | 'university' | 'courses' | 'profile' = inProfilePath
+    ? 'profile'
+    : inCoursesPath
+    ? 'courses'
     : inUniversityPath
     ? 'university'
     : 'overview';
@@ -140,23 +137,27 @@ export default function Sidebar({ role }: { role: Role }) {
   const secondaryNav: NavItem[] =
     activeModule === 'university'
       ? adminUniversityNav
-      : activeModule === 'external'
+      : activeModule === 'courses'
       ? adminExternalNav
+      : activeModule === 'profile'
+      ? [{ href: '/settings', label: 'Account & Profile', icon: Settings }]
       : adminOverviewNav;
 
   const secondaryTitle =
     activeModule === 'university'
       ? 'University'
-      : activeModule === 'external'
-      ? 'External Course'
+      : activeModule === 'courses'
+      ? 'Courses'
+      : activeModule === 'profile'
+      ? 'Profile Settings'
       : 'Admin';
 
   return (
     <>
       {/* Desktop sidebar */}
       {isAdmin ? (
-        <aside className="hidden w-[420px] shrink-0 border-r bg-background md:flex">
-          <div className="w-64 border-r bg-[#111214] text-white flex flex-col">
+        <aside className="hidden w-[400px] shrink-0 border-r bg-background md:flex">
+          <div className="w-60 border-r bg-[#111214] text-white flex flex-col">
             <div className="p-6 border-b border-white/10">
               <Link href="/admin" className="flex items-center gap-2">
                 <img src="/Aorthar Logo long complete.svg" alt="Aorthar" width={118} height={51} className="brightness-0 invert" />
@@ -171,14 +172,17 @@ export default function Sidebar({ role }: { role: Role }) {
                     key={href}
                     href={href}
                     className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      'flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                       active
-                        ? 'bg-white/12 text-white'
-                        : 'text-white/70 hover:bg-white/8 hover:text-white',
+                        ? 'bg-white text-black shadow-sm'
+                        : 'text-white/70 hover:bg-white/10 hover:text-white',
                     )}
                   >
-                    <Icon className="h-4 w-4" />
-                    <span>{label}</span>
+                    <span className="flex items-center gap-3">
+                      <Icon className="h-4 w-4" />
+                      <span>{label}</span>
+                    </span>
+                    <ChevronRight className={cn('h-4 w-4', active ? 'opacity-100' : 'opacity-30')} />
                   </Link>
                 );
               })}
@@ -187,7 +191,7 @@ export default function Sidebar({ role }: { role: Role }) {
 
           <div className="flex-1 bg-muted/30 flex flex-col">
             <div className="h-[73px] px-6 flex items-center border-b">
-              <h3 className="text-3xl font-semibold text-foreground tracking-tight">{secondaryTitle}</h3>
+              <h3 className="text-2xl font-semibold text-foreground tracking-tight">{secondaryTitle}</h3>
             </div>
             <nav className="p-4 space-y-1 overflow-y-auto">
               {secondaryNav.map(({ href, label, icon: Icon }) => {
@@ -197,10 +201,10 @@ export default function Sidebar({ role }: { role: Role }) {
                     key={href}
                     href={href}
                     className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors border',
                       active
-                        ? 'bg-background text-foreground shadow-sm border'
-                        : 'text-foreground/75 hover:bg-background/70 hover:text-foreground',
+                        ? 'bg-background text-foreground shadow-sm border-border'
+                        : 'text-foreground/75 border-transparent hover:bg-background/70 hover:text-foreground',
                     )}
                   >
                     <Icon className="h-4 w-4" />
