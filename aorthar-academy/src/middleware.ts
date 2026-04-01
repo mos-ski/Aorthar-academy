@@ -63,6 +63,15 @@ function getSubdomainRewrite(request: NextRequest): NextResponse | null {
     hostname === 'courses.aorthar.com' ||
     hostname === 'courses.aorthar.com:3000'
   ) {
+    // Auth routes and API routes pass through as-is (they exist at root level)
+    const isPassthrough =
+      pathname.startsWith('/login') ||
+      pathname.startsWith('/register') ||
+      pathname.startsWith('/verify') ||
+      pathname.startsWith('/api/') ||
+      pathname.startsWith('/_next/');
+    if (isPassthrough) return null;
+
     const url = request.nextUrl.clone();
     const cleanPath = pathname.startsWith('/courses-app')
       ? pathname.slice('/courses-app'.length) || '/'
