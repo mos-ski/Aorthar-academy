@@ -23,6 +23,8 @@ const PUBLIC_ROUTES = [
   '/unauthorized',
   '/suspended',
   '/verify',
+  '/forgot-password',
+  '/reset-password',
   // courses-app public routes
   '/courses-app',
 ];
@@ -75,6 +77,8 @@ function getSubdomainRewrite(request: NextRequest): NextResponse | null {
       pathname.startsWith('/login') ||
       pathname.startsWith('/register') ||
       pathname.startsWith('/verify') ||
+      pathname.startsWith('/forgot-password') ||
+      pathname.startsWith('/reset-password') ||
       pathname.startsWith('/api/') ||
       pathname.startsWith('/_next/');
     if (isPassthrough) return null;
