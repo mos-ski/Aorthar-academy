@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle, GraduationCap } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -56,6 +57,7 @@ interface PricingCardsProps {
 }
 
 export default function PricingCards({ plans, isLoggedIn, activePlanType }: PricingCardsProps) {
+  const router = useRouter();
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [mentorshipSelected, setMentorshipSelected] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -71,25 +73,10 @@ export default function PricingCards({ plans, isLoggedIn, activePlanType }: Pric
       toast.error('Payment is not yet configured. Please seed the plans table.');
       return;
     }
+    const checkoutKey = `aorthar_pricing_checkout_started_${planId}`;
+    sessionStorage.removeItem(checkoutKey);
     setCheckoutLoading(true);
-    const res = await fetch('/api/payments/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan_id: planId }),
-    });
-    const data = await res.json() as { data?: { authorization_url: string }; error?: string };
-    setCheckoutLoading(false);
-    if (!res.ok) {
-      if (res.status === 401) {
-        window.location.href = '/login?return=/pricing';
-        return;
-      }
-      toast.error(data.error ?? 'Failed to initiate payment. Please try again.');
-      return;
-    }
-    if (data.data?.authorization_url) {
-      window.location.href = data.data.authorization_url;
-    }
+    router.push(`/pricing/checkout/${planId}`);
   }
 
   const standardPrice = standardPlan

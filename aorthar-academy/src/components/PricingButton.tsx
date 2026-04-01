@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 
 interface PricingButtonProps {
   planId?: string;
@@ -61,28 +60,10 @@ export default function PricingButton({ planId, planType, label, state = 'cta', 
 
     if (!planId) return;
 
+    const checkoutKey = `aorthar_pricing_checkout_started_${planId}`;
+    sessionStorage.removeItem(checkoutKey);
     setLoading(true);
-    const res = await fetch('/api/payments/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan_id: planId }),
-    });
-
-    const data = await res.json() as { data?: { authorization_url: string }; error?: string };
-    setLoading(false);
-
-    if (!res.ok) {
-      if (res.status === 401) {
-        router.push('/login?return=/pricing');
-        return;
-      }
-      toast.error(data.error ?? 'Failed to initiate payment. Please try again.');
-      return;
-    }
-
-    if (data.data?.authorization_url) {
-      window.location.href = data.data.authorization_url;
-    }
+    router.push(`/pricing/checkout/${planId}`);
   }
 
   return (
