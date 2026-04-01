@@ -98,10 +98,10 @@ function getSubdomainRewrite(request: NextRequest): NextResponse | null {
 }
 
 // ─────────────────────────────────────────────
-// MIDDLEWARE
+// PROXY (Next.js 16 — replaces middleware)
 // ─────────────────────────────────────────────
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // ── Subdomain routing (runs before auth checks) ──
   const subdomainRewrite = getSubdomainRewrite(request);
   if (subdomainRewrite) {
