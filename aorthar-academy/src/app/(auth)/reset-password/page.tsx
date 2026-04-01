@@ -35,7 +35,10 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    router.push('/dashboard');
+    const dest = window.location.hostname.includes('courses.')
+      ? '/courses-app/learn'
+      : '/dashboard';
+    router.push(dest);
     router.refresh();
   }
 
