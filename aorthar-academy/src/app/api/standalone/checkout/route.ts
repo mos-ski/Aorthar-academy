@@ -6,20 +6,40 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Not logged in — redirect to register with ?next pointing back to the course
+  const referer = request.headers.get('referer') ?? 'https://courses.aorthar.com';
   if (!user) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    // Extract slug from form so we can build the next param
+    let slugForRedirect = '';
+    try {
+      const ct = request.headers.get('content-type') ?? '';
+      if (ct.includes('application/x-www-form-urlencoded') || ct.includes('multipart/form-data')) {
+        const form = await request.formData();
+        slugForRedirect = form.get('slug')?.toString() ?? '';
+      }
+    } catch { /* ignore */ }
+    const registerUrl = new URL('/register', 'https://courses.aorthar.com');
+    if (slugForRedirect) registerUrl.searchParams.set('next', `/courses-app/checkout/${slugForRedirect}`);
+    return NextResponse.redirect(registerUrl.toString(), { status: 303 });
   }
 
-  let slug: string;
+  // Parse slug — accept both form-data and JSON
+  let slug = '';
   try {
-    const body = await request.json();
-    slug = body.slug;
+    const ct = request.headers.get('content-type') ?? '';
+    if (ct.includes('application/json')) {
+      const body = await request.json();
+      slug = body.slug ?? '';
+    } else {
+      const form = await request.formData();
+      slug = form.get('slug')?.toString() ?? '';
+    }
   } catch {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    return NextResponse.redirect(referer, { status: 303 });
   }
 
   if (!slug) {
-    return NextResponse.json({ error: 'Course slug required' }, { status: 400 });
+    return NextResponse.redirect(referer, { status: 303 });
   }
 
   // Load course
@@ -31,10 +51,10 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (!course) {
-    return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+    return NextResponse.redirect(referer, { status: 303 });
   }
 
-  // Check if already purchased
+  // Already purchased — send straight to classroom
   const { data: existing } = await supabase
     .from('standalone_purchases')
     .select('id')
@@ -42,11 +62,14 @@ export async function POST(request: NextRequest) {
     .eq('course_id', course.id)
     .maybeSingle();
 
+  const host = request.headers.get('host') ?? 'courses.aorthar.com';
+  const origin = host.includes('localhost') ? `http://${host}` : `https://courses.aorthar.com`;
+
   if (existing) {
-    return NextResponse.json({ error: 'Already purchased' }, { status: 409 });
+    return NextResponse.redirect(`${origin}/courses-app/learn/${slug}`, { status: 303 });
   }
 
-  // Get user email
+  // Get profile for name
   const { data: profile } = await supabase
     .from('profiles')
     .select('full_name')
@@ -55,9 +78,7 @@ export async function POST(request: NextRequest) {
 
   const email = user.email ?? '';
   const reference = generateReference(user.id);
-  const amountKobo = course.price_ngn * 100; // NGN → kobo
-
-  const origin = request.headers.get('origin') ?? process.env.NEXTAUTH_URL ?? 'https://courses.aorthar.com';
+  const amountKobo = course.price_ngn * 100;
 
   try {
     const paystack = await initiatePayment({
@@ -74,9 +95,10 @@ export async function POST(request: NextRequest) {
       callback_url: `${origin}/courses-app/learn/${slug}`,
     });
 
-    return NextResponse.json({ payment_url: paystack.data.authorization_url });
+    // Redirect browser directly to Paystack payment page
+    return NextResponse.redirect(paystack.data.authorization_url, { status: 303 });
   } catch (err) {
     console.error('[standalone/checkout] Paystack error:', err);
-    return NextResponse.json({ error: 'Payment initiation failed' }, { status: 500 });
+    return NextResponse.redirect(`${origin}/courses-app/${slug}?error=payment_failed`, { status: 303 });
   }
 }
