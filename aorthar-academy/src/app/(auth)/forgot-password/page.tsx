@@ -23,17 +23,27 @@ export default function ForgotPasswordPage() {
   async function onSubmit(values: ForgotPasswordInput) {
     setLoading(true);
     setError(null);
-    const res = await fetch('/api/auth/forgot-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: values.email }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
 
-    if (!res.ok) {
-      const data = await res.json();
-      setError(data.error || 'Something went wrong. Please try again.');
-      setLoading(false);
-      return;
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: values.email }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || 'Something went wrong. Please try again.');
+        setLoading(false);
+        return;
+      }
+    } catch {
+      clearTimeout(timeout);
+      // Timeout or network error — still show success (email may have sent)
     }
 
     setSent(true);
