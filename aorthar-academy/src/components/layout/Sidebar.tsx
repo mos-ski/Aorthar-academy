@@ -151,12 +151,18 @@ export default function Sidebar({ role }: { role: Role }) {
       : activeModule === 'profile'
       ? 'Profile Settings'
       : 'Admin';
+  const showSecondaryPane = activeModule === 'university' || activeModule === 'courses';
 
   return (
     <>
       {/* Desktop sidebar */}
       {isAdmin ? (
-        <aside className="hidden w-[400px] shrink-0 border-r bg-background md:flex">
+        <aside
+          className={cn(
+            'hidden shrink-0 border-r bg-background md:flex',
+            showSecondaryPane ? 'w-[400px]' : 'w-60',
+          )}
+        >
           <div className="w-60 border-r bg-[#111214] text-white flex flex-col">
             <div className="p-6 border-b border-white/10">
               <Link href="/admin" className="flex items-center gap-2">
@@ -189,31 +195,33 @@ export default function Sidebar({ role }: { role: Role }) {
             </nav>
           </div>
 
-          <div className="flex-1 bg-muted/30 flex flex-col">
-            <div className="h-[73px] px-6 flex items-center border-b">
-              <h3 className="text-2xl font-semibold text-foreground tracking-tight">{secondaryTitle}</h3>
+          {showSecondaryPane && (
+            <div className="flex-1 bg-muted/30 flex flex-col">
+              <div className="h-[73px] px-6 flex items-center border-b">
+                <h3 className="text-2xl font-semibold text-foreground tracking-tight">{secondaryTitle}</h3>
+              </div>
+              <nav className="p-4 space-y-1 overflow-y-auto">
+                {secondaryNav.map(({ href, label, icon: Icon }) => {
+                  const active = isNavItemActive({ href, label, icon: Icon });
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      className={cn(
+                        'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors border',
+                        active
+                          ? 'bg-background text-foreground shadow-sm border-border'
+                          : 'text-foreground/75 border-transparent hover:bg-background/70 hover:text-foreground',
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{label}</span>
+                    </Link>
+                  );
+                })}
+              </nav>
             </div>
-            <nav className="p-4 space-y-1 overflow-y-auto">
-              {secondaryNav.map(({ href, label, icon: Icon }) => {
-                const active = isNavItemActive({ href, label, icon: Icon });
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors border',
-                      active
-                        ? 'bg-background text-foreground shadow-sm border-border'
-                        : 'text-foreground/75 border-transparent hover:bg-background/70 hover:text-foreground',
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span>{label}</span>
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
+          )}
         </aside>
       ) : (
         <aside className="hidden w-64 shrink-0 border-r bg-background md:flex md:flex-col">
