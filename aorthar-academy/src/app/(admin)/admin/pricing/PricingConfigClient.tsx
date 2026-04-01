@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 
 export type AdminPlanRow = {
   id: string;
@@ -64,27 +65,31 @@ export default function PricingConfigClient({ initialPlans }: { initialPlans: Ad
           <CardDescription>Update name, amount, currency and active status.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
+          <Table className="table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead>Plan</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Billing</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Currency</TableHead>
-                <TableHead>Active</TableHead>
+                <TableHead className="w-[220px]">Plan</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="w-[110px]">Type</TableHead>
+                <TableHead className="w-[110px]">Billing</TableHead>
+                <TableHead className="w-[120px]">Price</TableHead>
+                <TableHead className="w-[120px]">Currency</TableHead>
+                <TableHead className="w-[140px]">Active</TableHead>
                 <TableHead className="w-24">Save</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {plans.map((plan) => (
                 <TableRow key={plan.id}>
-                  <TableCell className="space-y-2">
+                  <TableCell className="align-top whitespace-normal">
                     <Input
                       value={plan.name}
                       onChange={(event) => updatePlan(plan.id, { name: event.target.value })}
                     />
-                    <Input
+                  </TableCell>
+                  <TableCell className="align-top whitespace-normal">
+                    <Textarea
+                      className="min-h-20"
                       value={plan.description ?? ''}
                       placeholder="Description"
                       onChange={(event) => updatePlan(plan.id, { description: event.target.value })}
@@ -130,7 +135,7 @@ export default function PricingConfigClient({ initialPlans }: { initialPlans: Ad
               ))}
               {plans.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-8 text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">
                     No plans found.
                   </TableCell>
                 </TableRow>
