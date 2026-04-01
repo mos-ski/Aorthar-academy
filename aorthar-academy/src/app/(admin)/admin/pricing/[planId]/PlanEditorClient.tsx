@@ -10,6 +10,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
+const FEATURE_OPTIONS = [
+  { key: '200_level', label: 'Year 200 Access' },
+  { key: '300_level', label: 'Year 300 Access' },
+  { key: '400_level', label: 'Year 400 Access' },
+  { key: 'gpa_export', label: 'GPA Export' },
+  { key: 'capstone', label: 'Capstone Access' },
+  { key: 'mentorship', label: 'Mentorship' },
+  { key: 'priority_support', label: 'Priority Support' },
+  { key: 'unlimited_attempts', label: 'Unlimited Attempts' },
+] as const;
+
+const UNIVERSITY_SCOPE_PREFIX = 'course:university:';
+const EXTERNAL_SCOPE_PREFIX = 'course:external:';
+
 type AdminPlanRow = {
   id: string;
   name: string;
@@ -19,16 +33,60 @@ type AdminPlanRow = {
   billing_type: string;
   plan_type: string;
   is_active: boolean;
+  access_scope: string[];
 };
 
-export default function PlanEditorClient({ plan }: { plan: AdminPlanRow }) {
+type UniversityCourseOption = {
+  id: string;
+  code: string;
+  name: string;
+  status: string;
+  is_premium: boolean;
+};
+
+type ExternalCourseOption = {
+  id: string;
+  slug: string;
+  title: string;
+  status: string;
+};
+
+export default function PlanEditorClient({
+  plan,
+  universityCourses,
+  externalCourses,
+}: {
+  plan: AdminPlanRow;
+  universityCourses: UniversityCourseOption[];
+  externalCourses: ExternalCourseOption[];
+}) {
   const router = useRouter();
+  const knownFeatureKeys = FEATURE_OPTIONS.map((feature) => feature.key);
+  const initialScope = Array.isArray(plan.access_scope) ? plan.access_scope : [];
+  const initialFeatures = initialScope.filter((key) =>
+    knownFeatureKeys.includes(key as (typeof FEATURE_OPTIONS)[number]['key']),
+  );
+  const initialUniversityCourseIds = initialScope
+    .filter((key) => key.startsWith(UNIVERSITY_SCOPE_PREFIX))
+    .map((key) => key.slice(UNIVERSITY_SCOPE_PREFIX.length));
+  const initialExternalCourseIds = initialScope
+    .filter((key) => key.startsWith(EXTERNAL_SCOPE_PREFIX))
+    .map((key) => key.slice(EXTERNAL_SCOPE_PREFIX.length));
+  const preservedScopeKeys = initialScope.filter((key) =>
+    !knownFeatureKeys.includes(key as (typeof FEATURE_OPTIONS)[number]['key'])
+    && !key.startsWith(UNIVERSITY_SCOPE_PREFIX)
+    && !key.startsWith(EXTERNAL_SCOPE_PREFIX),
+  );
+
   const [form, setForm] = useState({
     name: plan.name,
     description: plan.description ?? '',
     price: String(plan.price),
     currency: plan.currency,
     is_active: plan.is_active,
+    featureKeys: initialFeatures,
+    universityCourseIds: initialUniversityCourseIds,
+    externalCourseIds: initialExternalCourseIds,
   });
   const [saving, setSaving] = useState(false);
 
@@ -44,6 +102,12 @@ export default function PlanEditorClient({ plan }: { plan: AdminPlanRow }) {
           price: Number(form.price),
           currency: form.currency,
           is_active: form.is_active,
+          access_scope: [
+            ...form.featureKeys,
+            ...form.universityCourseIds.map((id) => `${UNIVERSITY_SCOPE_PREFIX}${id}`),
+            ...form.externalCourseIds.map((id) => `${EXTERNAL_SCOPE_PREFIX}${id}`),
+            ...preservedScopeKeys,
+          ],
         }),
       });
       const json = await res.json();
@@ -57,6 +121,33 @@ export default function PlanEditorClient({ plan }: { plan: AdminPlanRow }) {
     } finally {
       setSaving(false);
     }
+  }
+
+  function toggleFeature(featureKey: string): void {
+    setForm((prev) => ({
+      ...prev,
+      featureKeys: prev.featureKeys.includes(featureKey)
+        ? prev.featureKeys.filter((key) => key !== featureKey)
+        : [...prev.featureKeys, featureKey],
+    }));
+  }
+
+  function toggleUniversityCourse(courseId: string): void {
+    setForm((prev) => ({
+      ...prev,
+      universityCourseIds: prev.universityCourseIds.includes(courseId)
+        ? prev.universityCourseIds.filter((id) => id !== courseId)
+        : [...prev.universityCourseIds, courseId],
+    }));
+  }
+
+  function toggleExternalCourse(courseId: string): void {
+    setForm((prev) => ({
+      ...prev,
+      externalCourseIds: prev.externalCourseIds.includes(courseId)
+        ? prev.externalCourseIds.filter((id) => id !== courseId)
+        : [...prev.externalCourseIds, courseId],
+    }));
   }
 
   return (
@@ -120,6 +211,62 @@ export default function PlanEditorClient({ plan }: { plan: AdminPlanRow }) {
             />
             Enabled
           </label>
+
+          <div className="space-y-2">
+            <Label>Accessible Features</Label>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {FEATURE_OPTIONS.map((feature) => (
+                <label key={feature.key} className="flex items-center gap-2 rounded-md border p-3 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={form.featureKeys.includes(feature.key)}
+                    onChange={() => toggleFeature(feature.key)}
+                  />
+                  {feature.label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Accessible University Courses</Label>
+            <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border p-3">
+              {universityCourses.map((course) => (
+                <label key={course.id} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={form.universityCourseIds.includes(course.id)}
+                    onChange={() => toggleUniversityCourse(course.id)}
+                  />
+                  <span className="font-mono text-xs text-muted-foreground">{course.code}</span>
+                  <span>{course.name}</span>
+                </label>
+              ))}
+              {universityCourses.length === 0 && (
+                <p className="text-sm text-muted-foreground">No university courses found.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Accessible External Courses</Label>
+            <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border p-3">
+              {externalCourses.map((course) => (
+                <label key={course.id} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={form.externalCourseIds.includes(course.id)}
+                    onChange={() => toggleExternalCourse(course.id)}
+                  />
+                  <span>{course.title}</span>
+                  <span className="text-xs text-muted-foreground">({course.slug})</span>
+                </label>
+              ))}
+              {externalCourses.length === 0 && (
+                <p className="text-sm text-muted-foreground">No external courses found.</p>
+              )}
+            </div>
+          </div>
 
           <div className="flex items-center gap-3">
             <Button onClick={() => void onSave()} disabled={saving}>

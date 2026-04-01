@@ -16,6 +16,9 @@ export async function PATCH(
     const price = Number(body.price);
     const currency = typeof body.currency === 'string' ? body.currency.trim().toUpperCase() : '';
     const isActive = Boolean(body.is_active);
+    const accessScope = Array.isArray(body.access_scope)
+      ? body.access_scope.filter((value: unknown): value is string => typeof value === 'string')
+      : [];
 
     if (!name) {
       return NextResponse.json({ error: 'Plan name is required' }, { status: 400 });
@@ -38,9 +41,10 @@ export async function PATCH(
         price,
         currency,
         is_active: isActive,
+        access_scope: accessScope,
       })
       .eq('id', planId)
-      .select('id, name, description, price, currency, billing_type, plan_type, is_active')
+      .select('id, name, description, price, currency, billing_type, plan_type, is_active, access_scope')
       .single();
 
     if (error) {

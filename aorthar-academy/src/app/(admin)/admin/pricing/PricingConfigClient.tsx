@@ -14,6 +14,7 @@ export type AdminPlanRow = {
   billing_type: string;
   plan_type: string;
   is_active: boolean;
+  access_scope: string[];
 };
 
 export default function PricingConfigClient({ initialPlans }: { initialPlans: AdminPlanRow[] }) {
@@ -55,6 +56,10 @@ export default function PricingConfigClient({ initialPlans }: { initialPlans: Ad
                 <div className="rounded-md border p-3">
                   <p className="text-xs text-muted-foreground">Type</p>
                   <p className="font-semibold">{plan.plan_type}</p>
+                </div>
+                <div className="rounded-md border p-3">
+                  <p className="text-xs text-muted-foreground">Access Rules</p>
+                  <p className="font-semibold">{plan.access_scope?.length ?? 0}</p>
                 </div>
               </div>
               <Button asChild>
