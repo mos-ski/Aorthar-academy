@@ -47,35 +47,30 @@ const studentNav = [
 
 const adminUniversityNav: NavItem[] = [
   {
-    href: '/admin/ops?tab=courses&courseTab=university&module=university',
+    href: '/admin/courses',
     label: 'Courses',
     icon: BookOpen,
-    match: (pathname, tab, courseTab, moduleParam) =>
-      pathname === '/admin/ops'
-      && tab === 'courses'
-      && courseTab === 'university'
-      && moduleParam === 'university',
   },
   {
-    href: '/admin/ops?tab=students&module=university',
+    href: '/admin/users?module=university',
     label: 'Students',
     icon: Users,
-    match: (pathname, tab, _courseTab, moduleParam) =>
-      pathname === '/admin/ops' && tab === 'students' && moduleParam === 'university',
+    match: (pathname, _tab, _courseTab, moduleParam) =>
+      pathname === '/admin/users' && moduleParam === 'university',
   },
   {
-    href: '/admin/ops?tab=transactions&module=university',
+    href: '/admin/pricing?module=university',
     label: 'Pricing',
     icon: CreditCard,
-    match: (pathname, tab, _courseTab, moduleParam) =>
-      pathname === '/admin/ops' && tab === 'transactions' && moduleParam === 'university',
+    match: (pathname, _tab, _courseTab, moduleParam) =>
+      pathname === '/admin/pricing' && moduleParam === 'university',
   },
   {
-    href: '/admin/ops?tab=transactions&module=university',
+    href: '/admin/payments?module=university',
     label: 'Transactions',
     icon: CreditCard,
-    match: (pathname, tab, _courseTab, moduleParam) =>
-      pathname === '/admin/ops' && tab === 'transactions' && moduleParam === 'university',
+    match: (pathname, _tab, _courseTab, moduleParam) =>
+      pathname === '/admin/payments' && moduleParam === 'university',
   },
   { href: '/admin/questions', label: 'Quiz & Questions', icon: FileQuestion },
   { href: '/admin/curriculum', label: 'Curriculum', icon: Layers },
@@ -87,28 +82,25 @@ const adminUniversityNav: NavItem[] = [
 const adminExternalNav: NavItem[] = [
   { href: '/admin/standalone-courses', label: 'Catalog', icon: BookOpen },
   {
-    href: '/admin/ops?tab=students',
+    href: '/admin/users?module=courses',
     label: 'Students',
     icon: Users,
-    match: (pathname, tab, _courseTab, moduleParam) =>
-      pathname === '/admin/ops' && tab === 'students' && moduleParam !== 'university',
+    match: (pathname, _tab, _courseTab, moduleParam) =>
+      pathname === '/admin/users' && moduleParam === 'courses',
   },
   {
-    href: '/admin/ops?tab=transactions',
+    href: '/admin/pricing?module=courses',
+    label: 'Pricing',
+    icon: CreditCard,
+    match: (pathname, _tab, _courseTab, moduleParam) =>
+      pathname === '/admin/pricing' && moduleParam === 'courses',
+  },
+  {
+    href: '/admin/payments?module=courses',
     label: 'Transactions',
     icon: CreditCard,
-    match: (pathname, tab, _courseTab, moduleParam) =>
-      pathname === '/admin/ops' && tab === 'transactions' && moduleParam !== 'university',
-  },
-  {
-    href: '/admin/ops?tab=courses&courseTab=external',
-    label: 'Course Manager',
-    icon: BriefcaseBusiness,
-    match: (pathname, tab, courseTab, moduleParam) =>
-      pathname === '/admin/ops'
-      && tab === 'courses'
-      && courseTab === 'external'
-      && moduleParam !== 'university',
+    match: (pathname, _tab, _courseTab, moduleParam) =>
+      pathname === '/admin/payments' && moduleParam === 'courses',
   },
 ];
 
@@ -124,12 +116,7 @@ const adminPrimaryModules: Array<{
   href: string;
 }> = [
   { key: 'overview', label: 'Overview', icon: LayoutDashboard, href: '/admin' },
-  {
-    key: 'university',
-    label: 'University',
-    icon: Building2,
-    href: '/admin/ops?tab=courses&courseTab=university&module=university',
-  },
+  { key: 'university', label: 'University', icon: Building2, href: '/admin/courses' },
   { key: 'courses', label: 'Courses', icon: BookOpen, href: '/admin/standalone-courses' },
   { key: 'profile', label: 'Profile Settings', icon: CircleUser, href: '/settings' },
 ];
@@ -144,7 +131,7 @@ const mobileStudentNav = [
 
 const mobileAdminNav = [
   { href: '/admin', label: 'Overview', icon: LayoutDashboard },
-  { href: '/admin/ops?tab=courses&courseTab=university&module=university', label: 'University', icon: Building2 },
+  { href: '/admin/courses', label: 'University', icon: Building2 },
   { href: '/admin/standalone-courses', label: 'Courses', icon: BookOpen },
   { href: '/settings', label: 'Profile', icon: CircleUser },
 ];
@@ -171,6 +158,13 @@ export default function Sidebar({ role }: { role: Role }) {
 
   const inUniversityPath =
     moduleParam === 'university'
+    || (
+      (pathname.startsWith('/admin/users')
+        || pathname.startsWith('/admin/pricing')
+        || pathname.startsWith('/admin/payments'))
+      && moduleParam !== 'courses'
+    )
+    || pathname.startsWith('/admin/courses')
     || pathname.startsWith('/admin/questions')
     || pathname.startsWith('/admin/curriculum')
     || pathname.startsWith('/admin/departments')
@@ -182,6 +176,12 @@ export default function Sidebar({ role }: { role: Role }) {
   const inCoursesPath =
     moduleParam === 'courses'
     || pathname.startsWith('/admin/standalone-courses')
+    || (
+      (pathname.startsWith('/admin/users')
+        || pathname.startsWith('/admin/pricing')
+        || pathname.startsWith('/admin/payments'))
+      && moduleParam === 'courses'
+    )
     || (pathname === '/admin/ops'
       && (tab === 'transactions' || tab === 'students' || courseTab === 'external')
       && moduleParam !== 'university');
