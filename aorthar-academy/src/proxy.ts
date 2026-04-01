@@ -186,8 +186,10 @@ export async function proxy(request: NextRequest) {
     profile = data;
   }
 
-  // Student onboarding gate
-  if (user && profile?.role === 'student') {
+  // Student onboarding gate — skip entirely on courses subdomain
+  const reqHostname = request.headers.get('host') ?? '';
+  const isCoursesSubdomain = reqHostname === 'courses.aorthar.com' || reqHostname.startsWith('courses.aorthar.com:');
+  if (user && profile?.role === 'student' && !isCoursesSubdomain) {
     const done = Boolean(profile.department && profile.onboarding_completed_at);
     const isApiRoute = pathname.startsWith('/api/');
 

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,8 +13,9 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { BookOpen } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -38,7 +39,14 @@ export default function LoginPage() {
       return;
     }
 
-    router.push('/dashboard');
+    // Respect ?next param; fall back to courses dashboard or university dashboard
+    const next = searchParams.get('next');
+    if (next) {
+      router.push(next);
+    } else {
+      const isCourses = typeof window !== 'undefined' && window.location.hostname.includes('courses.');
+      router.push(isCourses ? '/courses-app/learn' : '/dashboard');
+    }
     router.refresh();
   }
 
@@ -104,12 +112,20 @@ export default function LoginPage() {
 
           <p className="text-sm text-muted-foreground text-center">
             Don&apos;t have an account?{' '}
-            <Link href="/register" className="text-primary font-medium hover:underline">
+            <Link href={`/register${searchParams.get('next') ? `?next=${encodeURIComponent(searchParams.get('next')!)}` : ''}`} className="text-primary font-medium hover:underline">
               Sign up free
             </Link>
           </p>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

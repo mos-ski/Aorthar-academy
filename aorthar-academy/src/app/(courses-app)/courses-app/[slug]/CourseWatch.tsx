@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import YouTubePlayer from '@/components/standalone/YouTubePlayer';
 import DrivePlayer from '@/components/standalone/DrivePlayer';
+import { createClient } from '@/lib/supabase/client';
 
 type Lesson = { id: string; title: string; sort_order: number; youtube_url: string };
 
@@ -64,6 +65,11 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
   const [paywallVisible, setPaywallVisible] = useState(false);
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(firstLesson);
 
+  async function handleLogout() {
+    await createClient().auth.signOut();
+    window.location.href = '/courses-app';
+  }
+
   const videoSource = activeLesson ? detectVideo(activeLesson.youtube_url) : null;
   const previewSeconds = !hasPurchased && videoSource ? 60 : undefined;
 
@@ -90,13 +96,21 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
         </Link>
         <div className="flex items-center gap-4">
           {isLoggedIn ? (
-            <Link
-              href="/courses-app/learn"
-              className="text-sm font-medium transition-opacity hover:opacity-70"
-              style={{ color: '#a7d252' }}
-            >
-              My Courses
-            </Link>
+            <>
+              <Link
+                href="/courses-app/learn"
+                className="text-sm font-medium transition-opacity hover:opacity-70"
+                style={{ color: '#a7d252' }}
+              >
+                My Courses
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="text-sm text-white/40 hover:text-white/70 transition-colors"
+              >
+                Log out
+              </button>
+            </>
           ) : (
             <>
               <Link href="/login" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Sign in</Link>

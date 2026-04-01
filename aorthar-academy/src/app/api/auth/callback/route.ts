@@ -3,9 +3,11 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams, origin, hostname } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/dashboard';
+  const isCourses = hostname.includes('courses.');
+  const defaultNext = isCourses ? '/courses-app/learn' : '/dashboard';
+  const next = searchParams.get('next') ?? defaultNext;
 
   if (code) {
     const cookieStore = await cookies();

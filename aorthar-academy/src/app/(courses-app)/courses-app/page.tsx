@@ -5,6 +5,7 @@ export const metadata = { title: 'Courses — Aorthar' };
 
 export default async function CoursesListingPage() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const { data: courses } = await supabase
     .from('standalone_courses')
@@ -29,14 +30,25 @@ export default async function CoursesListingPage() {
     <div className="min-h-screen" style={{ backgroundColor: '#18191a', color: '#fff' }}>
       {/* Nav */}
       <header className="border-b px-6 sm:px-12 py-4 flex items-center justify-between" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/courses-app" className="flex items-center gap-2">
           <img src="/Aorthar Logo long complete.svg" alt="Aorthar" className="h-9 w-auto" />
         </Link>
         <div className="flex items-center gap-4">
-          <Link href="/login" className="text-sm font-medium text-white/60 hover:text-white transition-colors">Sign in</Link>
-          <Link href="/login" className="text-sm font-semibold px-4 py-2 text-white transition-colors hover:opacity-90" style={{ backgroundColor: '#08694a' }}>
-            Get started
-          </Link>
+          {user ? (
+            <>
+              <Link href="/courses-app/learn" className="text-sm font-medium hover:opacity-70 transition-opacity" style={{ color: '#a7d252' }}>My Courses</Link>
+              <form action="/api/standalone/logout" method="POST">
+                <button type="submit" className="text-sm text-white/40 hover:text-white/70 transition-colors">Log out</button>
+              </form>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="text-sm font-medium text-white/60 hover:text-white transition-colors">Sign in</Link>
+              <Link href="/register" className="text-sm font-semibold px-4 py-2 text-white transition-colors hover:opacity-90" style={{ backgroundColor: '#08694a' }}>
+                Get started
+              </Link>
+            </>
+          )}
         </div>
       </header>
 
