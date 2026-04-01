@@ -1,12 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { toast } from 'sonner';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
 
 export type AdminPlanRow = {
   id: string;
@@ -20,130 +17,61 @@ export type AdminPlanRow = {
 };
 
 export default function PricingConfigClient({ initialPlans }: { initialPlans: AdminPlanRow[] }) {
-  const [plans, setPlans] = useState<AdminPlanRow[]>(initialPlans);
-  const [savingId, setSavingId] = useState<string | null>(null);
-
-  async function savePlan(plan: AdminPlanRow): Promise<void> {
-    setSavingId(plan.id);
-    try {
-      const res = await fetch(`/api/admin/pricing/${plan.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: plan.name,
-          description: plan.description,
-          price: plan.price,
-          currency: plan.currency,
-          is_active: plan.is_active,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        toast.error(json.error ?? 'Failed to update pricing plan');
-        return;
-      }
-      toast.success('Pricing updated');
-    } finally {
-      setSavingId(null);
-    }
-  }
-
-  function updatePlan(planId: string, patch: Partial<AdminPlanRow>): void {
-    setPlans((prev) => prev.map((plan) => (plan.id === planId ? { ...plan, ...patch } : plan)));
-  }
+  const plans = initialPlans;
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold">Pricing Configuration</h2>
-        <p className="text-sm text-muted-foreground">Manage pricing plans shown on the public pricing page.</p>
+        <p className="text-sm text-muted-foreground">Manage pricing plans shown on the public pricing page. Open each plan to edit.</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Plans</CardTitle>
-          <CardDescription>Update name, amount, currency and active status.</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table className="table-fixed">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[220px]">Plan</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="w-[110px]">Type</TableHead>
-                <TableHead className="w-[110px]">Billing</TableHead>
-                <TableHead className="w-[120px]">Price</TableHead>
-                <TableHead className="w-[120px]">Currency</TableHead>
-                <TableHead className="w-[140px]">Active</TableHead>
-                <TableHead className="w-24">Save</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {plans.map((plan) => (
-                <TableRow key={plan.id}>
-                  <TableCell className="align-top whitespace-normal">
-                    <Input
-                      value={plan.name}
-                      onChange={(event) => updatePlan(plan.id, { name: event.target.value })}
-                    />
-                  </TableCell>
-                  <TableCell className="align-top whitespace-normal">
-                    <Textarea
-                      className="min-h-20"
-                      value={plan.description ?? ''}
-                      placeholder="Description"
-                      onChange={(event) => updatePlan(plan.id, { description: event.target.value })}
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm">{plan.plan_type}</TableCell>
-                  <TableCell className="text-sm">{plan.billing_type}</TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={plan.price}
-                      onChange={(event) => updatePlan(plan.id, { price: Number(event.target.value) })}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={plan.currency}
-                      maxLength={3}
-                      onChange={(event) => updatePlan(plan.id, { currency: event.target.value.toUpperCase() })}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <label className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={plan.is_active}
-                        onChange={(event) => updatePlan(plan.id, { is_active: event.target.checked })}
-                      />
-                      Enabled
-                    </label>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      size="sm"
-                      onClick={() => void savePlan(plan)}
-                      disabled={savingId === plan.id}
-                    >
-                      {savingId === plan.id ? 'Saving...' : 'Save'}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {plans.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">
-                    No plans found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 md:grid-cols-2">
+        {plans.map((plan) => (
+          <Card key={plan.id}>
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <CardTitle>{plan.name}</CardTitle>
+                  <CardDescription className="mt-1">
+                    {plan.description && plan.description.length > 0 ? plan.description : 'No description'}
+                  </CardDescription>
+                </div>
+                <Badge variant={plan.is_active ? 'default' : 'secondary'}>
+                  {plan.is_active ? 'Enabled' : 'Disabled'}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="rounded-md border p-3">
+                  <p className="text-xs text-muted-foreground">Price</p>
+                  <p className="font-semibold">{plan.currency} {plan.price.toLocaleString()}</p>
+                </div>
+                <div className="rounded-md border p-3">
+                  <p className="text-xs text-muted-foreground">Billing</p>
+                  <p className="font-semibold">{plan.billing_type}</p>
+                </div>
+                <div className="rounded-md border p-3">
+                  <p className="text-xs text-muted-foreground">Type</p>
+                  <p className="font-semibold">{plan.plan_type}</p>
+                </div>
+              </div>
+              <Button asChild>
+                <Link href={`/admin/pricing/${plan.id}`}>Edit Plan</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {plans.length === 0 && (
+        <Card>
+          <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            No pricing plans found.
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
