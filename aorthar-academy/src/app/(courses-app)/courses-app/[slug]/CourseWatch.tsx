@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import YouTubePlayer from '@/components/standalone/YouTubePlayer';
 import DrivePlayer from '@/components/standalone/DrivePlayer';
+import BuyButton from '@/components/standalone/BuyButton';
 import { createClient } from '@/lib/supabase/client';
 
 type Lesson = { id: string; title: string; sort_order: number; youtube_url: string };
@@ -212,16 +213,12 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
                 <p className="text-2xl font-bold" style={{ color: '#a7d252' }}>₦{course.price_ngn.toLocaleString()}</p>
               </div>
               {isLoggedIn ? (
-                <form action="/api/standalone/checkout" method="POST">
-                  <input type="hidden" name="slug" value={course.slug} />
-                  <button
-                    type="submit"
-                    className="w-full py-2.5 font-bold text-black text-sm transition-opacity hover:opacity-90"
-                    style={{ backgroundColor: '#a7d252' }}
-                  >
-                    Buy this course →
-                  </button>
-                </form>
+                <BuyButton
+                  slug={course.slug}
+                  label="Buy this course →"
+                  className="w-full py-2.5 font-bold text-black text-sm transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: '#a7d252' }}
+                />
               ) : (
                 <>
                   <Link
@@ -299,16 +296,12 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
                       </p>
                       <div className="flex flex-col gap-2.5">
                         {isLoggedIn ? (
-                          <form action="/api/standalone/checkout" method="POST">
-                            <input type="hidden" name="slug" value={course.slug} />
-                            <button
-                              type="submit"
-                              className="w-full py-2.5 px-6 font-bold text-black text-sm transition-opacity hover:opacity-90"
-                              style={{ backgroundColor: '#a7d252' }}
-                            >
-                              Buy now — ₦{course.price_ngn.toLocaleString()}
-                            </button>
-                          </form>
+                          <BuyButton
+                            slug={course.slug}
+                            label={`Buy now — ₦${course.price_ngn.toLocaleString()}`}
+                            className="w-full py-2.5 px-6 font-bold text-black text-sm transition-opacity hover:opacity-90"
+                            style={{ backgroundColor: '#a7d252' }}
+                          />
                         ) : (
                           <>
                             <Link
@@ -355,12 +348,12 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
             <p className="text-xs text-white/35">
               Free 1-minute preview.{' '}
               {isLoggedIn ? (
-                <form action="/api/standalone/checkout" method="POST" className="inline">
-                  <input type="hidden" name="slug" value={course.slug} />
-                  <button type="submit" className="font-medium underline hover:opacity-70 transition-opacity" style={{ color: '#a7d252' }}>
-                    Buy full course →
-                  </button>
-                </form>
+                <BuyButton
+                  slug={course.slug}
+                  label="Buy full course →"
+                  className="font-medium underline hover:opacity-70 transition-opacity"
+                  style={{ color: '#a7d252' }}
+                />
               ) : (
                 <Link href={`/register?next=/courses-app/checkout/${course.slug}`} className="font-medium underline" style={{ color: '#a7d252' }}>
                   Sign up to get full access →
