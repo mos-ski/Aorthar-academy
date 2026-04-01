@@ -4,6 +4,8 @@ import { hasAdminPermission, normalizeAdminLevel } from '@/lib/admin/permissions
 import { redirect } from 'next/navigation';
 import AdminAccessClient from './AdminAccessClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminAccessPage() {
   const { profile } = await requireAuth();
   if (profile?.role !== 'admin') redirect('/unauthorized');
