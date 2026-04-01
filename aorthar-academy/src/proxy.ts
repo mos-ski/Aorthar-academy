@@ -25,13 +25,12 @@ const PUBLIC_ROUTES = [
   '/verify',
   '/forgot-password',
   '/reset-password',
+  // public API routes (no auth required)
+  '/api/auth/forgot-password',
+  '/api/auth/send-welcome',
+  '/api/auth/callback',
   // courses-app public routes
   '/courses-app',
-];
-
-const PUBLIC_API_ROUTES = [
-  '/api/auth/forgot-password',
-  '/api/auth/forgot-password',
 ];
 const AUTH_ROUTES = ['/login', '/register', '/verify'];
 const PREMIUM_ROUTES = ['/courses/400', '/transcript/export', '/mentorship', '/capstone'];
@@ -41,10 +40,6 @@ const SUSPENDED_ROUTE = '/suspended';
 
 function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'));
-}
-
-function isPublicApiRoute(pathname: string): boolean {
-  return PUBLIC_API_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'));
 }
 
 function isAuthRoute(pathname: string): boolean {
@@ -162,7 +157,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip Supabase auth check for public routes that aren't auth routes
-  const needsAuthCheck = isAuthRoute(pathname) || (!isPublicRoute(pathname) && !isPublicApiRoute(pathname));
+  const needsAuthCheck = isAuthRoute(pathname) || !isPublicRoute(pathname);
 
   // Refresh session — gracefully handle missing/placeholder Supabase credentials
   let user = null;
