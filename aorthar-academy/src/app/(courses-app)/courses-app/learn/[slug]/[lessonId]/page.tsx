@@ -11,6 +11,9 @@ export default async function LessonPage({ params }: Props) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect(`/login?next=/courses-app/learn/${slug}/${lessonId}`);
 
+  const { data: profile } = await supabase
+    .from('profiles').select('full_name, avatar_url').eq('user_id', user.id).maybeSingle();
+
   // Load course
   const { data: course } = await supabase
     .from('standalone_courses')
@@ -62,6 +65,9 @@ export default async function LessonPage({ params }: Props) {
         completed: completedIds.has(l.id),
       }))}
       currentLessonId={lessonId}
+      userEmail={user.email ?? ''}
+      userFullName={profile?.full_name}
+      userAvatarUrl={profile?.avatar_url}
     />
   );
 }
