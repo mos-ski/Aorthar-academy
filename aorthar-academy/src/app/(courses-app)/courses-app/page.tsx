@@ -1,11 +1,16 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import UserAvatar from '@/components/standalone/UserAvatar';
 
 export const metadata = { title: 'Courses — Aorthar' };
 
 export default async function CoursesListingPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  const profile = user ? await supabase
+    .from('profiles').select('full_name, avatar_url').eq('user_id', user.id).maybeSingle()
+    .then(({ data }) => data) : null;
 
   const { data: courses } = await supabase
     .from('standalone_courses')
@@ -37,9 +42,7 @@ export default async function CoursesListingPage() {
           {user ? (
             <>
               <Link href="/courses-app/learn" className="text-sm font-medium hover:opacity-70 transition-opacity" style={{ color: '#a7d252' }}>My Courses</Link>
-              <form action="/api/standalone/logout" method="POST">
-                <button type="submit" className="text-sm text-white/40 hover:text-white/70 transition-colors">Log out</button>
-              </form>
+              <UserAvatar email={user.email ?? ''} fullName={profile?.full_name} avatarUrl={profile?.avatar_url} />
             </>
           ) : (
             <>

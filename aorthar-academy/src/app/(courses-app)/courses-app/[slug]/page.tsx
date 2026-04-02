@@ -42,14 +42,14 @@ export default async function CourseDetailPage({ params }: Props) {
 
   const { data: { user } } = await supabase.auth.getUser();
   let hasPurchased = false;
+  let profile: { full_name?: string | null; avatar_url?: string | null } | null = null;
   if (user) {
-    const { data: purchase } = await supabase
-      .from('standalone_purchases')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('course_id', course.id)
-      .maybeSingle();
+    const [{ data: purchase }, { data: prof }] = await Promise.all([
+      supabase.from('standalone_purchases').select('id').eq('user_id', user.id).eq('course_id', course.id).maybeSingle(),
+      supabase.from('profiles').select('full_name, avatar_url').eq('user_id', user.id).maybeSingle(),
+    ]);
     hasPurchased = Boolean(purchase);
+    profile = prof;
   }
 
   return (
@@ -59,6 +59,9 @@ export default async function CourseDetailPage({ params }: Props) {
       firstLesson={firstLesson}
       hasPurchased={hasPurchased}
       isLoggedIn={Boolean(user)}
+      userEmail={user?.email}
+      userFullName={profile?.full_name}
+      userAvatarUrl={profile?.avatar_url}
     />
   );
 }

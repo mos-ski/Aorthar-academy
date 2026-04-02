@@ -5,7 +5,7 @@ import Link from 'next/link';
 import YouTubePlayer from '@/components/standalone/YouTubePlayer';
 import DrivePlayer from '@/components/standalone/DrivePlayer';
 import BuyButton from '@/components/standalone/BuyButton';
-import { createClient } from '@/lib/supabase/client';
+import UserAvatar from '@/components/standalone/UserAvatar';
 
 type Lesson = { id: string; title: string; sort_order: number; youtube_url: string };
 
@@ -25,6 +25,9 @@ interface Props {
   firstLesson: Lesson | null;
   hasPurchased: boolean;
   isLoggedIn: boolean;
+  userEmail?: string;
+  userFullName?: string | null;
+  userAvatarUrl?: string | null;
 }
 
 function extractYouTubeId(url: string): string | null {
@@ -62,14 +65,9 @@ function getCompletedIds(lessons: Lesson[], activeId: string | undefined): Set<s
   return set;
 }
 
-export default function CourseWatch({ course, lessons, firstLesson, hasPurchased, isLoggedIn }: Props) {
+export default function CourseWatch({ course, lessons, firstLesson, hasPurchased, isLoggedIn, userEmail, userFullName, userAvatarUrl }: Props) {
   const [paywallVisible, setPaywallVisible] = useState(false);
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(firstLesson);
-
-  async function handleLogout() {
-    await createClient().auth.signOut();
-    window.location.href = '/courses-app';
-  }
 
   const videoSource = activeLesson ? detectVideo(activeLesson.youtube_url) : null;
   const previewSeconds = !hasPurchased && videoSource ? 60 : undefined;
@@ -105,12 +103,7 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
               >
                 My Courses
               </Link>
-              <button
-                onClick={handleLogout}
-                className="text-sm text-white/40 hover:text-white/70 transition-colors"
-              >
-                Log out
-              </button>
+              <UserAvatar email={userEmail ?? ''} fullName={userFullName} avatarUrl={userAvatarUrl} />
             </>
           ) : (
             <>

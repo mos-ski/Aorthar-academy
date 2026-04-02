@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import UserAvatar from '@/components/standalone/UserAvatar';
 
 export const metadata = { title: 'My Courses — Aorthar' };
 
@@ -9,6 +10,12 @@ export default async function MyCoursesPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) redirect('/login?next=/courses-app/learn');
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name, avatar_url')
+    .eq('user_id', user.id)
+    .maybeSingle();
 
   // Get user's purchased courses with lesson progress
   const { data: purchases } = await supabase
@@ -65,7 +72,7 @@ export default async function MyCoursesPage() {
         <Link href="/courses-app" className="flex items-center gap-2">
           <img src="/Aorthar Logo long complete.svg" alt="Aorthar" className="h-9 w-auto" />
         </Link>
-        <Link href="/settings" className="text-sm text-white/60 hover:text-white transition-colors">Account</Link>
+        <UserAvatar email={user.email ?? ''} fullName={profile?.full_name} avatarUrl={profile?.avatar_url} />
       </header>
 
       <div className="max-w-5xl mx-auto px-6 sm:px-12 py-12">
