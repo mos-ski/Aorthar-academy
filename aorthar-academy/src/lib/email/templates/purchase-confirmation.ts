@@ -25,6 +25,11 @@ export function purchaseConfirmationHtml(data: PurchaseConfirmationData): string
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>You just secured a sweet spot — Aorthar Academy</title>
+  <style>
+    @media only screen and (max-width: 600px) {
+      .headline { font-size: 48px !important; letter-spacing: -1px !important; }
+    }
+  </style>
 </head>
 <body style="margin:0;padding:0;background-color:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#ffffff;">
@@ -35,7 +40,7 @@ export function purchaseConfirmationHtml(data: PurchaseConfirmationData): string
           <!-- Header -->
           <tr>
             <td style="padding:48px 48px 0 48px;">
-              <h1 style="
+              <h1 class="headline" style="
                 margin:0;
                 font-family:Impact,'Arial Narrow',Arial,sans-serif;
                 font-size:96px;
