@@ -5,7 +5,6 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   BookOpen,
-  BadgeDollarSign,
   BriefcaseBusiness,
   ClipboardList,
   ChevronRight,
@@ -90,13 +89,6 @@ const adminExternalNav: NavItem[] = [
     icon: Users,
     match: (pathname, _tab, _courseTab, moduleParam) =>
       pathname === '/admin/users' && moduleParam === 'courses',
-  },
-  {
-    href: '/admin/pricing?module=courses',
-    label: 'Pricing',
-    icon: BadgeDollarSign,
-    match: (pathname, _tab, _courseTab, moduleParam) =>
-      pathname === '/admin/pricing' && moduleParam === 'courses',
   },
   {
     href: '/admin/payments?module=courses',

@@ -1,53 +1,96 @@
 export const dynamic = 'force-dynamic';
 
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TrendingUp, Users, CreditCard, AlertCircle, Banknote } from 'lucide-react';
-import { DEMO_TRANSACTIONS } from '@/lib/demo/adminSnapshot';
-import { isDemoMode, isExplicitLiveMode } from '@/lib/demo/mode';
 
 export default async function AdminPaymentsPage() {
-  const supabase = await createClient();
-  const demo = await isDemoMode();
-  const explicitLive = await isExplicitLiveMode();
+  const admin = createAdminClient();
 
   const [
-    { data: transactions },
+    { data: uniTxns },
+    { data: standalonePurchases },
     { count: activeSubscriptions },
     { count: totalUsers },
     { count: premiumUsers },
   ] = await Promise.all([
-    supabase
+    // University subscription transactions
+    admin
       .from('transactions')
-      .select('*, profiles!user_id(full_name, email)')
+      .select('id, paystack_reference, amount, status, created_at, user_id, profiles!user_id(full_name, email)')
       .order('created_at', { ascending: false })
       .limit(100),
-    supabase
+    // Standalone course purchases
+    admin
+      .from('standalone_purchases')
+      .select('id, paystack_reference, amount_paid_ngn, created_at, user_id, course_id, profiles!user_id(full_name, email), standalone_courses!course_id(title)')
+      .order('created_at', { ascending: false })
+      .limit(100),
+    admin
       .from('subscriptions')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'active'),
-    supabase
-      .from('profiles')
-      .select('*', { count: 'exact', head: true }),
-    supabase
+    admin.from('profiles').select('*', { count: 'exact', head: true }),
+    admin
       .from('subscriptions')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'active'),
   ]);
 
-  const rawTxns = transactions ?? [];
-  const txns = (explicitLive || (!demo && rawTxns.length > 0)) ? rawTxns : DEMO_TRANSACTIONS;
-  const successful = txns.filter((t) => t.status === 'success');
-  const failed = txns.filter((t) => t.status === 'failed');
-  const totalRevenue = successful.reduce((sum, t) => sum + (t.amount ?? 0), 0);
+  // Normalise both into one display shape
+  type TxRow = {
+    id: string;
+    paystack_reference: string;
+    amount_kobo: number; // university uses kobo, standalone uses NGN
+    type: 'subscription' | 'course';
+    label: string;
+    status: string;
+    created_at: string;
+    full_name: string | null;
+    email: string | null;
+  };
 
-  const isLive = explicitLive || (!demo && (totalUsers ?? 0) > 0);
-  const effectiveActiveSubscriptions = isLive ? (activeSubscriptions ?? 0) : 3;
-  const effectiveTotalUsers = isLive ? (totalUsers ?? 0) : 8;
-  const effectivePremiumUsers = isLive ? (premiumUsers ?? 0) : 3;
+  const rows: TxRow[] = [
+    ...(uniTxns ?? []).map((t) => {
+      const profile = (t.profiles as unknown) as { full_name: string | null; email: string | null } | null;
+      return {
+        id: t.id,
+        paystack_reference: t.paystack_reference ?? '',
+        amount_kobo: t.amount ?? 0,
+        type: 'subscription' as const,
+        label: 'University subscription',
+        status: t.status ?? 'unknown',
+        created_at: t.created_at,
+        full_name: profile?.full_name ?? null,
+        email: profile?.email ?? null,
+      };
+    }),
+    ...(standalonePurchases ?? []).map((p) => {
+      const profile = (p.profiles as unknown) as { full_name: string | null; email: string | null } | null;
+      const course = (p.standalone_courses as unknown) as { title: string | null } | null;
+      return {
+        id: p.id,
+        paystack_reference: p.paystack_reference ?? '',
+        amount_kobo: (p.amount_paid_ngn ?? 0) * 100, // convert to kobo for display consistency
+        type: 'course' as const,
+        label: course?.title ?? 'Course purchase',
+        status: 'success',
+        created_at: p.created_at,
+        full_name: profile?.full_name ?? null,
+        email: profile?.email ?? null,
+      };
+    }),
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  const successful = rows.filter((t) => t.status === 'success');
+  const failed = rows.filter((t) => t.status === 'failed');
+  const totalRevenue = successful.reduce((sum, t) => sum + t.amount_kobo, 0);
+
+  const effectiveTotalUsers = totalUsers ?? 0;
+  const effectivePremiumUsers = premiumUsers ?? 0;
   const conversionRate = effectiveTotalUsers > 0
     ? ((effectivePremiumUsers / effectiveTotalUsers) * 100).toFixed(1)
     : '0.0';
@@ -56,7 +99,7 @@ export default async function AdminPaymentsPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold">Payments & Revenue</h2>
-        <p className="text-sm text-muted-foreground">Paystack transaction history and subscription metrics</p>
+        <p className="text-sm text-muted-foreground">All transactions — university subscriptions and course purchases</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -77,7 +120,7 @@ export default async function AdminPaymentsPage() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{effectiveActiveSubscriptions}</p>
+            <p className="text-2xl font-bold">{activeSubscriptions ?? 0}</p>
             <p className="text-xs text-muted-foreground mt-1">premium students</p>
           </CardContent>
         </Card>
@@ -119,6 +162,7 @@ export default async function AdminPaymentsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>User</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Reference</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
@@ -126,47 +170,49 @@ export default async function AdminPaymentsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {txns.length === 0 && (
+              {rows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-16 text-center">
+                  <TableCell colSpan={6} className="py-16 text-center">
                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Banknote className="h-8 w-8 opacity-30" />
                       <p className="text-sm font-medium">No transactions yet</p>
-                      <p className="text-xs">Payments will appear here once students subscribe.</p>
+                      <p className="text-xs">Payments will appear here once students subscribe or purchase.</p>
                     </div>
                   </TableCell>
                 </TableRow>
               )}
-              {txns.map((t) => {
-                const profile = t.profiles as { full_name: string; email: string } | null;
-                return (
-                  <TableRow
-                    key={t.id}
-                    className={t.status === 'failed' ? 'bg-destructive/5' : ''}
-                  >
-                    <TableCell>
-                      <p className="font-medium text-sm">{profile?.full_name ?? '—'}</p>
-                      <p className="text-xs text-muted-foreground">{profile?.email ?? '—'}</p>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">{t.paystack_reference}</TableCell>
-                    <TableCell className="font-medium">{formatCurrency((t.amount ?? 0) / 100)}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          t.status === 'success'
-                            ? 'default'
-                            : t.status === 'failed'
-                            ? 'destructive'
-                            : 'secondary'
-                        }
-                      >
-                        {t.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{formatDateTime(t.created_at)}</TableCell>
-                  </TableRow>
-                );
-              })}
+              {rows.map((t) => (
+                <TableRow
+                  key={t.id}
+                  className={t.status === 'failed' ? 'bg-destructive/5' : ''}
+                >
+                  <TableCell>
+                    <p className="font-medium text-sm">{t.full_name ?? '—'}</p>
+                    <p className="text-xs text-muted-foreground">{t.email ?? '—'}</p>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-xs">
+                      {t.type === 'course' ? t.label : 'Subscription'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">{t.paystack_reference || '—'}</TableCell>
+                  <TableCell className="font-medium">{formatCurrency(t.amount_kobo / 100)}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        t.status === 'success'
+                          ? 'default'
+                          : t.status === 'failed'
+                          ? 'destructive'
+                          : 'secondary'
+                      }
+                    >
+                      {t.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{formatDateTime(t.created_at)}</TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </CardContent>

@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requireRole } from '@/lib/auth';
+import { writeAuditLog } from '@/lib/admin/audit';
 
 export async function POST(request: NextRequest) {
+  const { user } = await requireAuth();
   await requireRole('admin');
 
   const body = await request.json();
@@ -22,6 +24,15 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
+
+  await writeAuditLog({
+    action: 'standalone_course.create',
+    performedBy: user.id,
+    entityType: 'standalone_course',
+    entityId: data.id,
+    newValue: { title, slug, price_ngn },
+    req: request,
+  });
 
   return NextResponse.json({ id: data.id }, { status: 201 });
 }
