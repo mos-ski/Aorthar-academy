@@ -10,6 +10,15 @@ function extractYouTubeId(url: string): string | null {
   return match?.[1] ?? null;
 }
 
+function extractDriveId(url: string): string | null {
+  // https://drive.google.com/file/d/FILE_ID/view  or  /preview
+  const fileMatch = url.match(/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/);
+  if (fileMatch) return fileMatch[1];
+  // https://drive.google.com/open?id=FILE_ID
+  const openMatch = url.match(/drive\.google\.com\/open\?id=([A-Za-z0-9_-]+)/);
+  return openMatch?.[1] ?? null;
+}
+
 interface Lesson {
   id: string;
   title: string;
@@ -43,7 +52,9 @@ export default function LessonClassroom({ course, lessons, currentLessonId }: Pr
   const nextLesson = lessons[currentIndex + 1] ?? null;
   const prevLesson = currentIndex > 0 ? lessons[currentIndex - 1] : null;
 
-  const videoId = currentLesson?.youtubeUrl ? extractYouTubeId(currentLesson.youtubeUrl) : null;
+  const videoUrl = currentLesson?.youtubeUrl ?? '';
+  const youtubeId = videoUrl ? extractYouTubeId(videoUrl) : null;
+  const driveId = !youtubeId && videoUrl ? extractDriveId(videoUrl) : null;
 
   async function markComplete(lessonId: string) {
     if (completedIds.has(lessonId)) return;
@@ -200,9 +211,9 @@ export default function LessonClassroom({ course, lessons, currentLessonId }: Pr
         {/* Video + lesson info */}
         <div className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-8 py-6 flex flex-col gap-6">
           {/* Video player */}
-          {videoId ? (
+          {youtubeId ? (
             <YouTubePlayer
-              videoId={videoId}
+              videoId={youtubeId}
               onEnded={handleVideoEnded}
               nextLesson={
                 nextLesson
@@ -213,6 +224,15 @@ export default function LessonClassroom({ course, lessons, currentLessonId }: Pr
                   : undefined
               }
             />
+          ) : driveId ? (
+            <div className="aspect-video w-full rounded overflow-hidden bg-black">
+              <iframe
+                src={`https://drive.google.com/file/d/${driveId}/preview`}
+                className="w-full h-full"
+                allow="autoplay"
+                allowFullScreen
+              />
+            </div>
           ) : (
             <div className="aspect-video bg-black/40 rounded flex items-center justify-center">
               <p className="text-white/30 text-sm">No video available for this lesson.</p>
