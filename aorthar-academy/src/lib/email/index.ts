@@ -14,7 +14,7 @@ export interface SendEmailOptions {
 }
 
 export async function sendEmail({ to, subject, html, from }: SendEmailOptions) {
-  const sender = from ?? 'Aorthar Academy <hello@aorthar.academy>';
+  const sender = from ?? 'Aorthar Academy <hello@aorthar.com>';
 
   const { data, error } = await getResend().emails.send({ from: sender, to, subject, html });
 
