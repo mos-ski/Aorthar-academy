@@ -47,17 +47,22 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
   const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
 
   return (
-    <div className={`relative w-full aspect-video bg-black ${className ?? ''}`}>
+    <div className={`relative w-full aspect-video bg-black overflow-hidden ${className ?? ''}`}>
+      {/* Shift iframe up by 40px to push the Drive branding out of view, compensate height */}
       <iframe
         src={embedUrl}
-        className="absolute inset-0 w-full h-full"
         allow="autoplay"
         allowFullScreen
         title="Course lesson"
-        style={{ border: 'none' }}
+        style={{
+          border: 'none',
+          position: 'absolute',
+          top: '-40px',
+          left: 0,
+          width: '100%',
+          height: 'calc(100% + 40px)',
+        }}
       />
-      {/* Cover Google Drive branding icon (top-right corner) */}
-      <div className="absolute top-0 right-0 w-28 h-10 z-10" style={{ backgroundColor: '#000', pointerEvents: 'none' }} />
 
       {/* Preview expired — fullscreen paywall overlay */}
       {previewExpired && (

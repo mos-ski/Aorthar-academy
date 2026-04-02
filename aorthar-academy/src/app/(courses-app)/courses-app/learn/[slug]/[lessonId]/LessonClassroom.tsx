@@ -196,14 +196,18 @@ export default function LessonClassroom({ course, lessons, currentLessonId }: Pr
               <div className="aspect-video w-full rounded-xl overflow-hidden bg-black relative">
                 <iframe
                   src={`https://drive.google.com/file/d/${driveId}/preview`}
-                  className="absolute inset-0 w-full h-full"
                   allow="autoplay"
                   allowFullScreen
                   title={currentLesson.title}
-                  style={{ border: 'none' }}
+                  style={{
+                    border: 'none',
+                    position: 'absolute',
+                    top: '-40px',
+                    left: 0,
+                    width: '100%',
+                    height: 'calc(100% + 40px)',
+                  }}
                 />
-                {/* Cover Google Drive branding */}
-                <div className="absolute top-0 right-0 w-28 h-10 z-10 pointer-events-none" style={{ backgroundColor: '#000' }} />
               </div>
             ) : (
               <div className="aspect-video bg-black/40 rounded-xl flex items-center justify-center">
