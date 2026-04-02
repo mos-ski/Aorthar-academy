@@ -19,6 +19,7 @@ type User = {
   department: string | null;
   created_at: string;
   subscriptions: { status: string }[];
+  standalone_purchases: { course_id: string; purchased_at: string; standalone_courses: { title: string } | null }[];
 };
 
 const ROLE_VARIANT: Record<string, 'default' | 'secondary' | 'destructive'> = {
@@ -80,6 +81,7 @@ export default function UsersTable({ users }: Props) {
                 <TableHead>Role</TableHead>
                 <TableHead>Department</TableHead>
                 <TableHead>Premium</TableHead>
+                <TableHead>Purchases</TableHead>
                 <TableHead>Joined</TableHead>
                 <TableHead className="w-28">Actions</TableHead>
               </TableRow>
@@ -104,6 +106,19 @@ export default function UsersTable({ users }: Props) {
                         ? <Badge variant="default">Premium</Badge>
                         : <span className="text-xs text-muted-foreground">Free</span>}
                     </TableCell>
+                    <TableCell>
+                      {Array.isArray(user.standalone_purchases) && user.standalone_purchases.length > 0
+                        ? (
+                          <div className="space-y-1">
+                            {user.standalone_purchases.map((p) => (
+                              <Badge key={p.course_id} variant="outline" className="text-xs">
+                                {p.standalone_courses?.title ?? 'Course'}
+                              </Badge>
+                            ))}
+                          </div>
+                        )
+                        : <span className="text-xs text-muted-foreground">—</span>}
+                    </TableCell>
                     <TableCell className="text-sm">{formatDate(user.created_at)}</TableCell>
                     <TableCell>
                       <AdminUserActions userId={user.user_id} currentRole={user.role} isPremium={isPremium} />
@@ -113,7 +128,7 @@ export default function UsersTable({ users }: Props) {
               })}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     No users match your filters.
                   </TableCell>
                 </TableRow>

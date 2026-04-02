@@ -9,7 +9,7 @@ export default async function AdminUsersPage() {
 
   const { data: users } = await admin
     .from('profiles')
-    .select('*, subscriptions(status)')
+    .select('*, subscriptions(status), standalone_purchases(course_id, purchased_at, standalone_courses(title))')
     .order('created_at', { ascending: false });
 
   const rows = users ?? [];
@@ -19,6 +19,9 @@ export default async function AdminUsersPage() {
   const premiumCount = rows.filter(
     (u) => Array.isArray(u.subscriptions) && u.subscriptions.some((s: { status: string }) => s.status === 'active'),
   ).length;
+  const purchaseCount = rows.filter(
+    (u) => Array.isArray(u.standalone_purchases) && u.standalone_purchases.length > 0,
+  ).length;
 
   return (
     <div className="space-y-6">
@@ -27,7 +30,7 @@ export default async function AdminUsersPage() {
         <p className="text-sm text-muted-foreground">{rows.length} registered accounts</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Admins</CardTitle>
@@ -45,6 +48,12 @@ export default async function AdminUsersPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Premium</CardTitle>
           </CardHeader>
           <CardContent><p className="text-2xl font-bold">{premiumCount}</p></CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Course Buyers</CardTitle>
+          </CardHeader>
+          <CardContent><p className="text-2xl font-bold">{purchaseCount}</p></CardContent>
         </Card>
       </div>
 
