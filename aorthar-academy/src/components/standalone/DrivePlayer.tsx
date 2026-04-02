@@ -56,6 +56,8 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
         title="Course lesson"
         style={{ border: 'none' }}
       />
+      {/* Cover Google Drive branding icon (top-right corner) */}
+      <div className="absolute top-0 right-0 w-28 h-10 z-10" style={{ backgroundColor: '#000', pointerEvents: 'none' }} />
 
       {/* Preview expired — fullscreen paywall overlay */}
       {previewExpired && (
