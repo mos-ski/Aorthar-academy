@@ -202,10 +202,10 @@ export default function LessonClassroom({ course, lessons, currentLessonId }: Pr
                   style={{
                     border: 'none',
                     position: 'absolute',
-                    top: '-80px',
+                    top: '-30px',
                     left: 0,
                     width: '100%',
-                    height: 'calc(100% + 80px)',
+                    height: 'calc(100% + 30px)',
                   }}
                 />
               </div>

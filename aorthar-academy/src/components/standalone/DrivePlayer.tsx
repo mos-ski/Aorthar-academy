@@ -57,10 +57,10 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
         style={{
           border: 'none',
           position: 'absolute',
-          top: '-80px',
+          top: '-30px',
           left: 0,
           width: '100%',
-          height: 'calc(100% + 80px)',
+          height: 'calc(100% + 30px)',
         }}
       />
 
