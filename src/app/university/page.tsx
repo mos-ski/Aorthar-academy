@@ -146,7 +146,7 @@ export default async function UniversityPage() {
           </div>
           <h1
             className="text-5xl sm:text-6xl lg:text-[78px] font-black leading-[0.95] tracking-tight mb-6"
-            style={{ letterSpacing: '-0.03em', fontFamily: 'Impact, "Arial Black", sans-serif' }}
+            style={{ letterSpacing: '-0.03em', fontFamily: 'Impact, "Arial Black", sans-serif', textTransform: 'uppercase' }}
           >
             A university built{' '}
             <span
@@ -191,7 +191,7 @@ export default async function UniversityPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#a7d252] mb-3">Programme Structure</p>
             <h2
               className="text-3xl sm:text-4xl font-black tracking-tight text-white"
-              style={{ letterSpacing: '-0.02em', fontFamily: 'Impact, "Arial Black", sans-serif' }}
+              style={{ letterSpacing: '-0.02em', fontFamily: 'Impact, "Arial Black", sans-serif', textTransform: 'uppercase' }}
             >
               Four years. One career path.
             </h2>
@@ -221,7 +221,7 @@ export default async function UniversityPage() {
                 <div>
                   <span
                     className="text-5xl font-black leading-none"
-                    style={{ fontFamily: 'Impact, "Arial Black", sans-serif', color: free ? 'rgba(255,255,255,0.12)' : 'rgba(167,210,82,0.2)' }}
+                    style={{ fontFamily: 'Impact, "Arial Black", sans-serif', color: free ? 'rgba(255,255,255,0.12)' : 'rgba(167,210,82,0.2)', textTransform: 'uppercase' }}
                   >
                     {year}
                   </span>
@@ -254,7 +254,7 @@ export default async function UniversityPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#a7d252] mb-3">Departments</p>
           <h2
             className="text-3xl sm:text-4xl font-black tracking-tight text-white"
-            style={{ letterSpacing: '-0.02em', fontFamily: 'Impact, "Arial Black", sans-serif' }}
+            style={{ letterSpacing: '-0.02em', fontFamily: 'Impact, "Arial Black", sans-serif', textTransform: 'uppercase' }}
           >
             Eight tracks. Pick yours.
           </h2>
@@ -292,7 +292,7 @@ export default async function UniversityPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#a7d252] mb-3">How It Works</p>
             <h2
               className="text-3xl sm:text-4xl font-black tracking-tight text-white"
-              style={{ letterSpacing: '-0.02em', fontFamily: 'Impact, "Arial Black", sans-serif' }}
+              style={{ letterSpacing: '-0.02em', fontFamily: 'Impact, "Arial Black", sans-serif', textTransform: 'uppercase' }}
             >
               Learn. Build. Get hired.
             </h2>
@@ -307,7 +307,7 @@ export default async function UniversityPage() {
               >
                 <span
                   className="text-4xl font-black shrink-0 leading-none mt-1"
-                  style={{ fontFamily: 'Impact, "Arial Black", sans-serif', color: 'rgba(167,210,82,0.2)' }}
+                  style={{ fontFamily: 'Impact, "Arial Black", sans-serif', color: 'rgba(167,210,82,0.2)', textTransform: 'uppercase' }}
                 >
                   {step}
                 </span>
@@ -327,7 +327,7 @@ export default async function UniversityPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#a7d252] mb-3">Pricing</p>
           <h2
             className="text-3xl sm:text-4xl font-black tracking-tight text-white"
-            style={{ letterSpacing: '-0.02em', fontFamily: 'Impact, "Arial Black", sans-serif' }}
+            style={{ letterSpacing: '-0.02em', fontFamily: 'Impact, "Arial Black", sans-serif', textTransform: 'uppercase' }}
           >
             Start free. Go further with Premium.
           </h2>
@@ -428,7 +428,7 @@ export default async function UniversityPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#a7d252] mb-5">Get started today</p>
           <h2
             className="text-4xl sm:text-5xl font-black text-white mb-5 leading-[1.0]"
-            style={{ letterSpacing: '-0.02em', fontFamily: 'Impact, "Arial Black", sans-serif' }}
+            style={{ letterSpacing: '-0.02em', fontFamily: 'Impact, "Arial Black", sans-serif', textTransform: 'uppercase' }}
           >
             Year 100 is waiting for you.
           </h2>
