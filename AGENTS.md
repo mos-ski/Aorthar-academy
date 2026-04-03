@@ -6,15 +6,13 @@ This file provides guidance for agentic coding agents operating in the Aorthar A
 
 - **Stack:** Next.js 16 App Router · TypeScript · Tailwind CSS v4 · shadcn/ui (Radix) · Supabase · Zod · React Hook Form · Sonner toasts · Lucide icons
 - **Package manager:** `bun` (symlinked at `/usr/local/bin/bun`). Do not use `npm` or `pnpm`.
-- **Root:** `/Users/theoneglobal/Documents/Aorthar/aorthar-academy`
+- **Root:** `/Users/theoneglobal/Documents/Projects/Aorthar`
 
 ---
 
 ## Build / Lint / Test Commands
 
 ```bash
-cd aorthar-academy
-
 bun dev              # Start dev server (localhost:3000)
 bun run build        # Production build — primary correctness gate (no test suite)
 bun run lint         # ESLint with Next.js config
