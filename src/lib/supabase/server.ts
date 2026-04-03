@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 // In production, set cookie domain to .aorthar.com so sessions are shared
-// across university.aorthar.com and courses.aorthar.com
+// across all subdomains: university, bootcamp, internship, admin
 const cookieDomain =
   process.env.NEXT_PUBLIC_APP_ENV === 'production' ||
   process.env.NEXT_PUBLIC_APP_ENV === 'staging'

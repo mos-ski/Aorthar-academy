@@ -79,8 +79,8 @@ export async function POST(request: NextRequest) {
   const reference = generateReference(user.id);
   const amountKobo = course.price_ngn * 100;
 
-  const host = request.headers.get('host') ?? 'courses.aorthar.com';
-  const origin = host.includes('localhost') ? `http://${host}` : `https://courses.aorthar.com`;
+  const host = request.headers.get('host') ?? 'bootcamp.aorthar.com';
+  const origin = host.includes('localhost') ? `http://${host}` : `https://bootcamp.aorthar.com`;
 
   try {
     const paystack = await initiatePayment({

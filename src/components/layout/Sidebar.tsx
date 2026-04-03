@@ -112,7 +112,7 @@ const adminPrimaryModules: Array<{
 }> = [
   { key: 'overview', label: 'Overview', icon: LayoutDashboard, href: '/admin' },
   { key: 'university', label: 'University', icon: Building2, href: '/admin/courses' },
-  { key: 'courses', label: 'External Courses', icon: BookOpen, href: '/admin/standalone-courses' },
+  { key: 'courses', label: 'Bootcamps', icon: BookOpen, href: '/admin/standalone-courses' },
   { key: 'admin_access', label: 'Admin Access', icon: ShieldCheck, href: '/admin/admin-access' },
   { key: 'audit_logs', label: 'Audit Logs', icon: ScrollText, href: '/admin/audit-logs' },
   { key: 'profile', label: 'Profile Settings', icon: CircleUser, href: '/settings' },
@@ -222,7 +222,7 @@ export default function Sidebar({
     activeModule === 'university'
       ? 'University'
     : activeModule === 'courses'
-      ? 'External Courses'
+      ? 'Bootcamps'
       : activeModule === 'admin_access'
       ? 'Admin Access'
       : activeModule === 'audit_logs'

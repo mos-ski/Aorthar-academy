@@ -70,9 +70,8 @@ export default function TermsPage() {
             <p>Aorthar offers the following services, which may evolve over time:</p>
             <ul className="list-disc pl-5 space-y-2">
               <li><strong className="text-white">University Platform:</strong> A structured, self-paced learning dashboard covering Years 100 through 400 across eight departments. Includes courses, lessons, quizzes, exams, GPA tracking, and a Capstone project. Year 400 content requires an active premium subscription.</li>
-              <li><strong className="text-white">Courses:</strong> Standalone pre-recorded courses available for individual purchase, covering Product Design, Product Management, QA & Testing, Scrum & Agile, and Tech Operations.</li>
+              <li><strong className="text-white">Bootcamps:</strong> Self-paced pre-recorded courses available for individual purchase, covering Product Design, Product Management, QA & Testing, Scrum & Agile, and Tech Operations.</li>
               <li><strong className="text-white">Internship Program:</strong> A free quarterly cohort where selected applicants (10–20 per cohort) are trained on live projects and placed with partner startups. Participation is competitive and merit-based.</li>
-              <li><strong className="text-white">Bootcamps:</strong> Live, cohort-style intensive programs (8–12 weeks) with structured instruction, project work, and peer collaboration.</li>
               <li><strong className="text-white">Mentorship & Career Placement:</strong> Career support tools and integration with Motivv, our talent placement partner, where vetted graduates are matched with hiring companies.</li>
               <li><strong className="text-white">Community:</strong> Access to Aorthar's learning community via WhatsApp and other channels for peer support, resources, and networking.</li>
             </ul>

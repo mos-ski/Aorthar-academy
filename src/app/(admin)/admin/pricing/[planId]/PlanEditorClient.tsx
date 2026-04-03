@@ -249,7 +249,7 @@ export default function PlanEditorClient({
           </div>
 
           <div className="space-y-2">
-            <Label>Accessible External Courses</Label>
+            <Label>Accessible Bootcamps</Label>
             <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border p-3">
               {externalCourses.map((course) => (
                 <label key={course.id} className="flex items-center gap-2 text-sm">

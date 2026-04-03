@@ -54,8 +54,8 @@ export default function StandaloneCoursesAdmin({ courses }: { courses: Course[] 
     <div className="max-w-5xl">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">External Courses</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage courses for courses.aorthar.com</p>
+          <h1 className="text-2xl font-bold">Bootcamps</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage bootcamps for bootcamp.aorthar.com</p>
         </div>
         <button
           onClick={() => setCreating(true)}

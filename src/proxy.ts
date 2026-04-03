@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { getPermissionForPath, hasAdminPermission, normalizeAdminLevel } from '@/lib/admin/permissions';
+import { getProductFromHost } from '@/lib/urls';
 
 // ─────────────────────────────────────────────
 // ROUTE CATEGORIES
@@ -28,7 +29,7 @@ const PUBLIC_ROUTES = [
   '/api/auth/forgot-password',
   '/api/auth/send-welcome',
   '/api/auth/callback',
-  // courses-app public routes
+  // courses-app / bootcamp public routes
   '/courses-app',
 ];
 const AUTH_ROUTES = ['/login', '/register', '/verify'];
@@ -36,6 +37,28 @@ const PREMIUM_ROUTES = ['/courses/400', '/transcript/export', '/mentorship', '/c
 const ADMIN_ROUTES = ['/admin'];
 const ONBOARDING_ROUTE = '/onboarding';
 const SUSPENDED_ROUTE = '/suspended';
+
+// ─────────────────────────────────────────────
+// SUBDOMAIN CONFIG
+// ─────────────────────────────────────────────
+
+/** Products that skip the university onboarding gate */
+const SKIP_ONBOARDING_PRODUCTS = ['bootcamp', 'internship', 'admin', 'base'] as const;
+
+/** Auth routes that should pass through on every subdomain */
+const AUTH_PASSTHROUGH_PREFIXES = [
+  '/login',
+  '/register',
+  '/verify',
+  '/forgot-password',
+  '/reset-password',
+  '/api/',
+  '/_next/',
+] as const;
+
+function isAuthPassthrough(pathname: string): boolean {
+  return AUTH_PASSTHROUGH_PREFIXES.some((p) => pathname.startsWith(p));
+}
 
 function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'));
@@ -62,30 +85,17 @@ function isSuspendedRoute(pathname: string): boolean {
 }
 
 // ─────────────────────────────────────────────
-// SUBDOMAIN ROUTING
+// SUBDOMAIN REWRITE
 // ─────────────────────────────────────────────
 
 function getSubdomainRewrite(request: NextRequest): NextResponse | null {
   const hostname = request.headers.get('host') || '';
   const pathname = request.nextUrl.pathname;
+  const product = getProductFromHost(hostname);
 
-  // courses.aorthar.com → /courses-app/*
-  // Strip any accidental /courses-app prefix that internal links may have added
-  if (
-    hostname === 'courses.aorthar.com' ||
-    hostname === 'courses.aorthar.com:3000'
-  ) {
-    // Auth routes and API routes pass through as-is (they exist at root level)
-    const isPassthrough =
-      pathname.startsWith('/login') ||
-      pathname.startsWith('/register') ||
-      pathname.startsWith('/verify') ||
-      pathname.startsWith('/forgot-password') ||
-      pathname.startsWith('/reset-password') ||
-      pathname.startsWith('/api/') ||
-      pathname.startsWith('/_next/');
-    if (isPassthrough) return null;
-
+  // bootcamp.aorthar.com (and legacy courses.aorthar.com) → /courses-app/*
+  if (product === 'bootcamp') {
+    if (isAuthPassthrough(pathname)) return null;
     const url = request.nextUrl.clone();
     const cleanPath = pathname.startsWith('/courses-app')
       ? pathname.slice('/courses-app'.length) || '/'
@@ -94,18 +104,37 @@ function getSubdomainRewrite(request: NextRequest): NextResponse | null {
     return NextResponse.rewrite(url);
   }
 
-  // university.aorthar.com — root → /dashboard (or /login if not authenticated)
-  if (
-    hostname === 'university.aorthar.com' ||
-    hostname === 'university.aorthar.com:3000'
-  ) {
+  // university.aorthar.com → root redirects to /dashboard
+  if (product === 'university') {
     if (pathname === '/') {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
-    // All other paths (dashboard, courses, login, etc.) pass through unchanged
     return null;
   }
 
+  // internship.aorthar.com → /internship/*
+  if (product === 'internship') {
+    if (isAuthPassthrough(pathname)) return null;
+    const url = request.nextUrl.clone();
+    const cleanPath = pathname.startsWith('/internship')
+      ? pathname.slice('/internship'.length) || '/'
+      : pathname;
+    url.pathname = cleanPath === '/' ? '/internship' : `/internship${cleanPath}`;
+    return NextResponse.rewrite(url);
+  }
+
+  // admin.aorthar.com → /admin/*
+  if (product === 'admin') {
+    if (isAuthPassthrough(pathname)) return null;
+    const url = request.nextUrl.clone();
+    const cleanPath = pathname.startsWith('/admin')
+      ? pathname.slice('/admin'.length) || '/'
+      : pathname;
+    url.pathname = cleanPath === '/' ? '/admin' : `/admin${cleanPath}`;
+    return NextResponse.rewrite(url);
+  }
+
+  // aorthar.com (base/marketing) — no rewrite needed
   return null;
 }
 
@@ -117,9 +146,6 @@ export async function proxy(request: NextRequest) {
   // ── Subdomain routing (runs before auth checks) ──
   const subdomainRewrite = getSubdomainRewrite(request);
   if (subdomainRewrite) {
-    // Apply Supabase cookie refresh on the rewritten response too
-    // by letting it fall through with the rewritten URL
-    // For simple rewrites we return early; auth is handled on the rewritten path
     return subdomainRewrite;
   }
 
@@ -162,14 +188,17 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  // ── Determine product context from hostname ──
+  const hostname = request.headers.get('host') ?? '';
+  const product = getProductFromHost(hostname);
+  const isBootcampSubdomain = product === 'bootcamp';
+  const skipOnboarding = product !== null && (SKIP_ONBOARDING_PRODUCTS as readonly string[]).includes(product);
+
   // Redirect logged-in users away from auth pages
   if (user && isAuthRoute(pathname)) {
-    const hostname = request.headers.get('host') ?? '';
-    const isCoursesDomain =
-      hostname === 'courses.aorthar.com' || hostname.startsWith('courses.aorthar.com:');
-    // On courses subdomain: honour ?next param, otherwise go to My Courses
     const nextParam = request.nextUrl.searchParams.get('next');
-    if (isCoursesDomain) {
+    // On bootcamp subdomain: honour ?next param, otherwise go to learn
+    if (isBootcampSubdomain) {
       const dest = nextParam ?? '/courses-app/learn';
       return NextResponse.redirect(new URL(dest, request.url));
     }
@@ -217,10 +246,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // Student onboarding gate — skip entirely on courses subdomain
-  const reqHostname = request.headers.get('host') ?? '';
-  const isCoursesSubdomain = reqHostname === 'courses.aorthar.com' || reqHostname.startsWith('courses.aorthar.com:');
-  if (user && profile?.role === 'student' && !isCoursesSubdomain) {
+  // Student onboarding gate — skip on bootcamp, internship, admin, and base subdomains
+  if (user && profile?.role === 'student' && !skipOnboarding) {
     const done = Boolean(profile.department && profile.onboarding_completed_at);
     const isApiRoute = pathname.startsWith('/api/');
 

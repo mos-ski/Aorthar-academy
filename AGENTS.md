@@ -182,24 +182,113 @@ const isPremium = await checkPremiumAccess(user.id);
 
 ---
 
-## Route Groups
+## Subdomain Architecture
+
+Aorthar runs on **five subdomains**, each with a distinct purpose:
+
+| Subdomain | Product | Auth | Purpose |
+|-----------|---------|------|---------|
+| `aorthar.com` | Marketing Site | Public | Brand, landing page, CTAs to products |
+| `university.aorthar.com` | University | Required + onboarding gate | 4-year academic program |
+| `internship.aorthar.com` | Internship | Public browsing, required for exam | Quarterly cohort program |
+| `bootcamp.aorthar.com` | Bootcamps | Required for purchase | Self-paced courses |
+| `admin.aorthar.com` | Admin CMS | Required (admin guard) | Internal management |
+
+### Shared Auth (SSO)
+
+All subdomains share Supabase Auth via `.aorthar.com` cookie domain. One credential works everywhere.
+
+### Route Groups by Subdomain
+
+#### University (`university.aorthar.com`)
 
 | Group | Path | Auth | Purpose |
 |-------|------|------|---------|
 | `(auth)` | `/login`, `/register`, `/verify` | public | Auth pages |
 | `(dashboard)` | `/dashboard`, `/courses`, etc. | required + onboarding gate | Student app |
 | `(classroom)` | `/classroom/[courseId]` | required | Full-screen course viewer |
-| `(admin)` | `/admin/**` | required (guard disabled in dev) | Admin CMS |
-| root | `/`, `/pricing`, `/onboarding` | public | Landing, pricing, onboarding |
+
+#### Internship (`internship.aorthar.com`)
+
+| Route | Auth | Purpose |
+|-------|------|---------|
+| `/` | public | Landing page |
+| `/apply` | public | Application + form purchase |
+| `/quiz/enter` | public | Exam entry (name + code) |
+| `/quiz/take` | public | Active exam session |
+| `/results` | public | Results lookup |
+
+#### Bootcamps (`bootcamp.aorthar.com`)
+
+| Route | Auth | Purpose |
+|-------|------|---------|
+| `/` | public | Bootcamp catalog |
+| `/courses-app/[courseId]` | public | Bootcamp detail |
+| `/courses-app/[courseId]/player` | required | Lesson player |
+| `/courses-app/[courseId]/checkout` | required | Purchase flow |
+
+#### Admin (`admin.aorthar.com`)
+
+| Route | Auth | Purpose |
+|-------|------|---------|
+| `/` | admin required | Admin dashboard |
+| `/courses`, `/users`, etc. | admin required | Product management |
+| `/internship/**` | admin required | Internship management |
+| `/bootcamps/**` | admin required | Bootcamp management |
+
+**Admin guard is disabled when `NEXT_PUBLIC_APP_ENV=development`.** In staging/prod, non-admins are redirected to `/unauthorized`.
+
+---
+
+## Documentation
+
+All product documentation is in `docs/`. Start with the master index:
+
+- **Master Index:** `docs/README.md`
+- **Products:** `docs/products/{internship,university,bootcamps}/`
+- **Shared:** `docs/products/_shared/` (auth, payments, admin, landing)
+- **Platform:** `docs/platform/` (database, API, RLS, edge functions, email, env vars)
+- **Analysis:** `docs/analysis/` (roadmap, gaps, tech debt, scope)
+
+### Key Documentation Files
+
+| File | Role |
+|------|------|
+| `docs/README.md` | Master index — links to everything |
+| `docs/products/_shared/01-overview.md` | 3-product architecture overview |
+| `docs/products/university/00-overview.md` | University product overview |
+| `docs/products/internship/00-overview.md` | Internship product overview |
+| `docs/products/bootcamps/00-overview.md` | Bootcamps product overview |
+| `docs/platform/database-schema.md` | All database tables (all products) |
+| `docs/platform/api-reference.md` | All API routes |
+| `docs/platform/rls-policies.md` | Row Level Security inventory |
+| `docs/platform/email-templates.md` | All Resend email templates |
+
+---
+
+## Terminology
+
+| Term | University | Bootcamp | Internship |
+|------|-----------|----------|------------|
+| **Product** | University | Bootcamp | Internship |
+| **Learning unit** | Course | Bootcamp | — |
+| **Content item** | Class | Lesson | — |
+| **Assessment** | Quiz + Exam | None | One-time exam |
+| **Structure** | Dept → Year → Semester → Course → Class | Bootcamp → Lesson | Application → Exam → Placement |
+| **Access model** | Subscription | One-time purchase | One-time form fee |
+| **Certificate** | End of program | End of bootcamp | End of placement |
+| **Subdomain** | `university.aorthar.com` | `bootcamp.aorthar.com` | `internship.aorthar.com` |
 
 ---
 
 ## Common Gotchas
 
-- **Admin guard:** Disabled when `NEXT_PUBLIC_APP_ENV=development`. In staging/prod, non-admins are redirected to `/unauthorized`.
 - **Dashboard padding:** `(dashboard)/layout.tsx` applies `px-[15%]` padding. Do not add per-page horizontal padding.
 - **Environment variable:** `NEXT_PUBLIC_APP_ENV=development|staging|production` controls env badge and demo toggle visibility.
 - **Edge Functions:** Located in `supabase/functions/`. Excluded from `tsconfig.json`. Use Deno imports.
+- **Five subdomains, one codebase:** All products share the same Next.js app. Use subdomain detection and route groups to separate logic.
+- **Terminology:** "Course" in University ≠ "Bootcamp" in standalone. A University Course has Classes; a Bootcamp has Lessons.
+- **Admin is separate:** `admin.aorthar.com` is its own subdomain, not `/admin` on the main site.
 
 ---
 
@@ -214,6 +303,7 @@ const isPremium = await checkPremiumAccess(user.id);
 | `src/lib/auth.ts` | requireAuth, requireRole, checkPremiumAccess |
 | `src/lib/demo/mode.ts` | isDemoMode() helper |
 | `src/components/courses/CourseViewer.tsx` | Full classroom UI |
+| `docs/README.md` | Master documentation index |
 
 ---
 

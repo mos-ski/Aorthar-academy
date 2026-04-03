@@ -21,11 +21,11 @@ export function welcomeHtml(data: WelcomeEmailData): string {
     : `You've just created your Aorthar Academy account. We built this platform to give everyone access to a structured, world-class design education — and we're genuinely excited to have you here.`;
 
   const bodyParagraph2 = isCourses
-    ? `Browse the course catalogue, find what speaks to you, and pay once for lifetime access. No subscriptions, no surprises. Just great content, whenever you need it.`
+    ? `Browse the bootcamp catalogue, find what speaks to you, and pay once for lifetime access. No subscriptions, no surprises. Just great content, whenever you need it.`
     : `You'll complete onboarding to pick your department, then unlock Year 100–300 courses for free. Everything is structured, paced, and designed to take you from zero to capable — one semester at a time.`;
 
-  const ctaUrl = isCourses ? 'https://courses.aorthar.com' : 'https://university.aorthar.com/dashboard';
-  const ctaLabel = isCourses ? 'Browse courses →' : 'Go to my dashboard →';
+  const ctaUrl = isCourses ? 'https://bootcamp.aorthar.com' : 'https://university.aorthar.com/dashboard';
+  const ctaLabel = isCourses ? 'Browse bootcamps →' : 'Go to my dashboard →';
 
   return `<!DOCTYPE html>
 <html lang="en">

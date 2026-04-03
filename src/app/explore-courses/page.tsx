@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
 export default function ExploreCoursesPage() {
-  redirect('https://courses.aorthar.com');
+  redirect('https://bootcamp.aorthar.com');
 }

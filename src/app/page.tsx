@@ -115,7 +115,7 @@ export default function HomePage() {
             { label: "Home", href: "/", external: false },
             { label: "Join Us", href: "#join", external: false },
             { label: "University", href: "https://university.aorthar.com", external: true },
-            { label: "Courses", href: "https://courses.aorthar.com", external: true },
+            { label: "Bootcamps", href: "https://bootcamp.aorthar.com", external: true },
             { label: "X", href: "https://x.com/aorthar", external: true },
             { label: "Instagram", href: "https://instagram.com/aortharhq", external: true },
             { label: "YouTube", href: "https://youtube.com/@aorthar", external: true },
@@ -187,14 +187,16 @@ export default function HomePage() {
           </h1>
 
           {/* CTA Button */}
-          <Link
-            href="/internship"
+          <a
+            href="https://internship.aorthar.com"
+            target="_blank"
+            rel="noopener noreferrer"
             className="landing-pulse flex items-center justify-center text-white font-bold text-[14px] sm:text-[15px] hover:opacity-90 transition-opacity"
             style={{ backgroundColor: "#08694a", padding: "10px", width: "min(273px, 100%)" }}
             data-reveal="zoom"
           >
             Apply for the Internship →
-          </Link>
+          </a>
 
           {/* Ratings badge */}
           <div data-reveal="zoom">
@@ -323,18 +325,19 @@ export default function HomePage() {
           {/* Feature grid — 2×2 */}
           <div className="flex flex-wrap" style={{ borderTop: "1px solid rgba(255,255,255,0.12)" }}>
             <FeatureCard
-              title="Courses (Learn at Your Own Pace)"
-              description="Pre-recorded courses in Product Design, Management, QA, Scrum & Ops. Learn on your schedule with structured lessons and real-world exercises."
-              ctaLabel="Browse Courses"
-              ctaHref="https://courses.aorthar.com"
+              title="Bootcamps (Learn at Your Own Pace)"
+              description="Self-paced bootcamps in Product Design, Management, QA, Scrum & Ops. Buy once, learn forever — no subscriptions, no surprises."
+              ctaLabel="Browse Bootcamps"
+              ctaHref="https://bootcamp.aorthar.com"
               external
               borderTop={false}
             />
             <FeatureCard
               title="Internship & Talent Hunt"
               description="A quarterly cohort where we train the top 10–20 applicants on real projects and place them in early-stage startups. Free. Applications open twice a year."
-              ctaLabel="Join Waitlist"
-              ctaHref="/internship"
+              ctaLabel="Apply for Internship"
+              ctaHref="https://internship.aorthar.com"
+              external
               borderLeft
               borderTop={false}
             />
@@ -452,13 +455,15 @@ export default function HomePage() {
             </div>
 
             <div className="flex flex-row gap-2">
-              <Link
-                href="/internship"
+              <a
+                href="https://internship.aorthar.com"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center justify-center font-bold text-[14px] sm:text-[15px] hover:opacity-90 transition-opacity whitespace-nowrap"
                 style={{ backgroundColor: "#ffffff", color: "#18191a", padding: "10px 18px" }}
               >
                 Apply for Internship
-              </Link>
+              </a>
               <a
                 href="https://wa.me/2349058653400"
                 target="_blank"
@@ -495,8 +500,8 @@ export default function HomePage() {
                 <p className="text-[13px] sm:text-[14px] leading-5 font-medium" style={{ color: "#d0d5dd" }}>Product</p>
                 <div className="flex flex-col gap-2 sm:gap-3">
                   {[
-                    { label: "Courses", href: "https://courses.aorthar.com", external: true },
-                    { label: "Internship", href: "/internship", external: false },
+                    { label: "Bootcamps", href: "https://bootcamp.aorthar.com", external: true },
+                    { label: "Internship", href: "https://internship.aorthar.com", external: true },
                     { label: "University", href: "https://university.aorthar.com", badge: "New", external: true },
                     { label: "Hire Talent", href: "https://www.motivv.co/post-job", external: true },
                   ].map((link) => (

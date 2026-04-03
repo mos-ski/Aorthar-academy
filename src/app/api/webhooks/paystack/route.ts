@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
               purchaseType: 'course',
               itemName: courseName,
               amountNgn: course?.price_ngn ?? 0,
-              dashboardUrl: 'https://courses.aorthar.com',
+              dashboardUrl: 'https://bootcamp.aorthar.com',
             }),
           });
         }

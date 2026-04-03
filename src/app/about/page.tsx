@@ -78,7 +78,7 @@ export default function AboutPage() {
           {[
             { label: 'Home', href: '/', external: false },
             { label: 'University', href: 'https://university.aorthar.com', external: true },
-            { label: 'Courses', href: 'https://courses.aorthar.com', external: true },
+            { label: 'Bootcamps', href: 'https://bootcamp.aorthar.com', external: true },
             { label: 'Pricing', href: '/pricing', external: false },
           ].map(({ label, href, external }) => external ? (
             <a
@@ -135,13 +135,15 @@ export default function AboutPage() {
             We close the gap between learning and actually working on product teams.
           </p>
           <div className="flex flex-wrap gap-3 mt-8">
-            <Link
-              href="/internship"
+            <a
+              href="https://internship.aorthar.com"
+              target="_blank"
+              rel="noopener noreferrer"
               className="px-5 py-2.5 rounded-md text-sm font-semibold text-black transition hover:opacity-90"
               style={{ backgroundColor: '#a7d252' }}
             >
               Apply for Internship →
-            </Link>
+            </a>
             <Link
               href="/pricing"
               className="px-5 py-2.5 rounded-md text-sm font-semibold text-white/85 border border-white/15 hover:border-[#a7d252] hover:text-white transition"
@@ -305,13 +307,15 @@ export default function AboutPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3 shrink-0">
-            <Link
-              href="/internship"
+            <a
+              href="https://internship.aorthar.com"
+              target="_blank"
+              rel="noopener noreferrer"
               className="px-5 py-2.5 rounded-md text-sm font-semibold text-black transition hover:opacity-90 whitespace-nowrap"
               style={{ backgroundColor: '#a7d252' }}
             >
               Apply for Internship →
-            </Link>
+            </a>
             <a
               href="https://university.aorthar.com"
               target="_blank"

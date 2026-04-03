@@ -71,7 +71,7 @@ export default async function LearnCoursePage({ params, searchParams }: Props) {
                   purchaseType: 'course',
                   itemName: course.title,
                   amountNgn: course.price_ngn,
-                  dashboardUrl: 'https://courses.aorthar.com',
+                  dashboardUrl: 'https://bootcamp.aorthar.com',
                 }),
               });
             }
