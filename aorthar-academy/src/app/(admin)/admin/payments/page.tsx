@@ -13,22 +13,25 @@ export default async function AdminPaymentsPage() {
   const [
     { data: uniTxns },
     { data: standalonePurchases },
+    { data: profileRows },
     { count: activeSubscriptions },
     { count: totalUsers },
     { count: premiumUsers },
   ] = await Promise.all([
-    // University subscription transactions
+    // University subscription transactions — no profile join (user_id FKs to auth.users, not profiles)
     admin
       .from('transactions')
-      .select('id, paystack_reference, amount, status, created_at, user_id, profiles!left(full_name, email)')
+      .select('id, paystack_reference, amount, status, created_at, user_id')
       .order('created_at', { ascending: false })
       .limit(100),
     // Standalone course purchases
     admin
       .from('standalone_purchases')
-      .select('id, paystack_reference, amount_paid_ngn, purchased_at, user_id, course_id, profiles!left(full_name, email), standalone_courses!course_id(title)')
+      .select('id, paystack_reference, amount_paid_ngn, purchased_at, user_id, course_id, standalone_courses(title)')
       .order('purchased_at', { ascending: false })
       .limit(100),
+    // Profiles fetched separately — user_id here is the FK to auth.users
+    admin.from('profiles').select('user_id, full_name, email'),
     admin
       .from('subscriptions')
       .select('*', { count: 'exact', head: true })
@@ -39,6 +42,14 @@ export default async function AdminPaymentsPage() {
       .select('*', { count: 'exact', head: true })
       .eq('status', 'active'),
   ]);
+
+  // Build a profile lookup map keyed by user_id
+  const profileMap = new Map(
+    (profileRows ?? []).map((p) => [
+      p.user_id,
+      { full_name: p.full_name as string | null, email: (p as { email?: string | null }).email ?? null },
+    ]),
+  );
 
   // Normalise both into one display shape
   type TxRow = {
@@ -53,9 +64,9 @@ export default async function AdminPaymentsPage() {
     email: string | null;
   };
 
-  const rows: TxRow[] = [
+  const rows: (TxRow & { user_id?: string })[] = [
     ...(uniTxns ?? []).map((t) => {
-      const profile = (t.profiles as unknown) as { full_name: string | null; email: string | null } | null;
+      const profile = profileMap.get(t.user_id);
       return {
         id: t.id,
         paystack_reference: t.paystack_reference ?? '',
@@ -64,54 +75,53 @@ export default async function AdminPaymentsPage() {
         label: 'University subscription',
         status: t.status ?? 'unknown',
         created_at: t.created_at,
+        user_id: t.user_id,
         full_name: profile?.full_name ?? null,
         email: profile?.email ?? null,
       };
     }),
     ...(standalonePurchases ?? []).map((p) => {
-      const profile = (p.profiles as unknown) as { full_name: string | null; email: string | null } | null;
+      const profile = profileMap.get(p.user_id);
       const course = (p.standalone_courses as unknown) as { title: string | null } | null;
       return {
         id: p.id,
         paystack_reference: p.paystack_reference ?? '',
-        amount_kobo: (p.amount_paid_ngn ?? 0) * 100, // convert to kobo for display consistency
+        amount_kobo: (p.amount_paid_ngn ?? 0) * 100,
         type: 'course' as const,
-        label: course?.title ?? 'Course purchase',
+        label: Array.isArray(p.standalone_courses)
+          ? ((p.standalone_courses[0] as { title?: string | null } | undefined)?.title ?? 'Course purchase')
+          : (course?.title ?? 'Course purchase'),
         status: 'success',
         created_at: p.purchased_at,
+        user_id: p.user_id,
         full_name: profile?.full_name ?? null,
         email: profile?.email ?? null,
-        user_id: p.user_id,
       };
     }),
   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-  // Enrich course purchases that lack profile data with auth user info
-  const missingProfileIds = rows
-    .filter((r) => r.type === 'course' && !r.full_name && !r.email)
-    .map((r) => (r as typeof rows[number] & { user_id?: string }).user_id)
-    .filter(Boolean) as string[];
+  // Enrich any rows where profile lookup found nothing — fall back to auth API
+  const missingUserIds = [...new Set(
+    rows.filter((r) => !r.full_name && !r.email && r.user_id).map((r) => r.user_id!),
+  )];
 
-  if (missingProfileIds.length > 0) {
-    const userMap = new Map<string, { full_name: string | null; email: string | null }>();
-    for (const uid of missingProfileIds) {
-      const { data } = await admin.auth.admin.getUserById(uid);
-      if (data?.user) {
-        userMap.set(uid, {
-          full_name: data.user.user_metadata?.full_name ?? null,
-          email: data.user.email ?? null,
-        });
-      }
-    }
-
-    for (const row of rows) {
-      if (row.type === 'course' && !row.full_name && !row.email) {
-        const uid = (row as typeof row & { user_id?: string }).user_id;
-        if (uid && userMap.has(uid)) {
-          const info = userMap.get(uid)!;
-          row.full_name = info.full_name;
-          row.email = info.email;
+  if (missingUserIds.length > 0) {
+    await Promise.all(
+      missingUserIds.map(async (uid) => {
+        const { data } = await admin.auth.admin.getUserById(uid);
+        if (data?.user) {
+          profileMap.set(uid, {
+            full_name: (data.user.user_metadata?.full_name as string | null) ?? null,
+            email: data.user.email ?? null,
+          });
         }
+      }),
+    );
+    for (const row of rows) {
+      if (!row.full_name && !row.email && row.user_id && profileMap.has(row.user_id)) {
+        const info = profileMap.get(row.user_id)!;
+        row.full_name = info.full_name;
+        row.email = info.email;
       }
     }
   }
