@@ -2,6 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requireRole } from '@/lib/auth';
 import { writeAuditLog } from '@/lib/admin/audit';
+import { requireAdminApi } from '@/lib/admin/apiAuth';
+
+export async function GET() {
+  try {
+    await requireAdminApi();
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from('standalone_courses')
+      .select('id, slug, title')
+      .order('title');
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(data ?? []);
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+}
 
 export async function POST(request: NextRequest) {
   const { user } = await requireAuth();
