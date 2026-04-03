@@ -114,6 +114,7 @@ export default function HomePage() {
           {[
             { label: "Home", href: "/", external: false },
             { label: "Join Us", href: "#join", external: false },
+            { label: "Internship", href: "https://internship.aorthar.com", external: true },
             { label: "University", href: "https://university.aorthar.com", external: true },
             { label: "Bootcamps", href: "https://bootcamp.aorthar.com", external: true },
             { label: "X", href: "https://x.com/aorthar", external: true },
