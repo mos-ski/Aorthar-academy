@@ -102,7 +102,7 @@ Allow other universities to white-label the platform for their own students. B2B
 
 | # | Change | Impact |
 |---|--------|--------|
-| QW-01 | Fix `/univeristy/transaction` typo redirect | Eliminates 404s |
+| QW-01 | ~~Fix `/univeristy/transaction` typo redirect~~ | ✅ Resolved — removed /university/* and /univeristy/* routes entirely |
 | QW-02 | Rename `src/lib/ai/openai.ts` to `gemini.ts` | Reduces confusion |
 | QW-03 | Add `rel="noopener noreferrer"` to all external links | Security best practice |
 | QW-04 | Add Open Graph meta tags to all public pages | Better social sharing |

@@ -12,7 +12,7 @@
 | G-04 | `?module=courses` query param on admin pages has no effect | Low | Admin | Either implement filtering or remove the param from URLs |
 | G-05 | No pagination on admin users/transactions tables (limit 100) | Medium | Admin | Add pagination or infinite scroll for large datasets |
 | G-06 | No export functionality for transactions/users | Medium | Admin | Add CSV export for financial reporting |
-| G-07 | `univeristy/transaction` typo route exists | Low | Routing | Redirect to correct `/university/transactions` path |
+| G-07 | ~~`univeristy/transaction` typo route exists~~ | Resolved | ✅ Fixed | Removed; all university links now point to `university.aorthar.com` |
 | G-08 | No real-time quiz submission confirmation | Low | University | Add loading state and explicit success/error feedback |
 
 ## Important Gaps
@@ -52,7 +52,7 @@
 | B-01 | Admin users page → standalone buyers | Was not joining standalone_purchases table | **Fixed** (2026-04-03) |
 | B-02 | Admin payments page → standalone purchases | Was querying `created_at` instead of `purchased_at` | **Fixed** (2026-04-03) |
 | B-03 | Admin users/payments → buyers without profiles | Inner join on profiles excluded buyers without profile rows | **Fixed** (2026-04-03) |
-| B-04 | University pages (`/university/*`) | Exist but unclear if connected to main flows | **Investigate** |
+| B-04 | University pages (`/university/*`) | ~~Exist but unclear if connected to main flows~~ | **Resolved** (2026-04-03) — Removed; all university links point to `university.aorthar.com` |
 | B-05 | `?module=courses` param | Present in URLs but not implemented in code | **Low priority** |
 
 ---

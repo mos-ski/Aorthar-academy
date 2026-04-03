@@ -17,7 +17,7 @@
 - [ ] **Rate limiting** — Add rate limiting to auth, quiz, and payment endpoints
 - [ ] **Error monitoring** — Integrate Sentry for production error tracking
 - [ ] **Test suite** — Add unit tests for GPA calculation, progression logic, and grading
-- [ ] **Fix typo route** — Redirect `/univeristy/transaction` to correct path
+- [x] **Fix typo route** — Removed `/univeristy/transaction` and all `/university/*` routes; all university links now point to `university.aorthar.com` (done)
 
 ### Technical Priorities
 - Consolidate standalone purchase recording to single source of truth

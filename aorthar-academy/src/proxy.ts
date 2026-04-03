@@ -19,7 +19,6 @@ const PUBLIC_ROUTES = [
   '/privacy',
   '/register',
   '/terms',
-  '/university',
   '/unauthorized',
   '/suspended',
   '/verify',
@@ -115,13 +114,6 @@ function getSubdomainRewrite(request: NextRequest): NextResponse | null {
 // ─────────────────────────────────────────────
 
 export async function proxy(request: NextRequest) {
-  // Backward-compatible typo correction: /univeristy/* -> /university/*
-  if (request.nextUrl.pathname.startsWith('/univeristy')) {
-    const url = request.nextUrl.clone();
-    url.pathname = request.nextUrl.pathname.replace('/univeristy', '/university');
-    return NextResponse.redirect(url);
-  }
-
   // ── Subdomain routing (runs before auth checks) ──
   const subdomainRewrite = getSubdomainRewrite(request);
   if (subdomainRewrite) {

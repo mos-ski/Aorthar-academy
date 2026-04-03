@@ -510,25 +510,23 @@ NT-001 through NT-003 (see user_stories.md)
 
 ---
 
-## Module 8: University Pages
+## Module 8: University Subdomain
 
 ### 1. Overview
-Separate university-facing pages at `/university/*` for open-source university-like courses. Distinct from the standalone courses platform.
+The university product is served from the `university.aorthar.com` subdomain, not `/university/*` paths. This subdomain provides the university-branded experience with its own course catalog, student management, and transaction tracking. Distinct from the standalone courses platform (`courses.aorthar.com`) and the main academy product (`aorthar.com`).
 
 ### 2. Goals
-- University-branded course discovery
+- University-branded course discovery via dedicated subdomain
 - Student enrollment for university program
 - Transaction history for university payments
 
-### 3. Pages
-- `/university` — University landing page
-- `/university/courses` — University course catalog
-- `/university/pricing` — University pricing
-- `/university/student` — Student view
-- `/university/students` — Student listing
-- `/university/transactions` — Transaction history
+### 3. Subdomain Routing
+- `university.aorthar.com` root → redirects to `/dashboard` (or `/login` if not authenticated)
+- All other paths pass through unchanged on the university subdomain
+- Auth routes and API routes pass through as-is
 
-### 4. Status: **Partial**
-- Pages exist but integration with main dashboard is unclear
-- Separate from `(dashboard)` route group
-- May be legacy or parallel product arm
+### 4. Status: **Resolved**
+- `/university/*` route stubs have been removed (2026-04-03)
+- All university links in the codebase now point to `https://university.aorthar.com`
+- Typo route `/univeristy/*` and proxy redirect also removed
+- Subdomain routing handled in `src/proxy.ts`

@@ -10,13 +10,16 @@
 
 ## What This Product Is
 
-Aorthar Academy is a **dual-platform education product**:
+Aorthar Academy is a **three-subdomain education product**:
 
-### Platform 1: University (aorthar.com)
-A structured 4-year academic program modeled after a university curriculum. Students enroll in a department, progress through year/semester courses, take quizzes/exams, earn grades, track GPA, and submit a capstone project. Freemium model — Years 100–300 are free, Year 400 + capstone require a premium subscription.
+### Platform 1: Academy (aorthar.com)
+The main platform — landing page, pricing, authentication, student dashboard, classroom, admin CMS, and the structured 4-year academic program. Students enroll in a department, progress through year/semester courses, take quizzes/exams, earn grades, track GPA, and submit a capstone project. Freemium model — Years 100–300 are free, Year 400 + capstone require a premium subscription.
 
 ### Platform 2: Standalone Courses (courses.aorthar.com)
 A pay-per-course platform for self-paced learning. Individual courses with YouTube/Drive-powered lessons, lifetime access, one-time purchase via Paystack. Targets professionals who want specific skills without committing to the full university program.
+
+### Platform 3: University (university.aorthar.com)
+A separate product arm targeting students who want to learn from open-source university-like courses. Distinct from the standalone recorded courses — this is the university-branded experience with its own course catalog, student management, and transaction tracking.
 
 ---
 
@@ -41,7 +44,7 @@ A pay-per-course platform for self-paced learning. Individual courses with YouTu
 │                        Vercel (CDN + SSR)                    │
 │  ┌──────────────────┐  ┌──────────────────┐                 │
 │  │  aorthar.com     │  │ courses.aorthar.com│                │
-│  │  (University)    │  │ (Standalone)      │                 │
+│  │  (Academy)       │  │ (Standalone)      │                 │
 │  │  Next.js 16      │  │ Next.js 16        │                 │
 │  └────────┬─────────┘  └────────┬──────────┘                 │
 │           │                     │                             │
@@ -69,6 +72,11 @@ A pay-per-course platform for self-paced learning. Individual courses with YouTu
    └─────────────┘
 ```
 
+**Subdomains:**
+- **aorthar.com** — Main academy (landing, auth, dashboard, classroom, admin)
+- **courses.aorthar.com** — Standalone pay-per-course platform
+- **university.aorthar.com** — University subdomain for open-source university-like courses
+
 ### Route Groups
 
 | Group | Path | Auth | Purpose |
@@ -78,7 +86,7 @@ A pay-per-course platform for self-paced learning. Individual courses with YouTu
 | `(classroom)` | `/classroom/[courseId]` | Required | Full-screen course viewer |
 | `(admin)` | `/admin/**` | Required (admin guard, disabled in dev) | Admin CMS |
 | `(courses-app)` | `/courses-app/**` | Optional (required for purchase) | Standalone courses platform |
-| `university` | `/university/**` | Public/Required | University-specific pages |
+| `university` | `university.aorthar.com` | Public/Required | University subdomain pages |
 | root | `/`, `/pricing`, `/onboarding`, `/about`, `/contact` | Public | Landing, pricing, onboarding |
 
 ---

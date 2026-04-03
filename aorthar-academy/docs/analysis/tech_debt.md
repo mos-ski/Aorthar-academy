@@ -7,8 +7,8 @@
 | ID | Issue | Location | Severity | Fix |
 |----|-------|----------|----------|-----|
 | TD-01 | **Triple purchase recording paths** — `standalone_purchases` can be recorded via: (1) `/api/standalone/verify-payment`, (2) `/api/webhooks/paystack`, (3) `/courses-app/learn/[slug]/page.tsx`. This creates maintenance burden and subtle inconsistency risks. | Standalone checkout | High | Consolidate to single recording function; use webhook as primary, redirect as fallback |
-| TD-02 | **Duplicate university pages** — `/university/*` routes exist alongside `(dashboard)` routes. Unclear if these are separate products or duplicates. | `/university/**` | Medium | Clarify purpose; remove or integrate |
-| TD-03 | **Typo in route** — `univeristy/transaction` (missing 's') exists as a separate page. | `/univeristy/transaction` | Low | Add redirect to correct path, then remove |
+| TD-02 | ~~**Duplicate university pages** — `/university/*` routes exist alongside `(dashboard)` routes.~~ | Resolved | ✅ Fixed | Removed `/university/*` routes; all university links now point to `university.aorthar.com` subdomain |
+| TD-03 | ~~**Typo in route** — `univeristy/transaction` (missing 's') exists as a separate page.~~ | Resolved | ✅ Fixed | Removed `/univeristy/*` route and proxy redirect; all links now use `university.aorthar.com` |
 | TD-04 | **Inconsistent timestamp columns** — `standalone_purchases` uses `purchased_at`, while `transactions` uses `created_at` and `paid_at`. Other tables use `created_at`. | Database schema | Medium | Standardize on `created_at` for record creation, add domain-specific timestamps as needed |
 | TD-05 | **AI library misnamed** — `src/lib/ai/openai.ts` actually calls Gemini API, not OpenAI. | `src/lib/ai/openai.ts` | Low | Rename to `gemini.ts` or `ai.ts` |
 

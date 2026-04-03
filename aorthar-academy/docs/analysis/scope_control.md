@@ -77,7 +77,7 @@
 
 | Item | Status | Notes |
 |------|--------|-------|
-| `/university/*` pages | ⚠️ Unclear | Separate product arm or legacy? Needs product decision |
+| `university.aorthar.com` subdomain | ✅ Correct | All university links now point to the subdomain, not `/university/*` paths |
 | `?module=courses` query param | ⚠️ Unused | Present in URLs but not implemented. Implement or remove. |
 | In-app notifications UI | ⚠️ Table exists, no UI | `notifications` table exists but no frontend. Build or remove? |
 | External instructor accounts | ⚠️ Not yet designed | `instructor_name` is hardcoded. Should instructors have their own accounts? |

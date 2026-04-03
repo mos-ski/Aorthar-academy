@@ -309,7 +309,7 @@
   <div class="cover-logo">AORTHAR ACADEMY</div>
   <h1>Product, Engineering<br>& QA Documentation</h1>
   <div class="cover-divider"></div>
-  <h2>Comprehensive documentation pack for the dual-platform education product</h2>
+  <h2>Comprehensive documentation pack for the three-subdomain education product</h2>
   <div class="cover-meta">
     <span>📅 April 3, 2026</span>
     <span>📦 v0.1.0</span>
@@ -366,13 +366,16 @@
 </div>
 
 <h2>What This Product Is</h2>
-<p>Aorthar Academy is a <strong>dual-platform education product</strong>:</p>
+<p>Aorthar Academy is a <strong>three-subdomain education product</strong>:</p>
 
-<h3>Platform 1: University (aorthar.com)</h3>
-<p>A structured 4-year academic program modeled after a university curriculum. Students enroll in a department, progress through year/semester courses, take quizzes/exams, earn grades, track GPA, and submit a capstone project. Freemium model — Years 100–300 are free, Year 400 + capstone require a premium subscription.</p>
+<h3>Platform 1: Academy (aorthar.com)</h3>
+<p>The main platform — landing page, pricing, authentication, student dashboard, classroom, admin CMS, and the structured 4-year academic program. Students enroll in a department, progress through year/semester courses, take quizzes/exams, earn grades, track GPA, and submit a capstone project. Freemium model — Years 100–300 are free, Year 400 + capstone require a premium subscription.</p>
 
 <h3>Platform 2: Standalone Courses (courses.aorthar.com)</h3>
 <p>A pay-per-course platform for self-paced learning. Individual courses with YouTube/Drive-powered lessons, lifetime access, one-time purchase via Paystack. Targets professionals who want specific skills without committing to the full university program.</p>
+
+<h3>Platform 3: University (university.aorthar.com)</h3>
+<p>A separate product arm targeting students who want to learn from open-source university-like courses. Distinct from the standalone recorded courses — this is the university-branded experience with its own course catalog, student management, and transaction tracking.</p>
 
 <h2>User Types</h2>
 <table>
@@ -395,7 +398,7 @@
 │                    Vercel (CDN + SSR)                    │
 │  ┌──────────────────┐  ┌──────────────────┐             │
 │  │  aorthar.com     │  │ courses.aorthar.com│            │
-│  │  (University)    │  │ (Standalone)      │             │
+│  │  (Academy)       │  │ (Standalone)      │             │
 │  │  Next.js 16      │  │ Next.js 16        │             │
 │  └────────┬─────────┘  └────────┬──────────┘             │
 │           └──────────┬──────────┘                         │
@@ -419,6 +422,13 @@
    │  content)   │
    └─────────────┘</pre>
 
+<div class="info-box info-box-blue">
+  <div class="info-box-title">Subdomain Architecture</div>
+  <p><strong>aorthar.com</strong> — Main academy landing, pricing, auth, student dashboard, classroom, admin CMS</p>
+  <p><strong>courses.aorthar.com</strong> — Standalone pay-per-course platform (YouTube/Drive lessons)</p>
+  <p><strong>university.aorthar.com</strong> — University subdomain for open-source university-like courses (separate product arm)</p>
+</div>
+
 <h2>Route Groups</h2>
 <table>
   <thead><tr><th>Group</th><th>Path</th><th>Auth</th><th>Purpose</th></tr></thead>
@@ -428,8 +438,17 @@
     <tr><td><code>(classroom)</code></td><td>/classroom/[courseId]</td><td>Required</td><td>Full-screen course viewer</td></tr>
     <tr><td><code>(admin)</code></td><td>/admin/**</td><td>Required (admin guard)</td><td>Admin CMS</td></tr>
     <tr><td><code>(courses-app)</code></td><td>/courses-app/**</td><td>Optional</td><td>Standalone courses platform</td></tr>
-    <tr><td><code>university</code></td><td>/university/**</td><td>Public/Required</td><td>University-specific pages</td></tr>
     <tr><td>root</td><td>/, /pricing, /onboarding, /about</td><td>Public</td><td>Landing, pricing, onboarding</td></tr>
+  </tbody>
+</table>
+
+<h2>Subdomains</h2>
+<table>
+  <thead><tr><th>Subdomain</th><th>Purpose</th><th>Auth</th></tr></thead>
+  <tbody>
+    <tr><td><code>aorthar.com</code></td><td>Main academy — landing, pricing, auth, student dashboard, classroom, admin CMS</td><td>Public/Required</td></tr>
+    <tr><td><code>courses.aorthar.com</code></td><td>Standalone pay-per-course platform (YouTube/Drive lessons)</td><td>Optional</td></tr>
+    <tr><td><code>university.aorthar.com</code></td><td>University subdomain — open-source university-like courses (separate product arm)</td><td>Public/Required</td></tr>
   </tbody>
 </table>
 
@@ -776,7 +795,7 @@ Record purchase → Access all lessons</pre>
 
 <h2>Module 8: University Pages</h2>
 <h3>Status: <span class="badge badge-partial">Partial</span></h3>
-<p>Separate university-facing pages at <code>/university/*</code> for open-source university-like courses. Distinct from the standalone courses platform.</p>
+<p>Separate university-facing subdomain at <code>university.aorthar.com</code> for open-source university-like courses. Distinct from the standalone courses platform and the main academy product.</p>
 <ul>
   <li>Pages exist but integration with main dashboard is unclear</li>
   <li>Separate from <code>(dashboard)</code> route group</li>
@@ -961,7 +980,7 @@ Record purchase → Access all lessons</pre>
     <tr><td>G-04</td><td><code>?module=courses</code> query param on admin pages has no effect</td><td><span class="badge badge-low">Low</span></td><td>Admin</td><td>Either implement filtering or remove the param from URLs</td></tr>
     <tr><td>G-05</td><td>No pagination on admin users/transactions tables (limit 100)</td><td><span class="badge badge-medium">Medium</span></td><td>Admin</td><td>Add pagination or infinite scroll for large datasets</td></tr>
     <tr><td>G-06</td><td>No export functionality for transactions/users</td><td><span class="badge badge-medium">Medium</span></td><td>Admin</td><td>Add CSV export for financial reporting</td></tr>
-    <tr><td>G-07</td><td><code>univeristy/transaction</code> typo route exists</td><td><span class="badge badge-low">Low</span></td><td>Routing</td><td>Redirect to correct <code>/university/transactions</code> path</td></tr>
+    <tr><td>G-07</td><td>~~<code>univeristy/transaction</code> typo route~~</td><td><span class="badge badge-complete">Resolved</span></td><td>Routing</td><td>Removed; all university links now point to university.aorthar.com</td></tr>
     <tr><td>G-08</td><td>No real-time quiz submission confirmation</td><td><span class="badge badge-low">Low</span></td><td>University</td><td>Add loading state and explicit success/error feedback</td></tr>
   </tbody>
 </table>
@@ -1006,8 +1025,8 @@ Record purchase → Access all lessons</pre>
   <thead><tr><th>ID</th><th>Issue</th><th>Severity</th><th>Fix</th></tr></thead>
   <tbody>
     <tr><td>TD-01</td><td><strong>Triple purchase recording paths</strong> — standalone_purchases recorded via 3 code paths creating maintenance burden</td><td><span class="badge badge-high">High</span></td><td>Consolidate to single source of truth</td></tr>
-    <tr><td>TD-02</td><td><strong>Duplicate university pages</strong> — /university/* routes exist alongside (dashboard) routes</td><td><span class="badge badge-medium">Medium</span></td><td>Clarify purpose; remove or integrate</td></tr>
-    <tr><td>TD-03</td><td><strong>Typo in route</strong> — univeristy/transaction (missing 's')</td><td><span class="badge badge-low">Low</span></td><td>Add redirect to correct path, then remove</td></tr>
+    <tr><td>TD-02</td><td>~~<strong>Duplicate university pages</strong> — university.aorthar.com routes exist alongside (dashboard) routes~~</td><td><span class="badge badge-complete">Resolved</span></td><td>Removed /university/* routes; all links now use university.aorthar.com subdomain</td></tr>
+    <tr><td>TD-03</td><td>~~<strong>Typo in route</strong> — univeristy/transaction (missing 's')~~</td><td><span class="badge badge-complete">Resolved</span></td><td>Removed /univeristy/* route and proxy redirect</td></tr>
     <tr><td>TD-04</td><td><strong>Inconsistent timestamp columns</strong> — purchased_at vs created_at vs paid_at</td><td><span class="badge badge-medium">Medium</span></td><td>Standardize naming convention</td></tr>
     <tr><td>TD-05</td><td><strong>AI library misnamed</strong> — openai.ts actually calls Gemini API</td><td><span class="badge badge-low">Low</span></td><td>Rename to gemini.ts or ai.ts</td></tr>
   </tbody>
@@ -1081,7 +1100,7 @@ Record purchase → Access all lessons</pre>
     <tr><td>Rate limiting — Add rate limiting to auth, quiz, and payment endpoints</td><td><span class="badge badge-high">High</span></td></tr>
     <tr><td>Error monitoring — Integrate Sentry for production error tracking</td><td><span class="badge badge-high">High</span></td></tr>
     <tr><td>Test suite — Add unit tests for GPA calculation, progression logic, and grading</td><td><span class="badge badge-high">High</span></td></tr>
-    <tr><td>Fix typo route — Redirect /univeristy/transaction to correct path</td><td><span class="badge badge-medium">Medium</span></td></tr>
+    <tr><td>~~Fix typo route — Redirect /univeristy/transaction to correct path~~</td><td><span class="badge badge-complete">Resolved</span></td></tr>
   </tbody>
 </table>
 <p><strong>Success Metrics:</strong> 0 critical bugs in production · Test coverage > 40% · Admin page load time < 2s with 1000+ users · Email delivery rate > 99%</p>
@@ -1191,7 +1210,7 @@ Record purchase → Access all lessons</pre>
 <table>
   <thead><tr><th>#</th><th>Change</th><th>Impact</th></tr></thead>
   <tbody>
-    <tr><td>QW-01</td><td>Fix /univeristy/transaction typo redirect</td><td>Eliminates 404s</td></tr>
+    <tr><td>QW-01</td><td>~~Fix /univeristy/transaction typo redirect~~</td><td>✅ Resolved</td></tr>
     <tr><td>QW-02</td><td>Rename src/lib/ai/openai.ts to gemini.ts</td><td>Reduces confusion</td></tr>
     <tr><td>QW-03</td><td>Add rel="noopener noreferrer" to all external links</td><td>Security best practice</td></tr>
     <tr><td>QW-04</td><td>Add Open Graph meta tags to all public pages</td><td>Better social sharing</td></tr>
@@ -1246,7 +1265,7 @@ Record purchase → Access all lessons</pre>
 <table>
   <thead><tr><th>Item</th><th>Status</th><th>Notes</th></tr></thead>
   <tbody>
-    <tr><td><code>/university/*</code> pages</td><td><span class="badge badge-partial">Unclear</span></td><td>Separate product arm or legacy? Needs product decision</td></tr>
+    <tr><td><code>university.aorthar.com</code> pages</td><td><span class="badge badge-partial">Unclear</span></td><td>Separate product arm or legacy? Needs product decision</td></tr>
     <tr><td><code>?module=courses</code> query param</td><td><span class="badge badge-partial">Unused</span></td><td>Present in URLs but not implemented. Implement or remove.</td></tr>
     <tr><td>In-app notifications UI</td><td><span class="badge badge-partial">Table exists, no UI</span></td><td>Build or remove?</td></tr>
     <tr><td>External instructor accounts</td><td><span class="badge badge-partial">Not yet designed</span></td><td>Instructor name is hardcoded. Should instructors have their own accounts?</td></tr>

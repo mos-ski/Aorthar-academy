@@ -174,7 +174,6 @@ export default function Sidebar({
     || pathname.startsWith('/admin/suggestions')
     || pathname.startsWith('/admin/admin-access')
     || pathname.startsWith('/admin/audit-logs')
-    || pathname.startsWith('/university/')
     || adminUniversityNav.some((item) => isNavItemActive(item))
     || (pathname === '/admin/ops' && tab === 'courses' && courseTab !== 'external');
   const inCoursesPath =
