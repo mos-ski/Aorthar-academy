@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aorthar Academy — Product, Engineering & QA Documentation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --primary: #2563eb;
+    --primary-light: #dbeafe;
+    --primary-dark: #1e40af;
+    --accent: #059669;
+    --accent-light: #d1fae5;
+    --warning: #d97706;
+    --warning-light: #fef3c7;
+    --danger: #dc2626;
+    --danger-light: #fee2e2;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+    --radius: 8px;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--gray-800);
+    line-height: 1.7;
+    font-size: 14px;
+    background: #fff;
+  }
+
+  /* Cover Page */
+  .cover {
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    text-align: center;
+    padding: 60px 40px;
+    background: linear-gradient(135deg, #f0f7ff 0%, #e8f5e9 50%, #fff 100%);
+  }
+  .cover-logo {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+  .cover h1 {
+    font-size: 42px;
+    font-weight: 800;
+    color: var(--gray-900);
+    line-height: 1.2;
+    margin-bottom: 16px;
+  }
+  .cover h2 {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--gray-500);
+    margin-bottom: 48px;
+  }
+  .cover-meta {
+    display: flex;
+    gap: 32px;
+    font-size: 13px;
+    color: var(--gray-500);
+  }
+  .cover-meta span { display: flex; align-items: center; gap: 6px; }
+  .cover-divider {
+    width: 60px;
+    height: 3px;
+    background: var(--primary);
+    border-radius: 2px;
+    margin: 32px 0;
+  }
+
+  /* Table of Contents */
+  .toc {
+    page-break-after: always;
+    padding: 60px 40px;
+  }
+  .toc h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--gray-900);
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--gray-200);
+  }
+  .toc-list { list-style: none; }
+  .toc-list li {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--gray-100);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .toc-list li a {
+    color: var(--gray-700);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 15px;
+  }
+  .toc-list li .toc-section {
+    color: var(--gray-400);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .toc-list li.toc-h2 a { padding-left: 20px; font-size: 13px; color: var(--gray-500); }
+
+  /* Content Pages */
+  .content { padding: 40px; }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--gray-900);
+    margin: 48px 0 8px 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--primary-light);
+    page-break-before: always;
+  }
+  h1:first-of-type { margin-top: 0; page-break-before: avoid; }
+
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin: 32px 0 12px 0;
+    padding-top: 8px;
+  }
+
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin: 24px 0 8px 0;
+  }
+
+  h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-600);
+    margin: 16px 0 6px 0;
+  }
+
+  p { margin: 8px 0; color: var(--gray-700); }
+
+  ul, ol {
+    margin: 8px 0 8px 20px;
+    color: var(--gray-700);
+  }
+  li { margin: 4px 0; }
+
+  strong { color: var(--gray-900); font-weight: 600; }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--gray-100);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--primary-dark);
+  }
+
+  pre {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin: 12px 0;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--gray-700);
+    page-break-inside: avoid;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+    page-break-inside: avoid;
+  }
+  thead { background: var(--gray-50); }
+  th {
+    text-align: left;
+    padding: 10px 14px;
+    font-weight: 600;
+    color: var(--gray-700);
+    border-bottom: 2px solid var(--gray-200);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--gray-100);
+    color: var(--gray-700);
+    vertical-align: top;
+  }
+  tbody tr:hover { background: var(--gray-50); }
+  tbody tr:last-child td { border-bottom: none; }
+
+  /* Status badges */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .badge-complete { background: var(--accent-light); color: #065f46; }
+  .badge-partial { background: var(--warning-light); color: #92400e; }
+  .badge-missing { background: var(--danger-light); color: #991b1b; }
+  .badge-real { background: var(--primary-light); color: var(--primary-dark); }
+  .badge-high { background: var(--danger-light); color: #991b1b; }
+  .badge-medium { background: var(--warning-light); color: #92400e; }
+  .badge-low { background: var(--gray-100); color: var(--gray-600); }
+
+  /* Info boxes */
+  .info-box {
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin: 16px 0;
+    border-left: 4px solid;
+    page-break-inside: avoid;
+  }
+  .info-box-blue {
+    background: #eff6ff;
+    border-color: var(--primary);
+  }
+  .info-box-green {
+    background: #f0fdf4;
+    border-color: var(--accent);
+  }
+  .info-box-amber {
+    background: #fffbeb;
+    border-color: var(--warning);
+  }
+  .info-box-red {
+    background: #fef2f2;
+    border-color: var(--danger);
+  }
+  .info-box-title {
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+  .info-box-blue .info-box-title { color: var(--primary-dark); }
+  .info-box-green .info-box-title { color: #065f46; }
+  .info-box-amber .info-box-title { color: #92400e; }
+  .info-box-red .info-box-title { color: #991b1b; }
+  .info-box p { font-size: 13px; margin: 4px 0; }
+
+  /* Section divider */
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--gray-200);
+    margin: 32px 0;
+  }
+
+  /* Footer */
+  .page-footer {
+    text-align: center;
+    padding: 20px 40px;
+    font-size: 11px;
+    color: var(--gray-400);
+    border-top: 1px solid var(--gray-200);
+    margin-top: 40px;
+  }
+
+  /* Print adjustments */
+  @media print {
+    body { font-size: 12px; }
+    h1 { page-break-before: always; }
+    h1:first-of-type { page-break-before: avoid; }
+    table { page-break-inside: avoid; }
+    pre { page-break-inside: avoid; }
+    .info-box { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== COVER PAGE ==================== -->
+<div class="cover">
+  <div class="cover-logo">AORTHAR ACADEMY</div>
+  <h1>Product, Engineering<br>& QA Documentation</h1>
+  <div class="cover-divider"></div>
+  <h2>Comprehensive documentation pack for the dual-platform education product</h2>
+  <div class="cover-meta">
+    <span>📅 April 3, 2026</span>
+    <span>📦 v0.1.0</span>
+    <span>🔗 github.com/mos-ski/Aorthar-academy</span>
+  </div>
+</div>
+
+<!-- ==================== TABLE OF CONTENTS ==================== -->
+<div class="toc">
+  <h1>Table of Contents</h1>
+  <ul class="toc-list">
+    <li><a href="#product-overview">1. Full Product Overview</a><span class="toc-section">PRD</span></li>
+    <li class="toc-h2"><a href="#product-overview">What This Product Is</a></li>
+    <li class="toc-h2"><a href="#product-overview">User Types</a></li>
+    <li class="toc-h2"><a href="#product-overview">System Architecture</a></li>
+    <li class="toc-h2"><a href="#product-overview">Core Features</a></li>
+    <li class="toc-h2"><a href="#product-overview">Database Tables</a></li>
+    <li><a href="#user-stories">2. User Stories</a><span class="toc-section">Stories</span></li>
+    <li class="toc-h2"><a href="#user-stories">Authentication & Onboarding</a></li>
+    <li class="toc-h2"><a href="#user-stories">University Student App</a></li>
+    <li class="toc-h2"><a href="#user-stories">Standalone Courses</a></li>
+    <li class="toc-h2"><a href="#user-stories">Admin Dashboard</a></li>
+    <li class="toc-h2"><a href="#user-stories">Settings & Account</a></li>
+    <li><a href="#module-prds">3. Module PRDs</a><span class="toc-section">PRD</span></li>
+    <li class="toc-h2"><a href="#module-prds">Authentication & Onboarding</a></li>
+    <li class="toc-h2"><a href="#module-prds">University Student App</a></li>
+    <li class="toc-h2"><a href="#module-prds">Standalone Courses</a></li>
+    <li class="toc-h2"><a href="#module-prds">Admin Dashboard</a></li>
+    <li class="toc-h2"><a href="#module-prds">Payments & Monetization</a></li>
+    <li class="toc-h2"><a href="#module-prds">Settings & Account</a></li>
+    <li class="toc-h2"><a href="#module-prds">Notifications & Email</a></li>
+    <li class="toc-h2"><a href="#module-prds">University Pages</a></li>
+    <li><a href="#qa">4. QA Test Cases</a><span class="toc-section">QA</span></li>
+    <li class="toc-h2"><a href="#qa">Smoke Test Suite</a></li>
+    <li class="toc-h2"><a href="#qa">Detailed Test Cases</a></li>
+    <li class="toc-h2"><a href="#qa">Regression Scenarios</a></li>
+    <li><a href="#gap-analysis">5. Gap Analysis</a><span class="toc-section">Analysis</span></li>
+    <li><a href="#tech-debt">6. Technical Debt</a><span class="toc-section">Analysis</span></li>
+    <li><a href="#roadmap">7. One-Year Roadmap</a><span class="toc-section">Roadmap</span></li>
+    <li><a href="#recommendations">8. Product Recommendations</a><span class="toc-section">Analysis</span></li>
+    <li><a href="#scope">9. Scope Control</a><span class="toc-section">Scope</span></li>
+  </ul>
+</div>
+
+<!-- ==================== 1. PRODUCT OVERVIEW ==================== -->
+<div class="content" id="product-overview">
+<h1>1. Full Product Overview</h1>
+
+<div class="info-box info-box-blue">
+  <div class="info-box-title">Project Summary</div>
+  <p><strong>Stack:</strong> Next.js 16 App Router · TypeScript · Tailwind CSS v4 · shadcn/ui · Supabase · Paystack · Gemini AI · Resend</p>
+  <p><strong>Deployment:</strong> Vercel (aorthar.com, courses.aorthar.com)</p>
+  <p><strong>Last Updated:</strong> April 3, 2026</p>
+</div>
+
+<h2>What This Product Is</h2>
+<p>Aorthar Academy is a <strong>dual-platform education product</strong>:</p>
+
+<h3>Platform 1: University (aorthar.com)</h3>
+<p>A structured 4-year academic program modeled after a university curriculum. Students enroll in a department, progress through year/semester courses, take quizzes/exams, earn grades, track GPA, and submit a capstone project. Freemium model — Years 100–300 are free, Year 400 + capstone require a premium subscription.</p>
+
+<h3>Platform 2: Standalone Courses (courses.aorthar.com)</h3>
+<p>A pay-per-course platform for self-paced learning. Individual courses with YouTube/Drive-powered lessons, lifetime access, one-time purchase via Paystack. Targets professionals who want specific skills without committing to the full university program.</p>
+
+<h2>User Types</h2>
+<table>
+  <thead>
+    <tr><th>Persona</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Student (University)</strong></td><td>Enrolled in a department, progressing through the 4-year curriculum. Free tier + optional premium upgrade.</td></tr>
+    <tr><td><strong>Student (Standalone)</strong></td><td>Purchased one or more individual courses on courses.aorthar.com. No department enrollment required.</td></tr>
+    <tr><td><strong>Contributor</strong></td><td>A student who has had 3+ suggestions approved. Auto-promoted. Can create curriculum proposals.</td></tr>
+    <tr><td><strong>Admin (Super)</strong></td><td>Full access to all admin features, user management, pricing, audit logs, ops hub.</td></tr>
+    <tr><td><strong>Admin (Content)</strong></td><td>Can manage courses, lessons, questions, curriculum, suggestions, capstone reviews.</td></tr>
+    <tr><td><strong>Admin (Finance)</strong></td><td>Can view payments, transactions, audit logs, pricing configuration.</td></tr>
+    <tr><td><strong>Visitor</strong></td><td>Unauthenticated user browsing landing pages, pricing, course catalogs.</td></tr>
+  </tbody>
+</table>
+
+<h2>System Architecture</h2>
+<pre>┌─────────────────────────────────────────────────────────┐
+│                    Vercel (CDN + SSR)                    │
+│  ┌──────────────────┐  ┌──────────────────┐             │
+│  │  aorthar.com     │  │ courses.aorthar.com│            │
+│  │  (University)    │  │ (Standalone)      │             │
+│  │  Next.js 16      │  │ Next.js 16        │             │
+│  └────────┬─────────┘  └────────┬──────────┘             │
+│           └──────────┬──────────┘                         │
+│              ┌───────▼────────┐                           │
+│              │  Next.js App   │                           │
+│              │  Router        │                           │
+│              └───────┬────────┘                           │
+└──────────────────────┼────────────────────────────────────┘
+                       │
+          ┌────────────┼────────────┐
+          │            │            │
+   ┌──────▼──────┐ ┌──▼───────┐ ┌──▼──────┐
+   │  Supabase   │ │ Paystack │ │ Resend  │
+   │  (Postgres) │ │ (Payments)│ │ (Email) │
+   │  + Auth     │ │          │ │         │
+   └──────┬──────┘ └──────────┘ └─────────┘
+          │
+   ┌──────▼──────┐
+   │ Gemini AI   │
+   │ (Lesson     │
+   │  content)   │
+   └─────────────┘</pre>
+
+<h2>Route Groups</h2>
+<table>
+  <thead><tr><th>Group</th><th>Path</th><th>Auth</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>(auth)</code></td><td>/login, /register, /verify, /forgot-password</td><td>Public</td><td>Authentication</td></tr>
+    <tr><td><code>(dashboard)</code></td><td>/dashboard, /courses, /progress, /gpa, /capstone</td><td>Required + onboarding</td><td>Student university app</td></tr>
+    <tr><td><code>(classroom)</code></td><td>/classroom/[courseId]</td><td>Required</td><td>Full-screen course viewer</td></tr>
+    <tr><td><code>(admin)</code></td><td>/admin/**</td><td>Required (admin guard)</td><td>Admin CMS</td></tr>
+    <tr><td><code>(courses-app)</code></td><td>/courses-app/**</td><td>Optional</td><td>Standalone courses platform</td></tr>
+    <tr><td><code>university</code></td><td>/university/**</td><td>Public/Required</td><td>University-specific pages</td></tr>
+    <tr><td>root</td><td>/, /pricing, /onboarding, /about</td><td>Public</td><td>Landing, pricing, onboarding</td></tr>
+  </tbody>
+</table>
+
+<h2>Core Features Summary</h2>
+<table>
+  <thead><tr><th>Feature</th><th>Status</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>Auth (email/password + verification)</td><td><span class="badge badge-complete">Complete</span></td><td>Supabase Auth with email redirect</td></tr>
+    <tr><td>Student onboarding</td><td><span class="badge badge-complete">Complete</span></td><td>8 departments</td></tr>
+    <tr><td>4-year curriculum with progression</td><td><span class="badge badge-complete">Complete</span></td><td>Years 100→400, semester unlocks</td></tr>
+    <tr><td>Quiz/exam engine with grading</td><td><span class="badge badge-complete">Complete</span></td><td>Edge Function for server-side grading</td></tr>
+    <tr><td>GPA calculation (5.0 scale)</td><td><span class="badge badge-complete">Complete</span></td><td>Semester + cumulative GPA</td></tr>
+    <tr><td>Capstone submission + review</td><td><span class="badge badge-complete">Complete</span></td><td>Premium + 400-level + GPA ≥ 3.5</td></tr>
+    <tr><td>Community suggestions system</td><td><span class="badge badge-complete">Complete</span></td><td>Vote, review, auto-promote contributors</td></tr>
+    <tr><td>Premium subscriptions (Paystack)</td><td><span class="badge badge-complete">Complete</span></td><td>Semester/monthly/yearly/lifetime plans</td></tr>
+    <tr><td>Standalone courses (pay-per-course)</td><td><span class="badge badge-complete">Complete</span></td><td>YouTube/Drive lessons, lifetime access</td></tr>
+    <tr><td>Admin CMS</td><td><span class="badge badge-complete">Complete</span></td><td>Multi-level admin permissions</td></tr>
+    <tr><td>Audit logging</td><td><span class="badge badge-complete">Complete</span></td><td>Immutable audit trail</td></tr>
+    <tr><td>AI lesson content (Gemini)</td><td><span class="badge badge-complete">Complete</span></td><td>Summaries, related content, deep-dives</td></tr>
+    <tr><td>Email (Resend)</td><td><span class="badge badge-complete">Complete</span></td><td>Welcome, password reset, purchase confirmation</td></tr>
+    <tr><td>Demo mode</td><td><span class="badge badge-complete">Complete</span></td><td>Cookie-based toggle, hidden in production</td></tr>
+    <tr><td>Account suspension</td><td><span class="badge badge-complete">Complete</span></td><td>Admin can suspend/unsuspend</td></tr>
+    <tr><td>Transcript PDF generation</td><td><span class="badge badge-complete">Complete</span></td><td>Server-side PDF streaming</td></tr>
+    <tr><td>Partnership inquiries</td><td><span class="badge badge-complete">Complete</span></td><td>Form + database storage</td></tr>
+  </tbody>
+</table>
+
+<h2>Database Tables (25+)</h2>
+<table>
+  <thead><tr><th>Category</th><th>Tables</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Core</strong></td><td>profiles, years, semesters, courses, lessons, resources, questions</td></tr>
+    <tr><td><strong>Assessment</strong></td><td>quiz_attempts, course_grades, semester_gpas, cumulative_gpas</td></tr>
+    <tr><td><strong>Progression</strong></td><td>enrollments, user_progress, semester_progress, course_prerequisites</td></tr>
+    <tr><td><strong>Capstone</strong></td><td>capstone_submissions, specialization_tracks, course_tracks</td></tr>
+    <tr><td><strong>Community</strong></td><td>suggestions, suggestion_votes, lesson_reactions, lesson_comments</td></tr>
+    <tr><td><strong>Monetization</strong></td><td>plans, subscriptions, transactions, standalone_courses, standalone_purchases</td></tr>
+    <tr><td><strong>Admin</strong></td><td>audit_log, notifications, webhook_events, partnership_inquiries</td></tr>
+    <tr><td><strong>AI Content</strong></td><td>lesson_summaries, lesson_deep_dive_links</td></tr>
+  </tbody>
+</table>
+
+<h2>Key Metrics</h2>
+<ul>
+  <li><strong>8 departments</strong> in the university program</li>
+  <li><strong>31+ courses</strong> seeded in the curriculum</li>
+  <li><strong>4 academic years</strong> (100–400 level)</li>
+  <li><strong>2 semesters</strong> per year</li>
+  <li><strong>5.0 GPA scale</strong> with 8 grade points (A+ through F)</li>
+  <li><strong>4 admin levels</strong> (super, content, finance + student role)</li>
+  <li><strong>3 plan types</strong> (semester, monthly, yearly + lifetime)</li>
+  <li><strong>2 video sources</strong> (YouTube, Google Drive)</li>
+</ul>
+</div>
+
+<!-- ==================== 2. USER STORIES ==================== -->
+<div class="content" id="user-stories">
+<h1>2. User Stories</h1>
+
+<h2>Authentication & Onboarding</h2>
+<p><strong>AS-001</strong> — As a visitor, I want to browse the landing page and pricing so that I can understand what Aorthar Academy offers before signing up.</p>
+<p><strong>AS-002</strong> — As a visitor, I want to create an account with my email, name, and password so that I can access the platform.</p>
+<p><strong>AS-003</strong> — As a new student, I want to verify my email so that I can activate my account.</p>
+<p><strong>AS-004</strong> — As a university student, I want to select my department during onboarding so that I see the correct curriculum for my field.</p>
+<p><strong>AS-005</strong> — As a returning user, I want to log in with my email and password so that I can access my account.</p>
+<p><strong>AS-006</strong> — As a user who forgot my password, I want to reset it via email so that I can regain access to my account.</p>
+
+<h2>University Student App</h2>
+<p><strong>US-001</strong> — As a university student, I want to see my dashboard with my current semester, courses, and progress so that I know what to study next.</p>
+<p><strong>US-002</strong> — As a student, I want to view my course list so that I can see all available courses for my department and level.</p>
+<p><strong>US-003</strong> — As a student, I want to enter the classroom for a course so that I can study lessons and take quizzes.</p>
+<p><strong>US-004</strong> — As a student, I want to take a quiz so that I can test my knowledge and earn a grade.</p>
+<p><strong>US-005</strong> — As a student, I want to take an exam so that I can complete the course assessment.</p>
+<p><strong>US-006</strong> — As a student, I want to see my GPA so that I can track my academic performance.</p>
+<p><strong>US-007</strong> — As a student, I want to see my progress across semesters so that I know what I've completed and what's next.</p>
+<p><strong>US-008</strong> — As a 400-level student with premium access and GPA ≥ 3.5, I want to submit my capstone project so that I can graduate.</p>
+<p><strong>US-009</strong> — As a student, I want to suggest improvements to the curriculum so that I can contribute to the community.</p>
+<p><strong>US-010</strong> — As a student, I want to upgrade to premium so that I can access Year 400 courses and the capstone.</p>
+
+<h2>Standalone Courses</h2>
+<p><strong>SC-001</strong> — As a visitor, I want to browse standalone courses so that I can find courses to purchase.</p>
+<p><strong>SC-002</strong> — As a visitor, I want to preview the first lesson of a course for free so that I can evaluate the course quality.</p>
+<p><strong>SC-003</strong> — As a logged-in user, I want to purchase a course so that I get lifetime access.</p>
+<p><strong>SC-004</strong> — As a course buyer, I want to watch purchased lessons so that I can learn at my own pace.</p>
+<p><strong>SC-005</strong> — As a learner, I want to see my purchased courses in one place so that I can easily resume learning.</p>
+
+<h2>Admin Dashboard</h2>
+<p><strong>AD-001</strong> — As an admin, I want to see an overview dashboard so that I can quickly understand platform health.</p>
+<p><strong>AD-002</strong> — As an admin, I want to manage courses so that I can create, edit, and publish curriculum content.</p>
+<p><strong>AD-003</strong> — As an admin, I want to manage lessons and resources within a course so that I can structure the learning content.</p>
+<p><strong>AD-004</strong> — As an admin, I want to manage the question bank so that I can create quiz and exam questions.</p>
+<p><strong>AD-005</strong> — As an admin, I want to view and manage users so that I can see who has registered, their roles, and their purchases.</p>
+<p><strong>AD-006</strong> — As an admin, I want to view all transactions so that I can monitor revenue and payment history.</p>
+<p><strong>AD-007</strong> — As an admin, I want to review student suggestions so that I can approve or reject curriculum improvements.</p>
+<p><strong>AD-008</strong> — As an admin, I want to review capstone submissions so that I can approve or request revisions.</p>
+<p><strong>AD-009</strong> — As an admin, I want to manage standalone courses so that I can create and edit pay-per-course offerings.</p>
+<p><strong>AD-010</strong> — As a super admin, I want to manage pricing plans so that I can adjust subscription pricing.</p>
+<p><strong>AD-011</strong> — As a super admin, I want to view audit logs so that I can track all admin actions on the platform.</p>
+<p><strong>AD-012</strong> — As a super admin, I want to suspend a user's account so that I can block access for policy violations.</p>
+<p><strong>AD-013</strong> — As a super admin, I want to grant premium access to a user so that I can give them free premium status.</p>
+<p><strong>AD-014</strong> — As a super admin, I want to grant standalone course access to a user so that I can give them a course without payment.</p>
+
+<h2>Settings & Account</h2>
+<p><strong>ST-001</strong> — As a user, I want to update my profile information so that my name and social links are current.</p>
+<p><strong>ST-002</strong> — As a student, I want to change my department after onboarding so that I can switch to a different curriculum.</p>
+<p><strong>ST-003</strong> — As a user, I want to delete my account so that I can remove all my data from the platform.</p>
+<p><strong>ST-004</strong> — As a user, I want to download my academic transcript so that I have a record of my performance.</p>
+
+<h2>Notifications & System</h2>
+<p><strong>NT-001</strong> — As a student, I want to receive a welcome email after signing up so that I feel welcomed and know next steps.</p>
+<p><strong>NT-002</strong> — As a course buyer, I want to receive a purchase confirmation email so that I have a record of my purchase.</p>
+<p><strong>NT-003</strong> — As a student, I want to receive a password reset email so that I can recover my account.</p>
+
+<h2>Partnership</h2>
+<p><strong>PT-001</strong> — As a potential partner, I want to submit a partnership inquiry so that I can explore collaboration opportunities.</p>
+</div>
+
+<!-- ==================== 3. MODULE PRDs ==================== -->
+<div class="content" id="module-prds">
+<h1>3. Module PRDs</h1>
+
+<h2>Module 1: Authentication & Onboarding</h2>
+<h3>Overview</h3>
+<p>Email/password authentication with email verification, password reset, and department-based onboarding for university students. Standalone course users skip department selection.</p>
+
+<h3>Goals</h3>
+<ul>
+  <li>Frictionless signup with email verification</li>
+  <li>Automatic profile creation via database trigger</li>
+  <li>Department routing for university students</li>
+  <li>Cross-subdomain session sharing (.aorthar.com cookie domain)</li>
+</ul>
+
+<h3>User Flows</h3>
+<pre>University Signup:
+Visit aorthar.com/register → Fill name, email, password, department →
+Verify email → Onboarding → Dashboard
+
+Standalone Signup:
+Visit courses.aorthar.com → Click "Sign up & enroll" → Fill name, email, password →
+Verify email → Redirect to checkout → Paystack → Course access
+
+Login:
+Visit /login → Enter email + password → Redirect to ?next or default dashboard</pre>
+
+<h3>Functional Requirements</h3>
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th></tr></thead>
+  <tbody>
+    <tr><td>FR-001</td><td>Sign up with email, password (8+ chars, uppercase, number), full name</td></tr>
+    <tr><td>FR-002</td><td>Email verification required before access</td></tr>
+    <tr><td>FR-003</td><td>Password reset via email link</td></tr>
+    <tr><td>FR-004</td><td>Auto-create profile row via handle_new_user() trigger</td></tr>
+    <tr><td>FR-005</td><td>Department selection on university domain (8 options)</td></tr>
+    <tr><td>FR-006</td><td>Minimal signup on courses domain (no department)</td></tr>
+    <tr><td>FR-007</td><td>Session persistence across subdomains via .aorthar.com cookie</td></tr>
+    <tr><td>FR-008</td><td>Suspended users redirected to /suspended</td></tr>
+  </tbody>
+</table>
+
+<h3>API / Data Requirements</h3>
+<table>
+  <thead><tr><th>Endpoint</th><th>Status</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>POST /api/auth/callback</code></td><td><span class="badge badge-real">Real</span></td><td>Supabase email verification</td></tr>
+    <tr><td><code>POST /api/auth/forgot-password</code></td><td><span class="badge badge-real">Real</span></td><td>Send reset email via Resend</td></tr>
+    <tr><td><code>POST /api/auth/send-welcome</code></td><td><span class="badge badge-real">Real</span></td><td>Send welcome email via Resend</td></tr>
+    <tr><td>Supabase Auth</td><td><span class="badge badge-real">Real</span></td><td>signInWithPassword, signUp, updateUser</td></tr>
+  </tbody>
+</table>
+
+<h2>Module 2: University Student App</h2>
+<h3>Overview</h3>
+<p>The core university experience: 4-year curriculum, quiz/exam engine, GPA tracking, progression gates, and capstone submission.</p>
+
+<h3>Goals</h3>
+<ul>
+  <li>Structured learning path through department-specific curriculum</li>
+  <li>Fair assessment with server-side grading and cooldowns</li>
+  <li>Accurate GPA tracking on 5.0 scale</li>
+  <li>Clear progression gates (semester/year unlocks)</li>
+</ul>
+
+<h3>Functional Requirements</h3>
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th></tr></thead>
+  <tbody>
+    <tr><td>FR-001</td><td>Display courses by semester with status indicators</td></tr>
+    <tr><td>FR-002</td><td>Classroom with lessons, materials, related content, quiz tabs</td></tr>
+    <tr><td>FR-003</td><td>Timed quiz/exam with shuffled questions, no answer leakage</td></tr>
+    <tr><td>FR-004</td><td>Server-side grading via Supabase Edge Function</td></tr>
+    <tr><td>FR-005</td><td>Cooldown between attempts (default 24 hours)</td></tr>
+    <tr><td>FR-006</td><td>Attempt limits (default 3 per quiz/exam)</td></tr>
+    <tr><td>FR-007</td><td>Grade computation: quiz_weight × quiz_score + exam_weight × exam_score</td></tr>
+    <tr><td>FR-008</td><td>GPA on 5.0 scale with 8 grade points</td></tr>
+    <tr><td>FR-009</td><td>Semester unlock: all previous semester courses must pass</td></tr>
+    <tr><td>FR-010</td><td>Year 400 requires premium subscription</td></tr>
+    <tr><td>FR-011</td><td>Capstone requires 400-level + GPA ≥ 3.5 + premium</td></tr>
+  </tbody>
+</table>
+
+<h2>Module 3: Standalone Courses</h2>
+<h3>Overview</h3>
+<p>Pay-per-course platform on courses.aorthar.com. One-time purchase via Paystack, lifetime access, YouTube/Drive-powered lessons.</p>
+
+<h3>Goals</h3>
+<ul>
+  <li>Simple purchase flow with minimal friction</li>
+  <li>Free preview to drive conversions</li>
+  <li>Reliable purchase recording (webhook + redirect fallback)</li>
+  <li>Progress tracking across lessons</li>
+</ul>
+
+<h3>User Flows</h3>
+<pre>Purchase Flow:
+Browse courses → Select course → Watch 1-min preview →
+Click "Buy" → Paystack checkout → Payment success →
+Redirect to /courses-app/learn/[slug] → Record purchase →
+Access all lessons</pre>
+
+<h3>Functional Requirements</h3>
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th></tr></thead>
+  <tbody>
+    <tr><td>FR-001</td><td>Display published standalone courses with pricing</td></tr>
+    <tr><td>FR-002</td><td>Free 1-minute preview of first lesson</td></tr>
+    <tr><td>FR-003</td><td>Paystack checkout with course metadata</td></tr>
+    <tr><td>FR-004</td><td>Idempotent purchase recording (upsert on paystack_reference)</td></tr>
+    <tr><td>FR-005</td><td>Purchase verification on redirect AND via webhook</td></tr>
+    <tr><td>FR-006</td><td>YouTube and Google Drive video embedding</td></tr>
+    <tr><td>FR-007</td><td>Lesson progress tracking</td></tr>
+    <tr><td>FR-008</td><td>"My Courses" page showing all purchased courses</td></tr>
+  </tbody>
+</table>
+
+<h2>Module 4: Admin Dashboard</h2>
+<h3>Overview</h3>
+<p>Multi-level admin CMS for managing courses, users, payments, pricing, curriculum, and platform operations.</p>
+
+<h3>Goals</h3>
+<ul>
+  <li>Complete content management for university and standalone courses</li>
+  <li>User management with suspension and premium controls</li>
+  <li>Financial visibility (transactions, revenue, conversion rates)</li>
+  <li>Audit trail for all admin actions</li>
+  <li>Role-based access control (super, content, finance)</li>
+</ul>
+
+<h3>User Flows</h3>
+<pre>Course Creation:
+Admin → /admin/courses → Create course → Set code, name, year, semester →
+Add lessons → Add resources → Add questions → Publish course
+
+User Management:
+Admin → /admin/users → Search/filter users → View user details →
+Suspend/unsuspend → Grant premium → Grant standalone access
+
+Payment Monitoring:
+Admin → /admin/payments → View unified transaction table →
+See subscriptions + standalone purchases → Filter by type →
+Monitor revenue and conversion rates</pre>
+
+<h3>Functional Requirements</h3>
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th></tr></thead>
+  <tbody>
+    <tr><td>FR-001</td><td>CRUD for courses, lessons, resources, questions</td></tr>
+    <tr><td>FR-002</td><td>User listing with search, role filter, premium/purchase status</td></tr>
+    <tr><td>FR-003</td><td>Transaction listing (subscriptions + standalone purchases)</td></tr>
+    <tr><td>FR-004</td><td>Suggestion review with approve/reject</td></tr>
+    <tr><td>FR-005</td><td>Capstone review with approve/reject/request revision</td></tr>
+    <tr><td>FR-006</td><td>Standalone course management (create, edit, publish, add lessons)</td></tr>
+    <tr><td>FR-007</td><td>Pricing plan configuration</td></tr>
+    <tr><td>FR-008</td><td>Audit log viewer (immutable)</td></tr>
+    <tr><td>FR-009</td><td>User suspension/unsuspension</td></tr>
+    <tr><td>FR-010</td><td>Premium grant/revoke</td></tr>
+    <tr><td>FR-011</td><td>Standalone course access grant</td></tr>
+    <tr><td>FR-012</td><td>Student invite and bulk import</td></tr>
+    <tr><td>FR-013</td><td>Admin access management (invite, grant, update level)</td></tr>
+  </tbody>
+</table>
+
+<h2>Module 5: Payments & Monetization</h2>
+<h3>Overview</h3>
+<p>Paystack-powered payment processing for university subscriptions and standalone course purchases. Webhook-based verification with idempotent recording.</p>
+
+<h3>Goals</h3>
+<ul>
+  <li>Reliable payment processing with webhook fallback</li>
+  <li>Idempotent transaction recording</li>
+  <li>Clear financial reporting for admins</li>
+  <li>Multiple plan types (semester, monthly, yearly, lifetime)</li>
+</ul>
+
+<h3>User Flows</h3>
+<pre>University Subscription:
+Student → /pricing → Select plan → /pricing/checkout/[planId] →
+Paystack checkout → Payment success → Webhook fires →
+Edge Function verifies → Subscription created → Access granted
+
+Standalone Course:
+Student → /courses-app/[slug] → Click "Buy" →
+/api/standalone/checkout → Paystack → Payment success →
+Redirect to /courses-app/learn/[slug] → Verify payment →
+Record purchase → Access all lessons</pre>
+
+<h3>Functional Requirements</h3>
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th></tr></thead>
+  <tbody>
+    <tr><td>FR-001</td><td>Paystack checkout session creation</td></tr>
+    <tr><td>FR-002</td><td>Webhook signature verification (HMAC-SHA512)</td></tr>
+    <tr><td>FR-003</td><td>Idempotent upsert on paystack_reference</td></tr>
+    <tr><td>FR-004</td><td>Subscription status tracking (active/expired/cancelled)</td></tr>
+    <tr><td>FR-005</td><td>Purchase confirmation emails</td></tr>
+    <tr><td>FR-006</td><td>Revenue calculation and display</td></tr>
+    <tr><td>FR-007</td><td>Conversion rate calculation</td></tr>
+  </tbody>
+</table>
+
+<h2>Module 6: Settings & Account</h2>
+<h3>Overview</h3>
+<p>User profile management, department changes, account deletion, and transcript downloads.</p>
+
+<h3>Functional Requirements</h3>
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th></tr></thead>
+  <tbody>
+    <tr><td>FR-001</td><td>Edit full name, bio, GitHub URL, LinkedIn URL</td></tr>
+    <tr><td>FR-002</td><td>Change department (recalculates progress)</td></tr>
+    <tr><td>FR-003</td><td>Delete account (cascading delete)</td></tr>
+    <tr><td>FR-004</td><td>Download transcript PDF</td></tr>
+  </tbody>
+</table>
+
+<h2>Module 7: Notifications & Email</h2>
+<h3>Status: <span class="badge badge-partial">Partial</span></h3>
+<p>Email delivery via Resend for welcome, password reset, and purchase confirmation. In-app notifications table exists but is not yet surfaced in the UI.</p>
+<ul>
+  <li>Email templates exist and work</li>
+  <li><code>notifications</code> table exists in schema but has no UI</li>
+  <li>No push notifications or SMS</li>
+</ul>
+
+<h2>Module 8: University Pages</h2>
+<h3>Status: <span class="badge badge-partial">Partial</span></h3>
+<p>Separate university-facing pages at <code>/university/*</code> for open-source university-like courses. Distinct from the standalone courses platform.</p>
+<ul>
+  <li>Pages exist but integration with main dashboard is unclear</li>
+  <li>Separate from <code>(dashboard)</code> route group</li>
+  <li>May be legacy or parallel product arm</li>
+</ul>
+</div>
+
+<!-- ==================== 4. QA TEST CASES ==================== -->
+<div class="content" id="qa">
+<h1>4. QA Test Cases</h1>
+
+<h2>Smoke Test Suite (Critical Path)</h2>
+<table>
+  <thead><tr><th>#</th><th>Test</th><th>Module</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr><td>SM-01</td><td>User can register with valid credentials</td><td>Auth</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>SM-02</td><td>User receives verification email</td><td>Auth</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>SM-03</td><td>User can verify email and access dashboard</td><td>Auth</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>SM-04</td><td>User can log in with valid credentials</td><td>Auth</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>SM-05</td><td>Dashboard loads with courses</td><td>University</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>SM-06</td><td>User can start and submit a quiz</td><td>University</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>SM-07</td><td>User can purchase a standalone course</td><td>Standalone</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>SM-08</td><td>Admin can view users and transactions</td><td>Admin</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>SM-09</td><td>Payment webhook records purchase</td><td>Payments</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>SM-10</td><td>Suspended user cannot access platform</td><td>Auth</td><td><span class="badge badge-high">High</span></td></tr>
+  </tbody>
+</table>
+
+<h2>Detailed Test Cases — Authentication</h2>
+<table>
+  <thead><tr><th>TC</th><th>Title</th><th>Priority</th><th>Expected</th></tr></thead>
+  <tbody>
+    <tr><td>AUTH-01</td><td>Register with valid university credentials</td><td><span class="badge badge-high">High</span></td><td>Account created, redirected to /verify, email sent</td></tr>
+    <tr><td>AUTH-02</td><td>Register with valid standalone credentials</td><td><span class="badge badge-high">High</span></td><td>Account created, redirected to /verify, email sent</td></tr>
+    <tr><td>AUTH-03</td><td>Register with weak password</td><td><span class="badge badge-medium">Medium</span></td><td>Error: "Must contain at least one uppercase letter"</td></tr>
+    <tr><td>AUTH-04</td><td>Register with existing email</td><td><span class="badge badge-medium">Medium</span></td><td>Supabase error shown to user</td></tr>
+    <tr><td>AUTH-05</td><td>Register with invalid email</td><td><span class="badge badge-low">Low</span></td><td>Error: "Invalid email address"</td></tr>
+    <tr><td>AUTH-06</td><td>Login with correct credentials</td><td><span class="badge badge-high">High</span></td><td>Redirected to dashboard</td></tr>
+    <tr><td>AUTH-07</td><td>Login with wrong password</td><td><span class="badge badge-medium">Medium</span></td><td>Error shown, no redirect</td></tr>
+    <tr><td>AUTH-08</td><td>Login with unverified email</td><td><span class="badge badge-medium">Medium</span></td><td>Login succeeds but onboarding gate blocks access</td></tr>
+    <tr><td>AUTH-09</td><td>Forgot password flow</td><td><span class="badge badge-high">High</span></td><td>Reset email sent, success message shown</td></tr>
+    <tr><td>AUTH-10</td><td>Reset password</td><td><span class="badge badge-high">High</span></td><td>Password updated, redirected to dashboard</td></tr>
+    <tr><td>AUTH-11</td><td>Reset password with mismatched passwords</td><td><span class="badge badge-low">Low</span></td><td>Error: "Passwords do not match"</td></tr>
+    <tr><td>AUTH-12</td><td>Suspended user login</td><td><span class="badge badge-high">High</span></td><td>Redirected to /suspended</td></tr>
+    <tr><td>AUTH-13</td><td>Session persistence across subdomains</td><td><span class="badge badge-high">High</span></td><td>User is authenticated on both domains</td></tr>
+    <tr><td>AUTH-14</td><td>Logout from standalone platform</td><td><span class="badge badge-medium">Medium</span></td><td>Session cleared, redirected</td></tr>
+  </tbody>
+</table>
+
+<h2>Detailed Test Cases — University Student App</h2>
+<table>
+  <thead><tr><th>TC</th><th>Title</th><th>Priority</th><th>Expected</th></tr></thead>
+  <tbody>
+    <tr><td>UNI-01</td><td>Dashboard loads with semester courses</td><td><span class="badge badge-high">High</span></td><td>Shows current year/semester, courses, progress</td></tr>
+    <tr><td>UNI-02</td><td>Course listing shows all semesters</td><td><span class="badge badge-medium">Medium</span></td><td>Courses grouped by semester with status</td></tr>
+    <tr><td>UNI-03</td><td>Enter classroom for a course</td><td><span class="badge badge-high">High</span></td><td>Classroom loads with lessons, materials tabs</td></tr>
+    <tr><td>UNI-04</td><td>Start quiz</td><td><span class="badge badge-high">High</span></td><td>Quiz starts, timer begins, questions shown</td></tr>
+    <tr><td>UNI-05</td><td>Submit quiz</td><td><span class="badge badge-high">High</span></td><td>Score calculated, results displayed</td></tr>
+    <tr><td>UNI-06</td><td>Quiz answers not exposed to client</td><td><span class="badge badge-high">High</span></td><td>No correct answers in API response</td></tr>
+    <tr><td>UNI-07</td><td>Quiz cooldown enforcement</td><td><span class="badge badge-medium">Medium</span></td><td>Blocked with cooldown timer</td></tr>
+    <tr><td>UNI-08</td><td>Quiz attempt limit enforcement</td><td><span class="badge badge-medium">Medium</span></td><td>Blocked, no new attempt created</td></tr>
+    <tr><td>UNI-09</td><td>GPA page shows correct calculation</td><td><span class="badge badge-high">High</span></td><td>GPA matches manual calculation</td></tr>
+    <tr><td>UNI-10</td><td>Progress page shows semester status</td><td><span class="badge badge-medium">Medium</span></td><td>Visual breakdown of completed/locked courses</td></tr>
+    <tr><td>UNI-11</td><td>Capstone submission (eligible student)</td><td><span class="badge badge-high">High</span></td><td>Status changes to "pending"</td></tr>
+    <tr><td>UNI-12</td><td>Capstone submission (ineligible student)</td><td><span class="badge badge-medium">Medium</span></td><td>Form disabled or blocked</td></tr>
+    <tr><td>UNI-13</td><td>Submit curriculum suggestion</td><td><span class="badge badge-medium">Medium</span></td><td>Suggestion recorded as pending</td></tr>
+    <tr><td>UNI-14</td><td>Premium subscription purchase</td><td><span class="badge badge-high">High</span></td><td>Subscription activated, premium features unlocked</td></tr>
+    <tr><td>UNI-15</td><td>Semester unlock after passing all courses</td><td><span class="badge badge-high">High</span></td><td>Semester 2 courses unlocked</td></tr>
+    <tr><td>UNI-16</td><td>Year 400 locked without premium</td><td><span class="badge badge-medium">Medium</span></td><td>Blocked, prompted to upgrade</td></tr>
+    <tr><td>UNI-17</td><td>Department change</td><td><span class="badge badge-medium">Medium</span></td><td>Profile updated, progress recalculated</td></tr>
+    <tr><td>UNI-18</td><td>Download transcript</td><td><span class="badge badge-medium">Medium</span></td><td>PDF downloaded with grades and GPA</td></tr>
+    <tr><td>UNI-19</td><td>Delete account</td><td><span class="badge badge-high">High</span></td><td>Account deleted, logged out, data removed</td></tr>
+  </tbody>
+</table>
+
+<h2>Detailed Test Cases — Standalone Courses</h2>
+<table>
+  <thead><tr><th>TC</th><th>Title</th><th>Priority</th><th>Expected</th></tr></thead>
+  <tbody>
+    <tr><td>SC-01</td><td>Browse published courses</td><td><span class="badge badge-high">High</span></td><td>Published courses displayed with prices</td></tr>
+    <tr><td>SC-02</td><td>View course detail page</td><td><span class="badge badge-high">High</span></td><td>Course page with preview, description, buy button</td></tr>
+    <tr><td>SC-03</td><td>Free preview (1 minute)</td><td><span class="badge badge-high">High</span></td><td>Preview ends, paywall overlay shown</td></tr>
+    <tr><td>SC-04</td><td>Purchase course via Paystack</td><td><span class="badge badge-high">High</span></td><td>Redirected to learn page, purchase recorded</td></tr>
+    <tr><td>SC-05</td><td>Purchase recording (webhook)</td><td><span class="badge badge-high">High</span></td><td>Purchase recorded in database</td></tr>
+    <tr><td>SC-06</td><td>Access purchased lessons</td><td><span class="badge badge-high">High</span></td><td>All lessons accessible, no paywall</td></tr>
+    <tr><td>SC-07</td><td>Access unpurchased course</td><td><span class="badge badge-medium">Medium</span></td><td>Redirected to course page</td></tr>
+    <tr><td>SC-08</td><td>Lesson progress tracking</td><td><span class="badge badge-medium">Medium</span></td><td>Previous lesson marked complete</td></tr>
+    <tr><td>SC-09</td><td>My Courses page</td><td><span class="badge badge-medium">Medium</span></td><td>List of all purchased courses with progress</td></tr>
+    <tr><td>SC-10</td><td>Duplicate purchase prevention</td><td><span class="badge badge-medium">Medium</span></td><td>Redirected to learn page (409)</td></tr>
+    <tr><td>SC-11</td><td>YouTube video playback</td><td><span class="badge badge-medium">Medium</span></td><td>Video plays correctly</td></tr>
+    <tr><td>SC-12</td><td>Google Drive video playback</td><td><span class="badge badge-medium">Medium</span></td><td>Video plays correctly</td></tr>
+    <tr><td>SC-13</td><td>Course not found (invalid slug)</td><td><span class="badge badge-low">Low</span></td><td>404 page</td></tr>
+    <tr><td>SC-14</td><td>Draft course not visible</td><td><span class="badge badge-low">Low</span></td><td>Course not shown</td></tr>
+  </tbody>
+</table>
+
+<h2>Detailed Test Cases — Admin Dashboard</h2>
+<table>
+  <thead><tr><th>TC</th><th>Title</th><th>Priority</th><th>Expected</th></tr></thead>
+  <tbody>
+    <tr><td>AD-01</td><td>Admin dashboard loads</td><td><span class="badge badge-high">High</span></td><td>Metrics displayed: users, subscriptions, revenue</td></tr>
+    <tr><td>AD-02</td><td>Create course</td><td><span class="badge badge-high">High</span></td><td>Course created, appears in list</td></tr>
+    <tr><td>AD-03</td><td>Edit course</td><td><span class="badge badge-medium">Medium</span></td><td>Changes saved and reflected</td></tr>
+    <tr><td>AD-04</td><td>Delete course</td><td><span class="badge badge-medium">Medium</span></td><td>Course removed (or blocked if has enrollments)</td></tr>
+    <tr><td>AD-05</td><td>Add lesson to course</td><td><span class="badge badge-medium">Medium</span></td><td>Lesson appears in course</td></tr>
+    <tr><td>AD-06</td><td>Add question to course</td><td><span class="badge badge-medium">Medium</span></td><td>Question saved with correct options format</td></tr>
+    <tr><td>AD-07</td><td>View users list</td><td><span class="badge badge-high">High</span></td><td>All users shown with name, email, role, status</td></tr>
+    <tr><td>AD-08</td><td>Search users</td><td><span class="badge badge-medium">Medium</span></td><td>Filtered results</td></tr>
+    <tr><td>AD-09</td><td>Filter users by role</td><td><span class="badge badge-medium">Medium</span></td><td>Only matching users shown</td></tr>
+    <tr><td>AD-10</td><td>View standalone course buyers</td><td><span class="badge badge-high">High</span></td><td>Buyers shown with course names in Purchases column</td></tr>
+    <tr><td>AD-11</td><td>View payments/transactions</td><td><span class="badge badge-high">High</span></td><td>All subscriptions + standalone purchases shown</td></tr>
+    <tr><td>AD-12</td><td>Revenue calculation</td><td><span class="badge badge-medium">Medium</span></td><td>Matches sum of all successful transactions</td></tr>
+    <tr><td>AD-13</td><td>Review suggestion</td><td><span class="badge badge-medium">Medium</span></td><td>Status updated, contributor promoted if applicable</td></tr>
+    <tr><td>AD-14</td><td>Review capstone</td><td><span class="badge badge-medium">Medium</span></td><td>Status updated, student notified</td></tr>
+    <tr><td>AD-15</td><td>Manage standalone courses</td><td><span class="badge badge-high">High</span></td><td>Course created and published</td></tr>
+    <tr><td>AD-16</td><td>Suspend user</td><td><span class="badge badge-high">High</span></td><td>User redirected to /suspended on next login</td></tr>
+    <tr><td>AD-17</td><td>Grant premium access</td><td><span class="badge badge-medium">Medium</span></td><td>User gains premium features immediately</td></tr>
+    <tr><td>AD-18</td><td>Grant standalone access</td><td><span class="badge badge-medium">Medium</span></td><td>User can access course without payment</td></tr>
+    <tr><td>AD-19</td><td>View audit logs</td><td><span class="badge badge-medium">Medium</span></td><td>Chronological log of admin actions</td></tr>
+    <tr><td>AD-20</td><td>Non-admin access blocked</td><td><span class="badge badge-high">High</span></td><td>Redirected to /unauthorized (in staging/prod)</td></tr>
+    <tr><td>AD-21</td><td>Finance admin cannot edit courses</td><td><span class="badge badge-medium">Medium</span></td><td>Blocked by permissions</td></tr>
+    <tr><td>AD-22</td><td>Content admin cannot view payments</td><td><span class="badge badge-medium">Medium</span></td><td>Blocked by permissions</td></tr>
+  </tbody>
+</table>
+
+<h2>Detailed Test Cases — Payments</h2>
+<table>
+  <thead><tr><th>TC</th><th>Title</th><th>Priority</th><th>Expected</th></tr></thead>
+  <tbody>
+    <tr><td>PAY-01</td><td>Paystack checkout session created</td><td><span class="badge badge-high">High</span></td><td>Payment URL returned</td></tr>
+    <tr><td>PAY-02</td><td>Webhook signature verification</td><td><span class="badge badge-high">High</span></td><td>400 response for invalid signature</td></tr>
+    <tr><td>PAY-03</td><td>Webhook records subscription</td><td><span class="badge badge-high">High</span></td><td>Subscription created in DB</td></tr>
+    <tr><td>PAY-04</td><td>Webhook records standalone purchase</td><td><span class="badge badge-high">High</span></td><td>Purchase recorded in DB</td></tr>
+    <tr><td>PAY-05</td><td>Idempotent webhook handling</td><td><span class="badge badge-high">High</span></td><td>Only one record created</td></tr>
+    <tr><td>PAY-06</td><td>Failed payment handling</td><td><span class="badge badge-medium">Medium</span></td><td>No subscription/purchase created</td></tr>
+    <tr><td>PAY-07</td><td>Purchase confirmation email sent</td><td><span class="badge badge-medium">Medium</span></td><td>Email received with course details</td></tr>
+    <tr><td>PAY-08</td><td>Subscription expiration</td><td><span class="badge badge-medium">Medium</span></td><td>Status changed to expired</td></tr>
+    <tr><td>PAY-09</td><td>Premium access revoked on expiry</td><td><span class="badge badge-high">High</span></td><td>Blocked</td></tr>
+  </tbody>
+</table>
+
+<h2>Detailed Test Cases — Security</h2>
+<table>
+  <thead><tr><th>TC</th><th>Title</th><th>Priority</th><th>Expected</th></tr></thead>
+  <tbody>
+    <tr><td>SEC-01</td><td>RLS prevents cross-user data access</td><td><span class="badge badge-high">High</span></td><td>No data returned</td></tr>
+    <tr><td>SEC-02</td><td>Admin API requires admin role</td><td><span class="badge badge-high">High</span></td><td>401/403 response</td></tr>
+    <tr><td>SEC-03</td><td>Quiz answers not leaked</td><td><span class="badge badge-high">High</span></td><td>No is_correct in options</td></tr>
+    <tr><td>SEC-04</td><td>Suspended user API blocked</td><td><span class="badge badge-high">High</span></td><td>403 response</td></tr>
+    <tr><td>SEC-05</td><td>Paystack webhook HMAC verification</td><td><span class="badge badge-high">High</span></td><td>400 response</td></tr>
+    <tr><td>SEC-06</td><td>Service role key not exposed</td><td><span class="badge badge-high">High</span></td><td>No SUPABASE_SERVICE_ROLE_KEY in bundle</td></tr>
+    <tr><td>SEC-07</td><td>Demo mode hidden in production</td><td><span class="badge badge-medium">Medium</span></td><td>No demo toggle visible</td></tr>
+  </tbody>
+</table>
+
+<h2>Regression Test Scenarios</h2>
+<table>
+  <thead><tr><th>#</th><th>Scenario</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr><td>REG-01</td><td>After deploying new course, existing students see it</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>REG-02</td><td>After changing pricing, existing subscriptions unaffected</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>REG-03</td><td>After department change, student's progress recalculated</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>REG-04</td><td>After admin suspension, user immediately blocked</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>REG-05</td><td>After webhook reprocessing, no duplicate transactions</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>REG-06</td><td>After updating quiz questions, existing attempts unaffected</td><td><span class="badge badge-medium">Medium</span></td></tr>
+    <tr><td>REG-07</td><td>After adding new lesson, course progress not reset</td><td><span class="badge badge-medium">Medium</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ==================== 5. GAP ANALYSIS ==================== -->
+<div class="content" id="gap-analysis">
+<h1>5. Gap Analysis</h1>
+
+<h2>Critical Gaps</h2>
+<table>
+  <thead><tr><th>ID</th><th>Gap</th><th>Impact</th><th>Module</th><th>Recommendation</th></tr></thead>
+  <tbody>
+    <tr><td>G-01</td><td><code>notifications</code> table exists but has no UI</td><td><span class="badge badge-medium">Medium</span></td><td>Notifications</td><td>Build notification bell in Navbar + notification list page</td></tr>
+    <tr><td>G-02</td><td>No email notification when suggestion is approved/rejected</td><td><span class="badge badge-medium">Medium</span></td><td>Suggestions</td><td>Send email to proposer on status change</td></tr>
+    <tr><td>G-03</td><td>No email notification when capstone is reviewed</td><td><span class="badge badge-medium">Medium</span></td><td>Capstone</td><td>Send email to student on review</td></tr>
+    <tr><td>G-04</td><td><code>?module=courses</code> query param on admin pages has no effect</td><td><span class="badge badge-low">Low</span></td><td>Admin</td><td>Either implement filtering or remove the param from URLs</td></tr>
+    <tr><td>G-05</td><td>No pagination on admin users/transactions tables (limit 100)</td><td><span class="badge badge-medium">Medium</span></td><td>Admin</td><td>Add pagination or infinite scroll for large datasets</td></tr>
+    <tr><td>G-06</td><td>No export functionality for transactions/users</td><td><span class="badge badge-medium">Medium</span></td><td>Admin</td><td>Add CSV export for financial reporting</td></tr>
+    <tr><td>G-07</td><td><code>univeristy/transaction</code> typo route exists</td><td><span class="badge badge-low">Low</span></td><td>Routing</td><td>Redirect to correct <code>/university/transactions</code> path</td></tr>
+    <tr><td>G-08</td><td>No real-time quiz submission confirmation</td><td><span class="badge badge-low">Low</span></td><td>University</td><td>Add loading state and explicit success/error feedback</td></tr>
+  </tbody>
+</table>
+
+<h2>Important Gaps</h2>
+<table>
+  <thead><tr><th>ID</th><th>Gap</th><th>Impact</th><th>Module</th></tr></thead>
+  <tbody>
+    <tr><td>G-09</td><td>No bulk email capability for admins</td><td><span class="badge badge-medium">Medium</span></td><td>Admin</td></tr>
+    <tr><td>G-10</td><td>No analytics dashboard (page views, engagement, drop-off)</td><td><span class="badge badge-medium">Medium</span></td><td>Admin</td></tr>
+    <tr><td>G-11</td><td>No referral/affiliate system for standalone courses</td><td><span class="badge badge-low">Low</span></td><td>Standalone</td></tr>
+    <tr><td>G-12</td><td>No certificate of completion for standalone courses</td><td><span class="badge badge-medium">Medium</span></td><td>Standalone</td></tr>
+    <tr><td>G-13</td><td>No search functionality for courses</td><td><span class="badge badge-medium">Medium</span></td><td>Both</td></tr>
+    <tr><td>G-14</td><td>No mobile app or PWA support</td><td><span class="badge badge-low">Low</span></td><td>Platform</td></tr>
+    <tr><td>G-15</td><td>No discussion forum or community feature</td><td><span class="badge badge-medium">Medium</span></td><td>University</td></tr>
+    <tr><td>G-16</td><td>No progress email reminders for inactive students</td><td><span class="badge badge-low">Low</span></td><td>Engagement</td></tr>
+    <tr><td>G-17</td><td>No A/B testing framework for pricing page</td><td><span class="badge badge-low">Low</span></td><td>Monetization</td></tr>
+    <tr><td>G-18</td><td>Standalone course purchase recording has 3 code paths</td><td><span class="badge badge-medium">Medium</span></td><td>Standalone</td></tr>
+  </tbody>
+</table>
+
+<h2>Backend Gaps</h2>
+<table>
+  <thead><tr><th>ID</th><th>Gap</th><th>Impact</th><th>Recommendation</th></tr></thead>
+  <tbody>
+    <tr><td>BG-01</td><td>No rate limiting on API routes</td><td><span class="badge badge-medium">Medium</span></td><td>Add rate limiting for auth, quiz, and payment endpoints</td></tr>
+    <tr><td>BG-02</td><td>No API versioning</td><td><span class="badge badge-low">Low</span></td><td>Add <code>/api/v1/</code> prefix for future compatibility</td></tr>
+    <tr><td>BG-03</td><td>No webhook retry logic</td><td><span class="badge badge-medium">Medium</span></td><td>If webhook processing fails, no automatic retry</td></tr>
+    <tr><td>BG-04</td><td>No background job queue</td><td><span class="badge badge-low">Low</span></td><td>Email sending is fire-and-forget; consider a queue</td></tr>
+    <tr><td>BG-05</td><td>No database backups automation</td><td><span class="badge badge-high">High</span></td><td>Ensure Supabase automated backups are enabled</td></tr>
+    <tr><td>BG-06</td><td>No migration rollback capability</td><td><span class="badge badge-medium">Medium</span></td><td>Supabase migrations are forward-only</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ==================== 6. TECH DEBT ==================== -->
+<div class="content" id="tech-debt">
+<h1>6. Technical Debt Analysis</h1>
+
+<h2>Structural Issues</h2>
+<table>
+  <thead><tr><th>ID</th><th>Issue</th><th>Severity</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td>TD-01</td><td><strong>Triple purchase recording paths</strong> — standalone_purchases recorded via 3 code paths creating maintenance burden</td><td><span class="badge badge-high">High</span></td><td>Consolidate to single source of truth</td></tr>
+    <tr><td>TD-02</td><td><strong>Duplicate university pages</strong> — /university/* routes exist alongside (dashboard) routes</td><td><span class="badge badge-medium">Medium</span></td><td>Clarify purpose; remove or integrate</td></tr>
+    <tr><td>TD-03</td><td><strong>Typo in route</strong> — univeristy/transaction (missing 's')</td><td><span class="badge badge-low">Low</span></td><td>Add redirect to correct path, then remove</td></tr>
+    <tr><td>TD-04</td><td><strong>Inconsistent timestamp columns</strong> — purchased_at vs created_at vs paid_at</td><td><span class="badge badge-medium">Medium</span></td><td>Standardize naming convention</td></tr>
+    <tr><td>TD-05</td><td><strong>AI library misnamed</strong> — openai.ts actually calls Gemini API</td><td><span class="badge badge-low">Low</span></td><td>Rename to gemini.ts or ai.ts</td></tr>
+  </tbody>
+</table>
+
+<h2>Security Risks</h2>
+<table>
+  <thead><tr><th>ID</th><th>Risk</th><th>Severity</th><th>Mitigation</th></tr></thead>
+  <tbody>
+    <tr><td>TD-21</td><td><strong>Admin guard disabled in development</strong> — NEXT_PUBLIC_APP_ENV=development bypasses admin check</td><td><span class="badge badge-high">High</span></td><td>Use server-side env check, not client-side variable</td></tr>
+    <tr><td>TD-22</td><td><strong>No rate limiting</strong> — Auth, quiz, and API endpoints have no rate limiting</td><td><span class="badge badge-medium">Medium</span></td><td>Add rate limiting (Upstash Ratelimit or Vercel Edge Middleware)</td></tr>
+    <tr><td>TD-23</td><td><strong>Paystack metadata not validated server-side</strong></td><td><span class="badge badge-medium">Medium</span></td><td>Add server-side validation of metadata</td></tr>
+    <tr><td>TD-24</td><td><strong>No CSRF protection on forms</strong></td><td><span class="badge badge-low">Low</span></td><td>Supabase handles this via session cookies, but verify</td></tr>
+    <tr><td>TD-25</td><td><strong>Audit log IP address may be inaccurate behind proxy</strong></td><td><span class="badge badge-low">Low</span></td><td>Use x-forwarded-for header parsing</td></tr>
+  </tbody>
+</table>
+
+<h2>Scalability Risks</h2>
+<table>
+  <thead><tr><th>ID</th><th>Risk</th><th>Severity</th><th>Mitigation</th></tr></thead>
+  <tbody>
+    <tr><td>TD-16</td><td><strong>No pagination on admin tables</strong> — limit 100 will break at scale</td><td><span class="badge badge-medium">Medium</span></td><td>Add cursor-based pagination</td></tr>
+    <tr><td>TD-17</td><td><strong>No database indexing on hot query paths</strong></td><td><span class="badge badge-medium">Medium</span></td><td>Verify indexes; add composite indexes</td></tr>
+    <tr><td>TD-18</td><td><strong>Fire-and-forget email sending</strong> — emails lost if Resend is down</td><td><span class="badge badge-medium">Medium</span></td><td>Add retry logic or use a queue</td></tr>
+    <tr><td>TD-19</td><td><strong>No CDN caching for static assets</strong></td><td><span class="badge badge-low">Low</span></td><td>Configure Vercel Image Optimization</td></tr>
+    <tr><td>TD-20</td><td><strong>Single Edge Function for grading</strong></td><td><span class="badge badge-low">Low</span></td><td>Monitor execution time; consider batching</td></tr>
+  </tbody>
+</table>
+
+<h2>Code Quality</h2>
+<table>
+  <thead><tr><th>ID</th><th>Issue</th><th>Severity</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td>TD-26</td><td><strong>No test coverage</strong> — Vitest configured but no tests exist</td><td><span class="badge badge-high">High</span></td><td>Add unit tests for core logic</td></tr>
+    <tr><td>TD-27</td><td><strong>Type assertions (as unknown)</strong> — Fragile Supabase join casting</td><td><span class="badge badge-medium">Medium</span></td><td>Create proper TypeScript types</td></tr>
+    <tr><td>TD-28</td><td><strong>Large page components</strong> — Some files exceed 200 lines</td><td><span class="badge badge-low">Low</span></td><td>Extract data fetching into separate functions</td></tr>
+    <tr><td>TD-29</td><td><strong>No error boundaries</strong></td><td><span class="badge badge-medium">Medium</span></td><td>Add error boundaries at page and layout level</td></tr>
+    <tr><td>TD-30</td><td><strong>Console.error used for production errors</strong> — No monitoring</td><td><span class="badge badge-medium">Medium</span></td><td>Integrate Sentry or similar error tracking</td></tr>
+  </tbody>
+</table>
+
+<div class="info-box info-box-red">
+  <div class="info-box-title">Priority Fix Order</div>
+  <p>1. TD-21 — Admin guard bypass risk (security)</p>
+  <p>2. TD-26 — No test coverage (quality)</p>
+  <p>3. TD-01 — Triple purchase recording (reliability)</p>
+  <p>4. TD-22 — No rate limiting (security)</p>
+  <p>5. TD-16 — No pagination on admin tables (scalability)</p>
+  <p>6. TD-18 — Fire-and-forget emails (reliability)</p>
+  <p>7. TD-04 — Inconsistent timestamp columns (maintainability)</p>
+  <p>8. TD-30 — No error monitoring (observability)</p>
+</div>
+</div>
+
+<!-- ==================== 7. ROADMAP ==================== -->
+<div class="content" id="roadmap">
+<h1>7. One-Year Roadmap</h1>
+
+<h2>Q1 (Apr–Jun 2026) — Stabilization & Core Fixes</h2>
+<div class="info-box info-box-blue">
+  <div class="info-box-title">Goals</div>
+  <p>Fix all critical bugs and gaps. Establish testing foundation. Improve admin experience for monitoring buyers and transactions.</p>
+</div>
+<table>
+  <thead><tr><th>Feature</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr><td>Admin transaction visibility — ensure all standalone buyers appear in users list and payments page</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>Admin pagination — Add pagination to users, transactions, and suggestions tables</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>CSV export — Export users and transactions from admin panel</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>Email notifications for reviews — Notify students when suggestions/capstones are reviewed</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>Rate limiting — Add rate limiting to auth, quiz, and payment endpoints</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>Error monitoring — Integrate Sentry for production error tracking</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>Test suite — Add unit tests for GPA calculation, progression logic, and grading</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>Fix typo route — Redirect /univeristy/transaction to correct path</td><td><span class="badge badge-medium">Medium</span></td></tr>
+  </tbody>
+</table>
+<p><strong>Success Metrics:</strong> 0 critical bugs in production · Test coverage > 40% · Admin page load time < 2s with 1000+ users · Email delivery rate > 99%</p>
+
+<h2>Q2 (Jul–Sep 2026) — Core Feature Expansion</h2>
+<div class="info-box info-box-green">
+  <div class="info-box-title">Goals</div>
+  <p>Enhance the learning experience for both university and standalone students. Build community features. Improve course discovery.</p>
+</div>
+<table>
+  <thead><tr><th>Feature</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr><td>Course search — Full-text search across university and standalone courses</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>Discussion forums — Course-level discussion threads for university courses</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>Certificate of completion — PDF certificates for standalone courses</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>Notification system — Build UI for existing notifications table</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>Course reviews/ratings — Star ratings and written reviews for standalone courses</td><td><span class="badge badge-medium">Medium</span></td></tr>
+    <tr><td>Progress email reminders — Weekly nudges for inactive students</td><td><span class="badge badge-medium">Medium</span></td></tr>
+    <tr><td>Bulk email for admins — Send announcements to all students or segments</td><td><span class="badge badge-medium">Medium</span></td></tr>
+    <tr><td>Coupon/discount codes — Promo code system for marketing campaigns</td><td><span class="badge badge-medium">Medium</span></td></tr>
+  </tbody>
+</table>
+<p><strong>Success Metrics:</strong> 20% increase in course completion rate · 15% increase in standalone course conversions · 50+ discussion threads active per month</p>
+
+<h2>Q3 (Oct–Dec 2026) — Growth & Monetization</h2>
+<div class="info-box info-box-amber">
+  <div class="info-box-title">Goals</div>
+  <p>Drive revenue growth through new monetization features. Expand standalone course catalog. Build referral and affiliate systems.</p>
+</div>
+<table>
+  <thead><tr><th>Feature</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr><td>Referral program — Referral codes for standalone courses with discounts</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>Affiliate dashboard — Track affiliate earnings and referrals</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>Instructor onboarding — Allow external instructors to create and manage standalone courses</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>Course bundles — Bundle multiple standalone courses at a discount</td><td><span class="badge badge-medium">Medium</span></td></tr>
+    <tr><td>Gift courses — Purchase courses as gifts for other users</td><td><span class="badge badge-medium">Medium</span></td></tr>
+    <tr><td>Multi-currency support — Support USD in addition to NGN</td><td><span class="badge badge-medium">Medium</span></td></tr>
+    <tr><td>A/B testing framework — Test pricing page layouts and copy</td><td><span class="badge badge-medium">Medium</span></td></tr>
+    <tr><td>Analytics dashboard — Page views, engagement metrics, drop-off analysis</td><td><span class="badge badge-high">High</span></td></tr>
+  </tbody>
+</table>
+<p><strong>Success Metrics:</strong> 30% of standalone revenue from referrals/affiliates · 5+ external instructors onboarded · 20% increase in ARPU</p>
+
+<h2>Q4 (Jan–Mar 2027) — Scale & Optimization</h2>
+<div class="info-box info-box-blue">
+  <div class="info-box-title">Goals</div>
+  <p>Prepare for 10x user growth. Optimize performance and reliability. Explore new product opportunities.</p>
+</div>
+<table>
+  <thead><tr><th>Feature</th><th>Priority</th></tr></thead>
+  <tbody>
+    <tr><td>PWA support — Offline lesson viewing for standalone courses</td><td><span class="badge badge-high">High</span></td></tr>
+    <tr><td>Mobile app — React Native app for iOS and Android</td><td><span class="badge badge-medium">Medium</span></td></tr>
+    <tr><td>Gamification — Streaks, badges, leaderboards for university students</td><td><span class="badge badge-medium">Medium</span></td></tr>
+    <tr><td>Social sharing — Share certificates and achievements on LinkedIn/Twitter</td><td><span class="badge badge-low">Low</span></td></tr>
+    <tr><td>Advanced analytics — Cohort analysis, LTV prediction, churn modeling</td><td><span class="badge badge-medium">Medium</span></td></tr>
+    <tr><td>API for partners — Public API for university partnerships</td><td><span class="badge badge-medium">Medium</span></td></tr>
+    <tr><td>White-label option — Allow institutions to white-label the platform</td><td><span class="badge badge-low">Low</span></td></tr>
+    <tr><td>AI tutor — Gemini-powered Q&A assistant for course content</td><td><span class="badge badge-medium">Medium</span></td></tr>
+  </tbody>
+</table>
+<p><strong>Success Metrics:</strong> 10,000+ active students · 99.9% uptime · < 1s page load time globally · 50+ courses in standalone catalog</p>
+</div>
+
+<!-- ==================== 8. RECOMMENDATIONS ==================== -->
+<div class="content" id="recommendations">
+<h1>8. Product Recommendations</h1>
+
+<h2>High-Impact, Low-Effort (Do First)</h2>
+<table>
+  <thead><tr><th>#</th><th>Recommendation</th><th>Impact</th><th>Effort</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><strong>Admin CSV Export</strong> — Add export button to users and payments pages</td><td><span class="badge badge-high">High</span></td><td>2–4 hours</td></tr>
+    <tr><td>2</td><td><strong>Email Notifications for Reviews</strong> — Notify students on suggestion/capstone review</td><td><span class="badge badge-high">High</span></td><td>4–6 hours</td></tr>
+    <tr><td>3</td><td><strong>Admin Pagination</strong> — Add pagination to all admin tables</td><td><span class="badge badge-high">High</span></td><td>4–8 hours</td></tr>
+    <tr><td>4</td><td><strong>Consolidate Purchase Recording</strong> — Single source of truth for standalone purchases</td><td><span class="badge badge-high">High</span></td><td>8–12 hours</td></tr>
+    <tr><td>5</td><td><strong>Rate Limiting</strong> — Protect auth, quiz, and payment endpoints</td><td><span class="badge badge-high">High</span></td><td>4–8 hours</td></tr>
+  </tbody>
+</table>
+
+<h2>High-Impact, Medium-Effort (Do Next)</h2>
+<table>
+  <thead><tr><th>#</th><th>Recommendation</th><th>Impact</th><th>Effort</th></tr></thead>
+  <tbody>
+    <tr><td>6</td><td><strong>Course Search</strong> — Full-text search with filters</td><td><span class="badge badge-high">High</span></td><td>1–2 weeks</td></tr>
+    <tr><td>7</td><td><strong>Certificate of Completion</strong> — PDF certificates for standalone courses</td><td><span class="badge badge-high">High</span></td><td>1 week</td></tr>
+    <tr><td>8</td><td><strong>Notification System UI</strong> — Bell icon + notification list</td><td><span class="badge badge-medium">Medium</span></td><td>1–2 weeks</td></tr>
+    <tr><td>9</td><td><strong>Coupon/Discount Codes</strong> — Promo codes for marketing</td><td><span class="badge badge-high">High</span></td><td>1–2 weeks</td></tr>
+    <tr><td>10</td><td><strong>Analytics Dashboard</strong> — PostHog integration</td><td><span class="badge badge-high">High</span></td><td>1 week</td></tr>
+  </tbody>
+</table>
+
+<h2>Strategic Recommendations</h2>
+<table>
+  <thead><tr><th>#</th><th>Recommendation</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>16</td><td><strong>Instructor Marketplace</strong> — Allow external instructors to sell courses</td><td>Transforms from single-instructor to marketplace, dramatically increasing catalog and revenue</td></tr>
+    <tr><td>17</td><td><strong>Corporate/B2B Licensing</strong> — Bulk licenses for company teams</td><td>Higher ARPU than individual sales</td></tr>
+    <tr><td>18</td><td><strong>Mobile App (PWA First)</strong> — Offline lesson viewing</td><td>Lower development cost, instant distribution, works on all devices</td></tr>
+    <tr><td>19</td><td><strong>AI Tutor</strong> — Gemini-powered Q&A assistant</td><td>Differentiates from competitors, increases learning outcomes</td></tr>
+    <tr><td>20</td><td><strong>White-Label for Universities</strong> — B2B SaaS model</td><td>Recurring revenue from institutional partnerships</td></tr>
+  </tbody>
+</table>
+
+<h2>Quick Wins (Under 2 Hours Each)</h2>
+<table>
+  <thead><tr><th>#</th><th>Change</th><th>Impact</th></tr></thead>
+  <tbody>
+    <tr><td>QW-01</td><td>Fix /univeristy/transaction typo redirect</td><td>Eliminates 404s</td></tr>
+    <tr><td>QW-02</td><td>Rename src/lib/ai/openai.ts to gemini.ts</td><td>Reduces confusion</td></tr>
+    <tr><td>QW-03</td><td>Add rel="noopener noreferrer" to all external links</td><td>Security best practice</td></tr>
+    <tr><td>QW-04</td><td>Add Open Graph meta tags to all public pages</td><td>Better social sharing</td></tr>
+    <tr><td>QW-05</td><td>Add loading skeletons to admin tables</td><td>Perceived performance</td></tr>
+    <tr><td>QW-06</td><td>Add empty state illustrations</td><td>Better UX</td></tr>
+    <tr><td>QW-07</td><td>Standardize date formatting across all pages</td><td>Consistency</td></tr>
+    <tr><td>QW-08</td><td>Add ?module=courses filtering logic or remove param</td><td>Eliminates confusion</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ==================== 9. SCOPE CONTROL ==================== -->
+<div class="content" id="scope">
+<h1>9. Scope Control</h1>
+
+<h2>In Scope (Current Product)</h2>
+<ul>
+  <li>Email/password authentication with verification</li>
+  <li>Password reset via email</li>
+  <li>Student onboarding (department selection)</li>
+  <li>4-year university curriculum (100–400 level)</li>
+  <li>8 departments with semester-based progression</li>
+  <li>Quiz/exam engine with server-side grading</li>
+  <li>GPA calculation (5.0 scale)</li>
+  <li>Capstone submission and review</li>
+  <li>Community suggestions system</li>
+  <li>Premium subscriptions (Paystack)</li>
+  <li>Standalone courses (pay-per-course)</li>
+  <li>YouTube and Google Drive video embedding</li>
+  <li>Admin CMS (courses, users, payments, pricing)</li>
+  <li>Multi-level admin permissions (super, content, finance)</li>
+  <li>Audit logging</li>
+  <li>Account suspension</li>
+  <li>Email delivery (Resend)</li>
+  <li>AI lesson content (Gemini)</li>
+  <li>Demo mode</li>
+  <li>Transcript PDF generation</li>
+  <li>Partnership inquiries</li>
+</ul>
+
+<h2>Out of Scope (Explicitly Not Building)</h2>
+<table>
+  <thead><tr><th>Category</th><th>Items</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Infrastructure</strong></td><td>Live video streaming, video hosting/encoding, CDN infrastructure, database infrastructure</td></tr>
+    <tr><td><strong>Product Features</strong></td><td>Real-time collaboration, blockchain certificates, multi-language support, native mobile apps, corporate/B2B sales, white-label platform, discussion forums, referral/affiliate system, coupon codes, course reviews, gamification, AI tutor, instructor marketplace</td></tr>
+    <tr><td><strong>Technical</strong></td><td>API versioning, microservices architecture, database sharding, multi-region deployment</td></tr>
+  </tbody>
+</table>
+
+<h2>Grey Area (Needs Clarification)</h2>
+<table>
+  <thead><tr><th>Item</th><th>Status</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td><code>/university/*</code> pages</td><td><span class="badge badge-partial">Unclear</span></td><td>Separate product arm or legacy? Needs product decision</td></tr>
+    <tr><td><code>?module=courses</code> query param</td><td><span class="badge badge-partial">Unused</span></td><td>Present in URLs but not implemented. Implement or remove.</td></tr>
+    <tr><td>In-app notifications UI</td><td><span class="badge badge-partial">Table exists, no UI</span></td><td>Build or remove?</td></tr>
+    <tr><td>External instructor accounts</td><td><span class="badge badge-partial">Not yet designed</span></td><td>Instructor name is hardcoded. Should instructors have their own accounts?</td></tr>
+    <tr><td>Course sort order</td><td><span class="badge badge-partial">Partial</span></td><td>sort_order column added but not fully utilized in UI</td></tr>
+  </tbody>
+</table>
+
+<div class="page-footer">
+  <p>Aorthar Academy — Product, Engineering & QA Documentation · April 2026</p>
+  <p>github.com/mos-ski/Aorthar-academy</p>
+</div>
+</div>
+
+</body>
+</html>
