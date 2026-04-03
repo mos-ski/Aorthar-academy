@@ -104,10 +104,12 @@ function getSubdomainRewrite(request: NextRequest): NextResponse | null {
     return NextResponse.rewrite(url);
   }
 
-  // university.aorthar.com → root redirects to /dashboard
+  // university.aorthar.com → / serves marketing landing page; other paths pass through
   if (product === 'university') {
     if (pathname === '/') {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      const url = request.nextUrl.clone();
+      url.pathname = '/university';
+      return NextResponse.rewrite(url);
     }
     return null;
   }
