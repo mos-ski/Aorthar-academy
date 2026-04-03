@@ -20,13 +20,13 @@ export default async function AdminPaymentsPage() {
     // University subscription transactions
     admin
       .from('transactions')
-      .select('id, paystack_reference, amount, status, created_at, user_id, profiles!user_id(full_name, email)')
+      .select('id, paystack_reference, amount, status, created_at, user_id, profiles!left(full_name, email)')
       .order('created_at', { ascending: false })
       .limit(100),
     // Standalone course purchases
     admin
       .from('standalone_purchases')
-      .select('id, paystack_reference, amount_paid_ngn, created_at, user_id, course_id, profiles!user_id(full_name, email), standalone_courses!course_id(title)')
+      .select('id, paystack_reference, amount_paid_ngn, created_at, user_id, course_id, profiles!left(full_name, email), standalone_courses!course_id(title)')
       .order('created_at', { ascending: false })
       .limit(100),
     admin
@@ -81,9 +81,40 @@ export default async function AdminPaymentsPage() {
         created_at: p.created_at,
         full_name: profile?.full_name ?? null,
         email: profile?.email ?? null,
+        user_id: p.user_id,
       };
     }),
   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  // Enrich course purchases that lack profile data with auth user info
+  const missingProfileIds = rows
+    .filter((r) => r.type === 'course' && !r.full_name && !r.email)
+    .map((r) => (r as typeof rows[number] & { user_id?: string }).user_id)
+    .filter(Boolean) as string[];
+
+  if (missingProfileIds.length > 0) {
+    const userMap = new Map<string, { full_name: string | null; email: string | null }>();
+    for (const uid of missingProfileIds) {
+      const { data } = await admin.auth.admin.getUserById(uid);
+      if (data?.user) {
+        userMap.set(uid, {
+          full_name: data.user.user_metadata?.full_name ?? null,
+          email: data.user.email ?? null,
+        });
+      }
+    }
+
+    for (const row of rows) {
+      if (row.type === 'course' && !row.full_name && !row.email) {
+        const uid = (row as typeof row & { user_id?: string }).user_id;
+        if (uid && userMap.has(uid)) {
+          const info = userMap.get(uid)!;
+          row.full_name = info.full_name;
+          row.email = info.email;
+        }
+      }
+    }
+  }
 
   const successful = rows.filter((t) => t.status === 'success');
   const failed = rows.filter((t) => t.status === 'failed');
