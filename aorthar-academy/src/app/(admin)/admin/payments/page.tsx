@@ -26,8 +26,8 @@ export default async function AdminPaymentsPage() {
     // Standalone course purchases
     admin
       .from('standalone_purchases')
-      .select('id, paystack_reference, amount_paid_ngn, created_at, user_id, course_id, profiles!left(full_name, email), standalone_courses!course_id(title)')
-      .order('created_at', { ascending: false })
+      .select('id, paystack_reference, amount_paid_ngn, purchased_at, user_id, course_id, profiles!left(full_name, email), standalone_courses!course_id(title)')
+      .order('purchased_at', { ascending: false })
       .limit(100),
     admin
       .from('subscriptions')
@@ -78,7 +78,7 @@ export default async function AdminPaymentsPage() {
         type: 'course' as const,
         label: course?.title ?? 'Course purchase',
         status: 'success',
-        created_at: p.created_at,
+        created_at: p.purchased_at,
         full_name: profile?.full_name ?? null,
         email: profile?.email ?? null,
         user_id: p.user_id,
