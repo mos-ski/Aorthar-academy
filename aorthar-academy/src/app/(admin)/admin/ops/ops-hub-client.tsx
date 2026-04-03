@@ -118,7 +118,7 @@ export default function OpsHubClient({
     department: '',
     role: 'student',
     grant_premium: false,
-    standalone_course_slugs: '',
+    standalone_course_slugs: [] as string[],
   });
   const [inviting, setInviting] = useState(false);
 
@@ -295,10 +295,7 @@ export default function OpsHubClient({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...inviteForm,
-          standalone_course_slugs: inviteForm.standalone_course_slugs
-            .split('|')
-            .map((slug) => slug.trim())
-            .filter(Boolean),
+          standalone_course_slugs: inviteForm.standalone_course_slugs,
         }),
       });
       const json = await res.json();
@@ -308,8 +305,8 @@ export default function OpsHubClient({
       }
       toast.success(
         json.status === 'skipped_existing'
-          ? `Skipped existing user (${json.reason ?? 'already exists'})`
-          : 'Invite sent successfully',
+          ? `Skipped — ${json.email} already has an account. Grant course access directly in the student manager below.`
+          : `Invite sent to ${json.email}. They will receive an email to sign up and access their course.`,
       );
       setInviteForm({
         full_name: '',
@@ -317,7 +314,7 @@ export default function OpsHubClient({
         department: '',
         role: 'student',
         grant_premium: false,
-        standalone_course_slugs: '',
+        standalone_course_slugs: [],
       });
     } finally {
       setInviting(false);
@@ -423,9 +420,12 @@ export default function OpsHubClient({
           <div className="grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Single Invite</CardTitle>
+                <CardTitle className="text-base">Invite Student</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Use this to invite a student who paid offline. They will receive an email to sign up and can immediately access their course when they log in.
+                </p>
                 <Input
                   placeholder="Full name"
                   value={inviteForm.full_name}
@@ -460,21 +460,41 @@ export default function OpsHubClient({
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
-                <Input
-                  placeholder="Standalone slugs (optional, separated by |)"
-                  value={inviteForm.standalone_course_slugs}
-                  onChange={(e) => setInviteForm((prev) => ({ ...prev, standalone_course_slugs: e.target.value }))}
-                />
+                {externalCourses.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-sm font-medium">Grant course access</p>
+                    <div className="rounded-md border divide-y max-h-40 overflow-y-auto">
+                      {externalCourses.map((course) => (
+                        <label key={course.id} className="flex items-center gap-2.5 px-3 py-2 text-sm cursor-pointer hover:bg-muted/50">
+                          <input
+                            type="checkbox"
+                            checked={inviteForm.standalone_course_slugs.includes(course.slug)}
+                            onChange={(e) => {
+                              setInviteForm((prev) => ({
+                                ...prev,
+                                standalone_course_slugs: e.target.checked
+                                  ? [...prev.standalone_course_slugs, course.slug]
+                                  : prev.standalone_course_slugs.filter((s) => s !== course.slug),
+                              }));
+                            }}
+                          />
+                          <span className="flex-1">{course.title}</span>
+                          <Badge variant="outline" className="text-xs font-normal shrink-0">{course.slug}</Badge>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <label className="flex items-center gap-2 text-sm">
                   <input
                     type="checkbox"
                     checked={inviteForm.grant_premium}
                     onChange={(e) => setInviteForm((prev) => ({ ...prev, grant_premium: e.target.checked }))}
                   />
-                  Grant premium on invite
+                  Grant university premium on invite
                 </label>
-                <Button onClick={() => void submitInvite()} disabled={inviting}>
-                  {inviting ? 'Inviting…' : 'Send Invite'}
+                <Button onClick={() => void submitInvite()} disabled={inviting || !inviteForm.email}>
+                  {inviting ? 'Sending invite…' : 'Send Invite Email'}
                 </Button>
               </CardContent>
             </Card>

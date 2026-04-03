@@ -66,6 +66,26 @@ export async function GET(req: NextRequest) {
       ]),
     );
 
+    // Collect user_ids that don't have a profile row (offline buyers who haven't signed up yet)
+    const allUserIds = new Set([
+      ...(subscriptionsResp.data ?? []).map((t) => t.user_id),
+      ...(standaloneResp.data ?? []).map((p) => p.user_id),
+    ]);
+    const missingUserIds = [...allUserIds].filter((uid) => uid && !profileMap.has(uid));
+    if (missingUserIds.length > 0) {
+      await Promise.all(
+        missingUserIds.map(async (uid) => {
+          const { data } = await admin.auth.admin.getUserById(uid);
+          if (data?.user) {
+            profileMap.set(uid, {
+              name: (data.user.user_metadata?.full_name as string | null) ?? null,
+              email: data.user.email ?? null,
+            });
+          }
+        }),
+      );
+    }
+
     const subscriptionTxns: UnifiedTransaction[] = (subscriptionsResp.data ?? []).map((transaction) => {
       const user = profileMap.get(transaction.user_id);
       return {
