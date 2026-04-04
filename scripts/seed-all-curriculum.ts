@@ -365,14 +365,24 @@ async function main() {
     }
   }
 
-  console.log(`\n📊 Total courses parsed: ${allCourses.length}\n`);
+  console.log(`\n📊 Total courses parsed: ${allCourses.length} (before dedup)\n`);
 
-  // 3. Batch insert courses (skip existing)
-  console.log('📝 Inserting courses…');
+  // Deduplicate by code — keep the entry with the most classes (primary dept wins)
+  const courseByCode = new Map<string, typeof allCourses[number]>();
+  for (const c of allCourses) {
+    const existing = courseByCode.get(c.code);
+    if (!existing || c.classes.length > existing.classes.length) {
+      courseByCode.set(c.code, c);
+    }
+  }
+  const uniqueCourses = Array.from(courseByCode.values());
+  console.log(`📊 Unique courses after dedup: ${uniqueCourses.length}\n`);
+
+  // 3. Upsert all courses (insert new + update existing name/description/department/placement)
+  console.log('📝 Upserting courses…');
   const existingCodes = await getExistingCodes();
-  const newCourses = allCourses.filter(c => !existingCodes.has(c.code));
 
-  const courseInserts = newCourses.map(c => ({
+  const courseUpserts = uniqueCourses.map(c => ({
     year_id: c.yearId,
     semester_id: c.semesterId,
     code: c.code,
@@ -386,8 +396,14 @@ async function main() {
     department: c.department,
   }));
 
-  const coursesInserted = await batchInsert('courses', courseInserts);
-  console.log(`   ✅ ${coursesInserted} new courses inserted (${existingCodes.size} skipped)`);
+  let coursesInserted = 0;
+  for (let i = 0; i < courseUpserts.length; i += 100) {
+    const chunk = courseUpserts.slice(i, i + 100);
+    const { error } = await supabase.from('courses').upsert(chunk, { onConflict: 'code' });
+    if (error) console.warn(`      ⚠ Upsert failed (chunk ${i}): ${error.message}`);
+    else coursesInserted += chunk.length;
+  }
+  console.log(`   ✅ ${coursesInserted} courses upserted (${existingCodes.size} previously existed)`);
 
   // 4. Get all course IDs (existing + new)
   console.log('\n📝 Inserting lessons…');
@@ -408,7 +424,7 @@ async function main() {
   }
 
   // Only seed courses that have NO lessons at all
-  const coursesNeedingLessons = allCourses.filter(
+  const coursesNeedingLessons = uniqueCourses.filter(
     c => !coursesWithLessons.has(courseMap.get(c.code) || '')
   );
 
@@ -521,7 +537,7 @@ async function main() {
   // 5. Batch insert questions
   console.log('\n📝 Inserting questions…');
   const existingQuestionCourseIds = await getExistingQuestionCourseIds();
-  const coursesNeedingQuestions = allCourses.filter(
+  const coursesNeedingQuestions = uniqueCourses.filter(
     c => c.quiz.length > 0 && !existingQuestionCourseIds.has(courseMap.get(c.code) || '')
   );
 
@@ -553,11 +569,30 @@ async function main() {
 
   console.log(`   ✅ ${questionsInserted} questions inserted`);
 
+  // 6. Archive stale courses no longer in any curriculum markdown
+  console.log('\n🧹 Archiving stale courses…');
+  const currentCodes = new Set(uniqueCourses.map(c => c.code.toUpperCase()));
+  const { data: allPublished } = await supabase
+    .from('courses')
+    .select('id, code, name')
+    .eq('status', 'published');
+
+  const staleCourses = (allPublished || []).filter(
+    (c: { id: string; code: string; name: string }) => !currentCodes.has(c.code.toUpperCase()),
+  );
+  if (staleCourses.length > 0) {
+    const staleIds = staleCourses.map((c: { id: string }) => c.id);
+    await supabase.from('courses').update({ status: 'draft' }).in('id', staleIds);
+    console.log(`   ✅ ${staleCourses.length} stale courses archived: ${staleCourses.map((c: { code: string }) => c.code).join(', ')}`);
+  } else {
+    console.log('   ✅ No stale courses found');
+  }
+
   // Summary
   console.log('\n' + '='.repeat(60));
   console.log('🎉 SEED COMPLETE');
   console.log('='.repeat(60));
-  console.log(`   Courses:    ${courseInserts.length} new`);
+  console.log(`   Courses:    ${coursesInserted} upserted`);
   console.log(`   Lessons:    ${lessonsInserted}`);
   console.log(`   Resources:  ${resourcesInserted}`);
   console.log(`   Questions:  ${questionsInserted}`);
