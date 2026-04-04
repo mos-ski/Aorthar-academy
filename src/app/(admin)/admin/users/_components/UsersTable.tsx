@@ -121,7 +121,7 @@ export default function UsersTable({ users }: Props) {
                     </TableCell>
                     <TableCell className="text-sm">{formatDate(user.created_at)}</TableCell>
                     <TableCell>
-                      <AdminUserActions userId={user.user_id} currentRole={user.role} isPremium={isPremium} />
+                      <AdminUserActions userId={user.user_id} currentRole={user.role} isPremium={isPremium} purchases={user.standalone_purchases} />
                     </TableCell>
                   </TableRow>
                 );
