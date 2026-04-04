@@ -10,7 +10,7 @@ import {
   ChevronRight,
   CircleUser,
   CreditCard,
-  FileQuestion,
+  GraduationCap,
   Layers,
   Lightbulb,
   LayoutDashboard,
@@ -75,7 +75,7 @@ const adminUniversityNav: NavItem[] = [
     match: (pathname, _tab, _courseTab, moduleParam) =>
       pathname === '/admin/payments' && moduleParam === 'university',
   },
-  { href: '/admin/questions', label: 'Quiz & Questions', icon: FileQuestion },
+  { href: '/admin/questions', label: 'Exam System', icon: GraduationCap },
   { href: '/admin/curriculum', label: 'Curriculum', icon: Layers },
   { href: '/admin/departments', label: 'Departments', icon: Building2 },
   { href: '/admin/suggestions', label: 'Suggestions', icon: Lightbulb },

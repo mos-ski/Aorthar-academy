@@ -4,13 +4,14 @@ import { mapAdminApiError, requireAdminApi } from '@/lib/admin/apiAuth';
 import { grantStandaloneCourses } from '@/lib/admin/studentOps';
 import { sendEmail } from '@/lib/email';
 import { bootcampAccessHtml, bootcampAccessSubject } from '@/lib/email/templates/bootcamp-access';
+import { writeAuditLog } from '@/lib/admin/audit';
 
 type Params = { params: Promise<{ userId: string }> };
 
 // POST — grant a bootcamp to an existing user and notify them by email
 export async function POST(req: NextRequest, { params }: Params) {
   try {
-    await requireAdminApi();
+    const { userId: performedBy } = await requireAdminApi();
     const { userId } = await params;
     const { course_slug } = await req.json() as { course_slug?: string };
 
@@ -23,9 +24,9 @@ export async function POST(req: NextRequest, { params }: Params) {
     // Grant access
     await grantStandaloneCourses(admin, userId, [course_slug]);
 
-    // Fetch course title and user details for the email
+    // Fetch course details and user for email
     const [{ data: course }, { data: { user } }] = await Promise.all([
-      admin.from('standalone_courses').select('title').eq('slug', course_slug).single(),
+      admin.from('standalone_courses').select('id, title').eq('slug', course_slug).single(),
       admin.auth.admin.getUserById(userId),
     ]);
 
@@ -47,6 +48,16 @@ export async function POST(req: NextRequest, { params }: Params) {
       }
     }
 
+    await writeAuditLog({
+      action: 'standalone_access_granted',
+      performedBy,
+      targetUser: userId,
+      entityType: 'standalone_course',
+      entityId: course?.id ?? null,
+      metadata: { course_slug, course_title: bootcampTitle },
+      req,
+    }, admin);
+
     return NextResponse.json({ status: 'granted' });
   } catch (error) {
     const mapped = mapAdminApiError(error);
@@ -57,7 +68,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 // DELETE — remove a user's access to a specific bootcamp
 export async function DELETE(req: NextRequest, { params }: Params) {
   try {
-    await requireAdminApi();
+    const { userId: performedBy } = await requireAdminApi();
     const { userId } = await params;
     const { course_id } = await req.json() as { course_id?: string };
 
@@ -66,6 +77,14 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     }
 
     const admin = createAdminClient();
+
+    // Fetch course title before deleting for audit
+    const { data: course } = await admin
+      .from('standalone_courses')
+      .select('id, title')
+      .eq('id', course_id)
+      .maybeSingle();
+
     const { error } = await admin
       .from('standalone_purchases')
       .delete()
@@ -73,6 +92,16 @@ export async function DELETE(req: NextRequest, { params }: Params) {
       .eq('course_id', course_id);
 
     if (error) throw new Error(error.message);
+
+    await writeAuditLog({
+      action: 'standalone_access_revoked',
+      performedBy,
+      targetUser: userId,
+      entityType: 'standalone_course',
+      entityId: course_id,
+      metadata: { course_title: course?.title ?? 'unknown' },
+      req,
+    }, admin);
 
     return NextResponse.json({ status: 'removed' });
   } catch (error) {

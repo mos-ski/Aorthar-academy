@@ -7,8 +7,15 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TrendingUp, Users, CreditCard, AlertCircle, Banknote } from 'lucide-react';
 
-export default async function AdminPaymentsPage() {
+export default async function AdminPaymentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ module?: string }>;
+}) {
+  const { module: moduleParam } = await searchParams;
   const admin = createAdminClient();
+  const isUniversity = moduleParam === 'university';
+  const isBootcamp = moduleParam === 'courses';
 
   const [
     { data: uniTxns },
@@ -16,34 +23,27 @@ export default async function AdminPaymentsPage() {
     { data: profileRows },
     { count: activeSubscriptions },
     { count: totalUsers },
-    { count: premiumUsers },
+    { data: allCourses },
   ] = await Promise.all([
-    // University subscription transactions — no profile join (user_id FKs to auth.users, not profiles)
+    // University subscription transactions
     admin
       .from('transactions')
       .select('id, paystack_reference, amount, status, created_at, user_id')
       .order('created_at', { ascending: false })
-      .limit(100),
+      .limit(200),
     // Standalone course purchases
     admin
       .from('standalone_purchases')
-      .select('id, paystack_reference, amount_paid_ngn, purchased_at, user_id, course_id, standalone_courses(title)')
+      .select('id, paystack_reference, amount_paid_ngn, purchased_at, user_id, course_id')
       .order('purchased_at', { ascending: false })
-      .limit(100),
-    // Profiles fetched separately — user_id here is the FK to auth.users
+      .limit(200),
     admin.from('profiles').select('user_id, full_name, email'),
-    admin
-      .from('subscriptions')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'active'),
+    admin.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     admin.from('profiles').select('*', { count: 'exact', head: true }),
-    admin
-      .from('subscriptions')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'active'),
+    // Course titles for manual join
+    admin.from('standalone_courses').select('id, title'),
   ]);
 
-  // Build a profile lookup map keyed by user_id
   const profileMap = new Map(
     (profileRows ?? []).map((p) => [
       p.user_id,
@@ -51,60 +51,66 @@ export default async function AdminPaymentsPage() {
     ]),
   );
 
-  // Normalise both into one display shape
+  const courseMap = new Map((allCourses ?? []).map((c) => [c.id, c.title]));
+
   type TxRow = {
     id: string;
     paystack_reference: string;
-    amount_kobo: number; // university uses kobo, standalone uses NGN
+    amount_kobo: number;
     type: 'subscription' | 'course';
     label: string;
     status: string;
     created_at: string;
     full_name: string | null;
     email: string | null;
+    user_id?: string;
   };
 
-  const rows: (TxRow & { user_id?: string })[] = [
-    ...(uniTxns ?? []).map((t) => {
-      const profile = profileMap.get(t.user_id);
-      return {
-        id: t.id,
-        paystack_reference: t.paystack_reference ?? '',
-        amount_kobo: t.amount ?? 0,
-        type: 'subscription' as const,
-        label: 'University subscription',
-        status: t.status ?? 'unknown',
-        created_at: t.created_at,
-        user_id: t.user_id,
-        full_name: profile?.full_name ?? null,
-        email: profile?.email ?? null,
-      };
-    }),
-    ...(standalonePurchases ?? []).map((p) => {
-      const profile = profileMap.get(p.user_id);
-      const course = (p.standalone_courses as unknown) as { title: string | null } | null;
-      return {
-        id: p.id,
-        paystack_reference: p.paystack_reference ?? '',
-        amount_kobo: (p.amount_paid_ngn ?? 0) * 100,
-        type: 'course' as const,
-        label: Array.isArray(p.standalone_courses)
-          ? ((p.standalone_courses[0] as { title?: string | null } | undefined)?.title ?? 'Course purchase')
-          : (course?.title ?? 'Course purchase'),
-        status: 'success',
-        created_at: p.purchased_at,
-        user_id: p.user_id,
-        full_name: profile?.full_name ?? null,
-        email: profile?.email ?? null,
-      };
-    }),
-  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const uniRows: TxRow[] = (uniTxns ?? []).map((t) => {
+    const profile = profileMap.get(t.user_id);
+    return {
+      id: t.id,
+      paystack_reference: t.paystack_reference ?? '',
+      amount_kobo: t.amount ?? 0,
+      type: 'subscription' as const,
+      label: 'University subscription',
+      status: t.status ?? 'unknown',
+      created_at: t.created_at,
+      user_id: t.user_id,
+      full_name: profile?.full_name ?? null,
+      email: profile?.email ?? null,
+    };
+  });
 
-  // Enrich any rows where profile lookup found nothing — fall back to auth API
+  const bootcampRows: TxRow[] = (standalonePurchases ?? []).map((p) => {
+    const profile = profileMap.get(p.user_id);
+    return {
+      id: p.id,
+      paystack_reference: p.paystack_reference ?? '',
+      amount_kobo: (p.amount_paid_ngn ?? 0) * 100,
+      type: 'course' as const,
+      label: courseMap.get(p.course_id) ?? 'Bootcamp purchase',
+      status: 'success',
+      created_at: p.purchased_at,
+      user_id: p.user_id,
+      full_name: profile?.full_name ?? null,
+      email: profile?.email ?? null,
+    };
+  });
+
+  // Select rows based on module
+  const allRows = isUniversity
+    ? uniRows
+    : isBootcamp
+    ? bootcampRows
+    : [...uniRows, ...bootcampRows].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  const rows = allRows;
+
+  // Enrich missing profiles from auth API
   const missingUserIds = [...new Set(
     rows.filter((r) => !r.full_name && !r.email && r.user_id).map((r) => r.user_id!),
   )];
-
   if (missingUserIds.length > 0) {
     await Promise.all(
       missingUserIds.map(async (uid) => {
@@ -131,55 +137,83 @@ export default async function AdminPaymentsPage() {
   const totalRevenue = successful.reduce((sum, t) => sum + t.amount_kobo, 0);
 
   const effectiveTotalUsers = totalUsers ?? 0;
-  const effectivePremiumUsers = premiumUsers ?? 0;
+  const premiumCount = activeSubscriptions ?? 0;
   const conversionRate = effectiveTotalUsers > 0
-    ? ((effectivePremiumUsers / effectiveTotalUsers) * 100).toFixed(1)
+    ? ((premiumCount / effectiveTotalUsers) * 100).toFixed(1)
     : '0.0';
+
+  const pageTitle = isUniversity
+    ? 'University Transactions'
+    : isBootcamp
+    ? 'Bootcamp Transactions'
+    : 'All Transactions';
+  const pageDesc = isUniversity
+    ? 'University plan subscriptions'
+    : isBootcamp
+    ? 'Bootcamp course purchases'
+    : 'University subscriptions and bootcamp purchases';
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold">Payments & Revenue</h2>
-        <p className="text-sm text-muted-foreground">All transactions — university subscriptions and course purchases</p>
+        <h2 className="text-xl font-semibold">{pageTitle}</h2>
+        <p className="text-sm text-muted-foreground">{pageDesc}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Revenue</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{formatCurrency(totalRevenue / 100)}</p>
-            <p className="text-xs text-muted-foreground mt-1">{successful.length} successful payments</p>
+            <p className="text-xs text-muted-foreground mt-1">{successful.length} successful</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Active Subscriptions</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{activeSubscriptions ?? 0}</p>
-            <p className="text-xs text-muted-foreground mt-1">premium students</p>
-          </CardContent>
-        </Card>
+        {(isUniversity || !moduleParam) && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Active Subscriptions</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">{premiumCount}</p>
+              <p className="text-xs text-muted-foreground mt-1">premium students</p>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Conversion Rate</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{conversionRate}%</p>
-            <p className="text-xs text-muted-foreground mt-1">free → premium</p>
-          </CardContent>
-        </Card>
+        {isBootcamp && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Bootcamp Buyers</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">{new Set(bootcampRows.map((r) => r.user_id)).size}</p>
+              <p className="text-xs text-muted-foreground mt-1">unique students</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {(isUniversity || !moduleParam) && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Conversion Rate</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">{conversionRate}%</p>
+              <p className="text-xs text-muted-foreground mt-1">free → premium</p>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className={failed.length > 0 ? 'border-destructive/40' : ''}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Failed Transactions</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Failed</CardTitle>
             <AlertCircle className={`h-4 w-4 ${failed.length > 0 ? 'text-destructive' : 'text-muted-foreground'}`} />
           </CardHeader>
           <CardContent>
@@ -223,10 +257,7 @@ export default async function AdminPaymentsPage() {
                 </TableRow>
               )}
               {rows.map((t) => (
-                <TableRow
-                  key={t.id}
-                  className={t.status === 'failed' ? 'bg-destructive/5' : ''}
-                >
+                <TableRow key={t.id} className={t.status === 'failed' ? 'bg-destructive/5' : ''}>
                   <TableCell>
                     <p className="font-medium text-sm">{t.full_name ?? '—'}</p>
                     <p className="text-xs text-muted-foreground">{t.email ?? '—'}</p>
@@ -241,11 +272,9 @@ export default async function AdminPaymentsPage() {
                   <TableCell>
                     <Badge
                       variant={
-                        t.status === 'success'
-                          ? 'default'
-                          : t.status === 'failed'
-                          ? 'destructive'
-                          : 'secondary'
+                        t.status === 'success' ? 'default'
+                        : t.status === 'failed' ? 'destructive'
+                        : 'secondary'
                       }
                     >
                       {t.status}

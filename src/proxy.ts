@@ -128,6 +128,8 @@ function getSubdomainRewrite(request: NextRequest): NextResponse | null {
   // admin.aorthar.com → /admin/*
   if (product === 'admin') {
     if (isAuthPassthrough(pathname)) return null;
+    // Let /settings pass through to the dashboard settings page
+    if (pathname === '/settings' || pathname.startsWith('/settings/')) return null;
     const url = request.nextUrl.clone();
     const cleanPath = pathname.startsWith('/admin')
       ? pathname.slice('/admin'.length) || '/'
