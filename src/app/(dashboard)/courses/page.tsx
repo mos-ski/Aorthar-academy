@@ -15,7 +15,7 @@ export default async function CoursesPage() {
   const forcedDemo = await isDemoMode();
   const explicitLive = await isExplicitLiveMode();
 
-  const [{ data: yearsData }, { data: profileData }, { data: passedCourseIds }, { data: semesterProgressData }] =
+  const [{ data: yearsData }, { data: profileData }, { data: passedCourseIds }, { data: semesterProgressData }, { data: enrolledRows }] =
     await Promise.all([
       supabase
         .from('years')
@@ -35,9 +35,15 @@ export default async function CoursesPage() {
         .from('semester_progress')
         .select('semester_id, is_unlocked')
         .eq('user_id', user.id),
+      supabase
+        .from('user_progress')
+        .select('course_id')
+        .eq('user_id', user.id),
     ]);
 
-  // Filter courses by student's department — use `department` column or fall back to code prefix
+  // Show a course if the student is enrolled in it (user_progress) OR it matches their department.
+  // This handles cross-listed courses (e.g. DES101 in PM curriculum) correctly.
+  const enrolledCourseIds = new Set((enrolledRows ?? []).map((r) => r.course_id));
   const studentDept = profileData?.department || null;
   if (yearsData && studentDept) {
     for (const year of yearsData) {
@@ -45,8 +51,10 @@ export default async function CoursesPage() {
         for (const semester of year.semesters) {
           if (semester.courses) {
             semester.courses = semester.courses.filter(
-              (c: { department: string | null; code: string }) =>
-                c.department === studentDept || getDeptFromCode(c.code) === studentDept,
+              (c: { id: string; department: string | null; code: string }) =>
+                enrolledCourseIds.has(c.id) ||
+                c.department === studentDept ||
+                getDeptFromCode(c.code) === studentDept,
             );
           }
         }

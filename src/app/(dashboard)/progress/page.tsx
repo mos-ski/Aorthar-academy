@@ -33,7 +33,9 @@ export default async function ProgressPage() {
         .eq('user_id', user.id),
     ]);
 
-  // Filter courses by student's department — use `department` column or fall back to code prefix
+  // Show a course if the student is enrolled in it OR it matches their department.
+  // This handles cross-listed courses (e.g. DES101 in PM curriculum) correctly.
+  const enrolledCourseIds = new Set((progressData ?? []).map((p) => p.course_id));
   const studentDept = profileData?.department || null;
   if (yearsData && studentDept) {
     for (const year of yearsData) {
@@ -41,8 +43,10 @@ export default async function ProgressPage() {
         for (const semester of year.semesters) {
           if (semester.courses) {
             semester.courses = semester.courses.filter(
-              (c: { department: string | null; code: string }) =>
-                c.department === studentDept || getDeptFromCode(c.code) === studentDept,
+              (c: { id: string; department: string | null; code: string }) =>
+                enrolledCourseIds.has(c.id) ||
+                c.department === studentDept ||
+                getDeptFromCode(c.code) === studentDept,
             );
           }
         }

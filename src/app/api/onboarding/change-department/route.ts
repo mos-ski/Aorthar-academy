@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { AORTHAR_DEPARTMENTS } from '@/lib/academics/departments';
+import { getSemester1CodesFromMarkdown } from '@/lib/academics/curriculumCodes';
 
 const changeDepartmentSchema = z.object({
   department: z.enum(AORTHAR_DEPARTMENTS),
@@ -70,14 +71,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, department, enrolledCount: 0 });
   }
 
-  const { data: selected } = await admin
-    .from('courses')
-    .select('id, code, sort_order')
-    .eq('semester_id', semester1.id)
-    .eq('status', 'published')
-    .eq('department', department)
-    .order('sort_order', { ascending: true })
-    .limit(8);
+  const sem1Codes = getSemester1CodesFromMarkdown(department);
+
+  let selected: { id: string; code: string; sort_order: number }[] | null = null;
+
+  if (sem1Codes.length > 0) {
+    const { data } = await admin
+      .from('courses')
+      .select('id, code, sort_order')
+      .eq('semester_id', semester1.id)
+      .eq('status', 'published')
+      .in('code', sem1Codes);
+    selected = data;
+  }
+
+  if (!selected || selected.length === 0) {
+    const { data } = await admin
+      .from('courses')
+      .select('id, code, sort_order')
+      .eq('semester_id', semester1.id)
+      .eq('status', 'published')
+      .eq('department', department)
+      .order('sort_order', { ascending: true })
+      .limit(8);
+    selected = data;
+  }
 
   if (!selected || selected.length === 0) {
     return NextResponse.json({ ok: true, department, enrolledCount: 0 });
