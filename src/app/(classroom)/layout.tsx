@@ -4,7 +4,7 @@ import UniversitySidebar from '@/components/university/Sidebar';
 import UniversityTopBar from '@/components/university/TopBar';
 import { createClient } from '@/lib/supabase/server';
 
-export default async function UniversityLayout({
+export default async function ClassroomLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -34,11 +34,11 @@ export default async function UniversityLayout({
       progress: item.status === 'passed' ? 100 : item.status === 'in_progress' ? 50 : 0,
     }));
   } catch {
-    // Silent fail — sidebar still works without courses
+    // Silent fail
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-[#060708]">
       <UniversitySidebar
         role={profile?.role ?? 'student'}
         department={profile?.department ?? null}
@@ -53,9 +53,7 @@ export default async function UniversityLayout({
           appEnv={appEnv}
         />
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-6 lg:px-8">
-            {children}
-          </div>
+          {children}
         </main>
       </div>
     </div>
