@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AORTHAR_DEPARTMENTS } from '@/lib/academics/departments';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,16 @@ import {
   Settings2,
   TestTube2,
   CheckCircle2,
+  Loader2,
 } from 'lucide-react';
+
+interface Course {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  credit_units: number;
+}
 
 const DEPARTMENT_META: Record<string, { icon: React.ElementType; description: string }> = {
   'UI/UX Design': { icon: Layers, description: 'Design systems, user research, and interaction design' },
@@ -44,8 +53,24 @@ export default function OnboardingForm({ initialDepartment, studentName }: Onboa
   const [department, setDepartment] = useState<string>(initialDepartment ?? '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [coursesLoading, setCoursesLoading] = useState(false);
 
   const firstName = studentName.split(' ')[0];
+
+  // Fetch Semester 1 courses when reaching Step 3
+  useEffect(() => {
+    if (step === 3 && department) {
+      setCoursesLoading(true);
+      fetch(`/api/onboarding/courses?department=${encodeURIComponent(department)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          setCourses(data.courses ?? []);
+          setCoursesLoading(false);
+        })
+        .catch(() => setCoursesLoading(false));
+    }
+  }, [step, department]);
 
   async function completeOnboarding() {
     setLoading(true);
@@ -214,6 +239,44 @@ export default function OnboardingForm({ initialDepartment, studentName }: Onboa
                 Review your Semester 1 courses before confirming enrollment.
               </p>
             </div>
+
+            {/* Course list */}
+            {coursesLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : courses.length > 0 ? (
+              <div className="space-y-3">
+                {courses.map((course) => (
+                  <div
+                    key={course.id}
+                    className="flex items-start gap-3 rounded-lg border border-border bg-background p-4"
+                  >
+                    <Badge variant="secondary" className="shrink-0 font-mono text-xs">
+                      {course.code}
+                    </Badge>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm">{course.name}</p>
+                      {course.description && (
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                          {course.description}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {course.credit_units} credit{course.credit_units !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                <p className="text-xs text-muted-foreground text-center pt-2">
+                  {courses.length} course{courses.length !== 1 ? 's' : ''} · Semester 1
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+                No courses found for this department yet. Courses will be added soon.
+              </div>
+            )}
 
 
             {error && (

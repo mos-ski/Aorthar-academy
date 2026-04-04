@@ -82,6 +82,15 @@ function RegisterForm() {
       return;
     }
 
+    // If department was selected, save it to the profile immediately
+    if (values.department && !isCourses) {
+      await fetch('/api/profile/department', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ department: values.department }),
+      });
+    }
+
     // Fire welcome email — best-effort, don't block navigation
     fetch('/api/auth/send-welcome', {
       method: 'POST',

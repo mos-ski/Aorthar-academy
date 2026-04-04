@@ -58,6 +58,48 @@ export async function loadCourseViewerData(courseId: string, userId: string, sea
     if (!sub) redirect('/pricing');
   }
 
+  // Check semester unlock: student must have completed all prior semesters
+  if (dbCourse?.semesters) {
+    const yearsArr = dbCourse.semesters.years as { level: number }[] | undefined;
+    const yearData = yearsArr?.[0];
+    if (yearData) {
+      const yearLevel = yearData.level;
+      const semNumber = dbCourse.semesters.number;
+
+      // Year 100 Semester 1 is always unlocked
+      if (!(yearLevel === 100 && semNumber === 1)) {
+        // Check if all prior semesters are completed
+        const { data: allSemesterProgress } = await supabase
+          .from('semester_progress')
+          .select('semester_id, is_completed, semesters(year_id, number, years(level))')
+          .eq('user_id', userId)
+          .order('semesters(year_id)', { ascending: true })
+          .order('semesters(number)', { ascending: true });
+
+        const completedSemesters = new Set(
+          (allSemesterProgress ?? [])
+            .filter((sp: any) => sp.is_completed && sp.semesters)
+            .map((sp: any) => `${sp.semesters.years.level}-${sp.semesters.number}`)
+        );
+
+        // Check all semesters before current one
+        let isLocked = false;
+        for (const y of [100, 200, 300, 400]) {
+          for (const s of [1, 2]) {
+            if (y === yearLevel && s === semNumber) break;
+            if (!completedSemesters.has(`${y}-${s}`)) {
+              isLocked = true;
+              break;
+            }
+          }
+          if (isLocked) break;
+        }
+
+        if (isLocked) redirect('/courses');
+      }
+    }
+  }
+
   const [{ data: progress }, { data: attempts }, { count: enrolledCount }] = await Promise.all([
     supabase
       .from('user_progress')
