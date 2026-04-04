@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -12,36 +12,52 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { BookOpen, CheckCircle } from 'lucide-react';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+// Create the client once at module level so it processes the URL hash
+// before React even mounts the component — avoids missing the PASSWORD_RECOVERY event.
+let _supabase: SupabaseClient | null = null;
+function getSupabase() {
+  if (!_supabase) _supabase = createClient();
+  return _supabase;
+}
 
 export default function ResetPasswordPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
-  // 'waiting' = processing the token from the URL hash
-  // 'ready'   = PASSWORD_RECOVERY event fired, session is valid
-  // 'invalid' = token expired or missing
   const [tokenState, setTokenState] = useState<'waiting' | 'ready' | 'invalid'>('waiting');
+  const tokenStateRef = useRef(tokenState);
+  tokenStateRef.current = tokenState;
 
   const { register, handleSubmit, formState: { errors } } = useForm<ResetPasswordInput>({
     resolver: zodResolver(resetPasswordSchema),
   });
 
   useEffect(() => {
-    const supabase = createClient();
+    const supabase = getSupabase();
 
-    // Supabase fires PASSWORD_RECOVERY once it parses the token from the URL hash.
-    // We must wait for this before calling updateUser.
+    // Listen for PASSWORD_RECOVERY — fires when Supabase processes the hash token
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setTokenState('ready');
       }
     });
 
-    // If no PASSWORD_RECOVERY event fires within 5 seconds the token is missing/expired.
+    // Also check immediately: if the client already processed the hash before
+    // the listener was attached (e.g. on fast connections), getSession() will
+    // return the active recovery session.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setTokenState('ready');
+      }
+    });
+
+    // Fallback timeout — only mark invalid if nothing resolved after 15s
     const timer = setTimeout(() => {
       setTokenState((prev) => prev === 'waiting' ? 'invalid' : prev);
-    }, 5000);
+    }, 15000);
 
     return () => {
       subscription.unsubscribe();
@@ -52,7 +68,7 @@ export default function ResetPasswordPage() {
   async function onSubmit(values: ResetPasswordInput) {
     setLoading(true);
     setError(null);
-    const supabase = createClient();
+    const supabase = getSupabase();
 
     const { error } = await supabase.auth.updateUser({ password: values.password });
 
@@ -67,6 +83,7 @@ export default function ResetPasswordPage() {
 
     setTimeout(() => {
       const dest = window.location.hostname.includes('courses.')
+        || window.location.hostname.includes('bootcamp.')
         ? '/courses-app/learn'
         : '/dashboard';
       router.push(dest);
@@ -109,7 +126,7 @@ export default function ResetPasswordPage() {
           </div>
 
           {tokenState === 'waiting' && (
-            <p className="text-sm text-muted-foreground">Verifying your reset link…</p>
+            <p className="text-sm text-muted-foreground animate-pulse">Verifying your reset link…</p>
           )}
 
           {tokenState === 'invalid' && (
