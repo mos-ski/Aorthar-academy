@@ -40,7 +40,7 @@ export default async function DashboardPage() {
       .limit(6),
     supabase
       .from('years')
-      .select('id, level, semesters(id, number, courses(id, status))')
+      .select('id, level, semesters(id, number, courses(id, status, department))')
       .order('level'),
     supabase
       .from('semester_progress')
@@ -66,6 +66,7 @@ export default async function DashboardPage() {
   const displayGpa = shouldUseDemo ? demo.cumulativeGpa : gpa;
 
   // Bootstrap first-time students so dashboard is not empty.
+  const studentDept = profile?.department || null;
   if (!shouldUseDemo && (progress?.length ?? 0) === 0 && (years?.length ?? 0) > 0) {
     const unlocked = new Set(
       (semesterProgress ?? [])
@@ -81,8 +82,10 @@ export default async function DashboardPage() {
       (years ?? []).flatMap((year) =>
         (year.semesters ?? [])
           .filter((semester: { id: string }) => unlocked.has(semester.id))
-          .flatMap((semester: { courses: { id: string; status: string }[] }) => semester.courses ?? [])
-          .filter((course: { status: string }) => course.status === 'published'),
+          .flatMap((semester: { courses: { id: string; status: string; department: string | null }[] }) => semester.courses ?? [])
+          .filter((course: { status: string; department: string | null }) =>
+            course.status === 'published' && (!studentDept || course.department === studentDept)
+          ),
       );
 
     if (starterCourses.length > 0) {

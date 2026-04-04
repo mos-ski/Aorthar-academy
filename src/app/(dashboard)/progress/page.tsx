@@ -14,9 +14,14 @@ export default async function ProgressPage() {
   const forcedDemo = await isDemoMode();
   const explicitLive = await isExplicitLiveMode();
 
-  const [{ data: yearsData }, { data: progressData }, { data: semProgress }] =
+  const [{ data: yearsData }, { data: profileData }, { data: progressData }, { data: semProgress }] =
     await Promise.all([
       supabase.from('years').select('*, semesters(*, courses(*))').order('level'),
+      supabase
+        .from('profiles')
+        .select('department')
+        .eq('user_id', user.id)
+        .maybeSingle(),
       supabase
         .from('user_progress')
         .select('course_id, status')
@@ -26,6 +31,22 @@ export default async function ProgressPage() {
         .select('semester_id, is_unlocked, is_completed')
         .eq('user_id', user.id),
     ]);
+
+  // Filter courses by student's department
+  const studentDept = profileData?.department || null;
+  if (yearsData && studentDept) {
+    for (const year of yearsData) {
+      if (year.semesters) {
+        for (const semester of year.semesters) {
+          if (semester.courses) {
+            semester.courses = semester.courses.filter(
+              (c: { department: string | null }) => c.department === studentDept
+            );
+          }
+        }
+      }
+    }
+  }
 
   const demo = getDemoStudentSnapshot();
   const shouldUseDemo = forcedDemo || (!explicitLive && (yearsData?.length ?? 0) === 0);
