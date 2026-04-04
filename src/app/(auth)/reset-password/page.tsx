@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -12,11 +12,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { BookOpen, CheckCircle } from 'lucide-react';
-import type { SupabaseClient } from '@supabase/supabase-js';
-
 // Create the client once at module level so it processes the URL hash
 // before React even mounts the component — avoids missing the PASSWORD_RECOVERY event.
-let _supabase: SupabaseClient | null = null;
+let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
   if (!_supabase) _supabase = createClient();
   return _supabase;
@@ -28,9 +26,6 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [tokenState, setTokenState] = useState<'waiting' | 'ready' | 'invalid'>('waiting');
-  const tokenStateRef = useRef(tokenState);
-  tokenStateRef.current = tokenState;
-
   const { register, handleSubmit, formState: { errors } } = useForm<ResetPasswordInput>({
     resolver: zodResolver(resetPasswordSchema),
   });
@@ -45,19 +40,10 @@ export default function ResetPasswordPage() {
       }
     });
 
-    // Also check immediately: if the client already processed the hash before
-    // the listener was attached (e.g. on fast connections), getSession() will
-    // return the active recovery session.
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setTokenState('ready');
-      }
-    });
-
-    // Fallback timeout — only mark invalid if nothing resolved after 15s
+    // Fallback timeout — only mark invalid if nothing resolved after 30s
     const timer = setTimeout(() => {
       setTokenState((prev) => prev === 'waiting' ? 'invalid' : prev);
-    }, 15000);
+    }, 30000);
 
     return () => {
       subscription.unsubscribe();
