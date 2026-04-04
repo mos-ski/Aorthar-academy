@@ -1,13 +1,19 @@
 export const AORTHAR_DEPARTMENTS = [
-  'UI/UX Design',
   'Product Management',
   'Product Design',
-  'Design Engineering (FE)',
+  'Frontend Engineering',
   'Backend Engineering',
-  'Scrum & Agile',
-  'Operations',
-  'Quality Assurance (QA)',
+  'QA Engineering',
+  'Scrum & Agile Ops',
+  'Data & Analytics',
+  'Growth & Operations',
+  'Social Media Management',
+  'Video Editing',
+  'Content Creation (UGC)',
+  'Human Resources',
+  'Project Management',
+  'CEO',
+  'DevOps Engineering',
 ] as const;
 
 export type AortharDepartment = (typeof AORTHAR_DEPARTMENTS)[number];
-
