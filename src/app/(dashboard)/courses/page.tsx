@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/auth';
 import { formatYearLabel, formatSemesterLabel } from '@/utils/formatters';
+import { getDeptFromCode } from '@/lib/academics/departments';
 import { Badge } from '@/components/ui/badge';
 import { Lock } from 'lucide-react';
 import CourseCard from '@/components/courses/CourseCard';
@@ -36,7 +37,7 @@ export default async function CoursesPage() {
         .eq('user_id', user.id),
     ]);
 
-  // Filter courses by student's department
+  // Filter courses by student's department — use `department` column or fall back to code prefix
   const studentDept = profileData?.department || null;
   if (yearsData && studentDept) {
     for (const year of yearsData) {
@@ -44,7 +45,8 @@ export default async function CoursesPage() {
         for (const semester of year.semesters) {
           if (semester.courses) {
             semester.courses = semester.courses.filter(
-              (c: { department: string | null }) => c.department === studentDept
+              (c: { department: string | null; code: string }) =>
+                c.department === studentDept || getDeptFromCode(c.code) === studentDept,
             );
           }
         }

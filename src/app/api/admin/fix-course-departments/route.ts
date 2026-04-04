@@ -1,58 +1,17 @@
 /**
  * Fixes department assignment for all existing courses.
  * Uses course code prefixes to determine the correct department.
+ * Safe to run multiple times — only updates courses where department is NULL.
  *
  * After deploying, open in browser:
+ *   https://aorthar.com/api/admin/fix-course-departments
+ * Or:
  *   https://university.aorthar.com/api/admin/fix-course-departments
  */
 
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getDeptFromCode } from '@/lib/academics/departments';
 import { NextResponse } from 'next/server';
-
-// Map course code prefixes → department names
-const PREFIX_MAP: Record<string, string> = {
-  PM: 'Product Management',
-  DES: 'Product Design',
-  DSN: 'Product Design',
-  UXR: 'Product Design',
-  DEV: 'Frontend Engineering',
-  API: 'Frontend Engineering',
-  CI: 'Frontend Engineering',
-  SEC: 'Frontend Engineering',
-  OSS: 'Frontend Engineering',
-  PORT: 'Frontend Engineering',
-  INT: 'Frontend Engineering',
-  FRE: 'Frontend Engineering',
-  BE: 'Backend Engineering',
-  DB: 'Backend Engineering',
-  ARC: 'Backend Engineering',
-  QA: 'QA Engineering',
-  SCR: 'Scrum & Agile Ops',
-  SRE: 'Scrum & Agile Ops',
-  OPS: 'Scrum & Agile Ops',
-  STR: 'Scrum & Agile Ops',
-  PSY: 'Scrum & Agile Ops',
-  BUS: 'Scrum & Agile Ops',
-  LDR: 'Scrum & Agile Ops',
-  DA: 'Data & Analytics',
-  GO: 'Growth & Operations',
-  SM: 'Social Media Management',
-  VE: 'Video Editing',
-  CC: 'Content Creation (UGC)',
-  HR: 'Human Resources',
-  PJ: 'Project Management',
-  CEO: 'CEO',
-  DO: 'DevOps Engineering',
-  CS: 'Frontend Engineering',
-  COM: 'Product Management',
-  MKT: 'Product Management',
-  FIN: 'Product Management',
-  LAW: 'Product Management',
-  ANA: 'Product Management',
-  CAP: 'Product Management',
-  ETH: 'Product Management',
-  TEAM: 'Product Management',
-};
 
 export async function GET() {
   const supabase = createAdminClient();
@@ -69,14 +28,11 @@ export async function GET() {
 
   let updated = 0;
   let unknown = 0;
+  const unknownCodes: string[] = [];
 
   for (const course of courses) {
-    // Extract prefix: "PM101" → "PM", "DEV201" → "DEV"
-    const match = course.code.match(/^([A-Z]+)/);
-    if (!match) { unknown++; continue; }
-
-    const dept = PREFIX_MAP[match[1]];
-    if (!dept) { unknown++; continue; }
+    const dept = getDeptFromCode(course.code);
+    if (!dept) { unknown++; unknownCodes.push(course.code); continue; }
 
     const { error } = await supabase
       .from('courses')
@@ -91,6 +47,7 @@ export async function GET() {
     total: courses.length,
     updated,
     unknown,
+    unknownCodes: unknownCodes.slice(0, 20),
     message: `${updated} courses assigned departments, ${unknown} could not be mapped`,
   });
 }

@@ -31,6 +31,7 @@ export async function loadCourseViewerData(courseId: string, userId: string, sea
             resources(id, type, title, url, sort_order)
           `)
           .eq('course_id', dbCourseBase.id)
+          .eq('is_published', true)
           .order('sort_order', { ascending: true })
       : Promise.resolve({ data: null }),
   ]);

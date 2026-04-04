@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/auth';
+import { getDeptFromCode } from '@/lib/academics/departments';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -34,10 +35,10 @@ export default async function DashboardPage() {
       .eq('user_id', user.id),
     supabase
       .from('user_progress')
-      .select('status, courses(id, name, code, years(level))')
+      .select('status, courses(id, name, code, department, years(level))')
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
-      .limit(6),
+      .limit(12),
     supabase
       .from('years')
       .select('id, level, semesters(id, number, courses(id, status, department))')
@@ -67,6 +68,18 @@ export default async function DashboardPage() {
 
   // Bootstrap first-time students so dashboard is not empty.
   const studentDept = profile?.department || null;
+
+  // Filter recent activity to only show courses from the student's department
+  // (stale user_progress records from before department filtering was introduced)
+  if (!shouldUseDemo && studentDept && recentCourses) {
+    recentCourses = (recentCourses as unknown as { status: string; courses: { id: string; name: string; code: string; department: string | null; years: { level: number } } | null }[])
+      .filter((item) => {
+        const c = item.courses;
+        if (!c) return false;
+        return c.department === studentDept || getDeptFromCode(c.code) === studentDept;
+      })
+      .slice(0, 6) as typeof recentCourses;
+  }
   if (!shouldUseDemo && (progress?.length ?? 0) === 0 && (years?.length ?? 0) > 0) {
     const unlocked = new Set(
       (semesterProgress ?? [])
@@ -82,9 +95,10 @@ export default async function DashboardPage() {
       (years ?? []).flatMap((year) =>
         (year.semesters ?? [])
           .filter((semester: { id: string }) => unlocked.has(semester.id))
-          .flatMap((semester: { courses: { id: string; status: string; department: string | null }[] }) => semester.courses ?? [])
-          .filter((course: { status: string; department: string | null }) =>
-            course.status === 'published' && (!studentDept || course.department === studentDept)
+          .flatMap((semester: { courses: { id: string; code?: string; status: string; department: string | null }[] }) => semester.courses ?? [])
+          .filter((course: { status: string; department: string | null; code?: string }) =>
+            course.status === 'published' &&
+            (!studentDept || course.department === studentDept || getDeptFromCode(course.code ?? '') === studentDept)
           ),
       );
 
@@ -106,10 +120,10 @@ export default async function DashboardPage() {
           .eq('user_id', user.id),
         supabase
           .from('user_progress')
-          .select('status, courses(id, name, code, years(level))')
+          .select('status, courses(id, name, code, department, years(level))')
           .eq('user_id', user.id)
           .order('updated_at', { ascending: false })
-          .limit(6),
+          .limit(12),
       ]);
 
       progress = refreshedProgress ?? progress;
