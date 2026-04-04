@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { AORTHAR_DEPARTMENTS } from '@/lib/academics/departments';
-import { getSemester1EnrollmentCodes } from '@/lib/academics/plan';
 
 const completeOnboardingSchema = z.object({
   department: z.enum(AORTHAR_DEPARTMENTS),
@@ -99,27 +98,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, department, enrolledCount: 0 });
   }
 
-  const { data: courses } = await admin
+  const { data: selected } = await admin
     .from('courses')
     .select('id, code, sort_order')
     .eq('semester_id', semester1.id)
     .eq('status', 'published')
+    .eq('department', department)
     .order('sort_order', { ascending: true })
-    .limit(20);
+    .limit(8);
 
-  if (!courses || courses.length === 0) {
+  if (!selected || selected.length === 0) {
     return NextResponse.json({ ok: true, department, enrolledCount: 0 });
-  }
-
-  const entryCodes = getSemester1EnrollmentCodes(department);
-  const byCode = new Map(courses.map((c) => [c.code.toUpperCase(), c]));
-  const selected = entryCodes
-    .map((code) => byCode.get(code))
-    .filter((c): c is NonNullable<typeof c> => Boolean(c))
-    .slice(0, 8);
-
-  if (selected.length === 0) {
-    selected.push(...[...courses].slice(0, 8));
   }
 
   await admin.from('semester_progress').upsert(

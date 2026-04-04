@@ -171,8 +171,8 @@ function parseCurriculumMarkdown(markdown: string): CurriculumData {
 
 function loadCurriculumData(): CurriculumData {
   const candidatePaths = [
-    path.resolve(process.cwd(), '../aorthar_academy_curriculum.md'),
-    path.resolve(process.cwd(), 'aorthar_academy_curriculum.md'),
+    path.resolve(process.cwd(), 'docs/products/university/curriculum/product-management.md'),
+    path.resolve(process.cwd(), '../docs/products/university/curriculum/product-management.md'),
   ];
 
   for (const filePath of candidatePaths) {

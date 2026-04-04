@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AORTHAR_DEPARTMENTS } from '@/lib/academics/departments';
-import { getSemester1EnrollmentCodes } from '@/lib/academics/plan';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -46,7 +45,6 @@ export default function OnboardingForm({ initialDepartment, studentName }: Onboa
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const semester1Codes = department ? getSemester1EnrollmentCodes(department) : [];
   const firstName = studentName.split(' ')[0];
 
   async function completeOnboarding() {
@@ -217,22 +215,6 @@ export default function OnboardingForm({ initialDepartment, studentName }: Onboa
               </p>
             </div>
 
-            <div className="rounded-lg border bg-muted/20 p-5 space-y-3">
-              <p className="font-semibold text-sm">Year 100 — Semester 1 Courses</p>
-              {semester1Codes.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {semester1Codes.map((code) => (
-                    <Badge key={code} variant="outline" className="text-xs border-primary/30 text-primary bg-primary/5">
-                      {code}
-                    </Badge>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No courses configured yet for this department. Enrollment will be set up shortly.
-                </p>
-              )}
-            </div>
 
             {error && (
               <Alert variant="destructive">
