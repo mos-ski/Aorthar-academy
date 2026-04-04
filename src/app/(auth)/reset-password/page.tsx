@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -11,16 +11,43 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, CheckCircle } from 'lucide-react';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+  // 'waiting' = processing the token from the URL hash
+  // 'ready'   = PASSWORD_RECOVERY event fired, session is valid
+  // 'invalid' = token expired or missing
+  const [tokenState, setTokenState] = useState<'waiting' | 'ready' | 'invalid'>('waiting');
 
   const { register, handleSubmit, formState: { errors } } = useForm<ResetPasswordInput>({
     resolver: zodResolver(resetPasswordSchema),
   });
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    // Supabase fires PASSWORD_RECOVERY once it parses the token from the URL hash.
+    // We must wait for this before calling updateUser.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setTokenState('ready');
+      }
+    });
+
+    // If no PASSWORD_RECOVERY event fires within 5 seconds the token is missing/expired.
+    const timer = setTimeout(() => {
+      setTokenState((prev) => prev === 'waiting' ? 'invalid' : prev);
+    }, 5000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timer);
+    };
+  }, []);
 
   async function onSubmit(values: ResetPasswordInput) {
     setLoading(true);
@@ -35,11 +62,16 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    const dest = window.location.hostname.includes('courses.')
-      ? '/courses-app/learn'
-      : '/dashboard';
-    router.push(dest);
-    router.refresh();
+    setDone(true);
+    setLoading(false);
+
+    setTimeout(() => {
+      const dest = window.location.hostname.includes('courses.')
+        ? '/courses-app/learn'
+        : '/dashboard';
+      router.push(dest);
+      router.refresh();
+    }, 2000);
   }
 
   return (
@@ -76,26 +108,52 @@ export default function ResetPasswordPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {error && (
+          {tokenState === 'waiting' && (
+            <p className="text-sm text-muted-foreground">Verifying your reset link…</p>
+          )}
+
+          {tokenState === 'invalid' && (
+            <div className="space-y-4">
               <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>
+                  This reset link has expired or is invalid. Please request a new one.
+                </AlertDescription>
               </Alert>
-            )}
-            <div className="space-y-1.5">
-              <Label htmlFor="password">New Password</Label>
-              <Input id="password" type="password" placeholder="••••••••" {...register('password')} />
-              {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+              <Link href="/forgot-password">
+                <Button className="w-full">Request a new link</Button>
+              </Link>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input id="confirmPassword" type="password" placeholder="••••••••" {...register('confirmPassword')} />
-              {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>}
+          )}
+
+          {tokenState === 'ready' && !done && (
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              <div className="space-y-1.5">
+                <Label htmlFor="password">New Password</Label>
+                <Input id="password" type="password" placeholder="••••••••" {...register('password')} />
+                {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input id="confirmPassword" type="password" placeholder="••••••••" {...register('confirmPassword')} />
+                {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>}
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Updating…' : 'Update Password'}
+              </Button>
+            </form>
+          )}
+
+          {done && (
+            <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700">
+              <CheckCircle className="h-5 w-5 shrink-0" />
+              <p className="text-sm">Password updated! Taking you to your dashboard…</p>
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Updating...' : 'Update Password'}
-            </Button>
-          </form>
+          )}
         </div>
       </div>
     </div>
