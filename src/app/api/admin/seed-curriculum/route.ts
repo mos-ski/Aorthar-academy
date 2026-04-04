@@ -116,6 +116,14 @@ function parse(content: string): ParsedDept {
 }
 
 export async function POST() {
+  return seed();
+}
+
+export async function GET() {
+  return seed();
+}
+
+async function seed() {
   const supabase = createAdminClient();
 
   // 1. Ensure years/semesters
