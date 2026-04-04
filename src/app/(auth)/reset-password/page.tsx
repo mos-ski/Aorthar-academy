@@ -12,13 +12,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { BookOpen, CheckCircle } from 'lucide-react';
-// Create the client once at module level so it processes the URL hash
-// before React even mounts the component — avoids missing the PASSWORD_RECOVERY event.
-let _supabase: ReturnType<typeof createClient> | null = null;
-function getSupabase() {
-  if (!_supabase) _supabase = createClient();
-  return _supabase;
-}
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -26,35 +19,41 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [tokenState, setTokenState] = useState<'waiting' | 'ready' | 'invalid'>('waiting');
+
   const { register, handleSubmit, formState: { errors } } = useForm<ResetPasswordInput>({
     resolver: zodResolver(resetPasswordSchema),
   });
 
   useEffect(() => {
-    const supabase = getSupabase();
+    // @supabase/ssr's createBrowserClient does NOT auto-process the URL hash.
+    // We must manually parse the recovery tokens and call setSession ourselves.
+    const hash = window.location.hash.slice(1); // remove leading #
+    const params = new URLSearchParams(hash);
+    const type = params.get('type');
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
 
-    // Listen for PASSWORD_RECOVERY — fires when Supabase processes the hash token
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setTokenState('ready');
-      }
-    });
+    if (type !== 'recovery' || !accessToken || !refreshToken) {
+      setTokenState('invalid');
+      return;
+    }
 
-    // Fallback timeout — only mark invalid if nothing resolved after 30s
-    const timer = setTimeout(() => {
-      setTokenState((prev) => prev === 'waiting' ? 'invalid' : prev);
-    }, 30000);
-
-    return () => {
-      subscription.unsubscribe();
-      clearTimeout(timer);
-    };
+    const supabase = createClient();
+    supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+      .then(({ error }) => {
+        if (error) {
+          console.error('[reset-password] setSession error:', error.message);
+          setTokenState('invalid');
+        } else {
+          setTokenState('ready');
+        }
+      });
   }, []);
 
   async function onSubmit(values: ResetPasswordInput) {
     setLoading(true);
     setError(null);
-    const supabase = getSupabase();
+    const supabase = createClient();
 
     const { error } = await supabase.auth.updateUser({ password: values.password });
 
@@ -68,8 +67,7 @@ export default function ResetPasswordPage() {
     setLoading(false);
 
     setTimeout(() => {
-      const dest = window.location.hostname.includes('courses.')
-        || window.location.hostname.includes('bootcamp.')
+      const dest = window.location.hostname.includes('bootcamp.')
         ? '/courses-app/learn'
         : '/dashboard';
       router.push(dest);
