@@ -1,12 +1,17 @@
 import { createClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/auth';
 import { getDeptFromCode } from '@/lib/academics/departments';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { formatYearLabel } from '@/utils/formatters';
 import Link from 'next/link';
-import { BookOpen, Trophy, TrendingUp, Award, Flame, ArrowRight, Lock } from 'lucide-react';
+import {
+  BookOpen,
+  Trophy,
+  TrendingUp,
+  Award,
+  Flame,
+  ArrowRight,
+  Lock,
+  Play,
+} from 'lucide-react';
 import { getDemoStudentSnapshot } from '@/lib/demo/studentSnapshot';
 import { isDemoMode, isExplicitLiveMode } from '@/lib/demo/mode';
 
@@ -22,7 +27,6 @@ export default async function DashboardPage() {
     { data: initialRecentCourses },
     { data: years },
     { data: semesterProgress },
-    { data: streakProfile },
   ] = await Promise.all([
     supabase
       .from('cumulative_gpas')
@@ -47,11 +51,6 @@ export default async function DashboardPage() {
       .from('semester_progress')
       .select('semester_id, is_unlocked')
       .eq('user_id', user.id),
-    supabase
-      .from('profiles')
-      .select('streak_count, last_active_date')
-      .eq('user_id', user.id)
-      .maybeSingle(),
   ]);
 
   const demo = getDemoStudentSnapshot();
@@ -66,11 +65,8 @@ export default async function DashboardPage() {
   let recentCourses = shouldUseDemo ? demo.recentCourses : initialRecentCourses;
   const displayGpa = shouldUseDemo ? demo.cumulativeGpa : gpa;
 
-  // Bootstrap first-time students so dashboard is not empty.
+  // Department filtering
   const studentDept = profile?.department || null;
-
-  // Filter recent activity to only show courses from the student's department
-  // (stale user_progress records from before department filtering was introduced)
   if (!shouldUseDemo && studentDept && recentCourses) {
     recentCourses = (recentCourses as unknown as { status: string; courses: { id: string; name: string; code: string; department: string | null; years: { level: number } } | null }[])
       .filter((item) => {
@@ -80,27 +76,27 @@ export default async function DashboardPage() {
       })
       .slice(0, 6) as typeof recentCourses;
   }
+
+  // Bootstrap first-time students
   if (!shouldUseDemo && (progress?.length ?? 0) === 0 && (years?.length ?? 0) > 0) {
     const unlocked = new Set(
       (semesterProgress ?? [])
         .filter((sp) => sp.is_unlocked)
         .map((sp) => sp.semester_id),
     );
-
     const firstYear = years?.[0];
     const firstSem = firstYear?.semesters?.[0];
     if (firstSem) unlocked.add(firstSem.id);
 
-    const starterCourses =
-      (years ?? []).flatMap((year) =>
-        (year.semesters ?? [])
-          .filter((semester: { id: string }) => unlocked.has(semester.id))
-          .flatMap((semester: { courses: { id: string; code?: string; status: string; department: string | null }[] }) => semester.courses ?? [])
-          .filter((course: { status: string; department: string | null; code?: string }) =>
-            course.status === 'published' &&
-            (!studentDept || course.department === studentDept || getDeptFromCode(course.code ?? '') === studentDept)
-          ),
-      );
+    const starterCourses = (years ?? []).flatMap((year) =>
+      (year.semesters ?? [])
+        .filter((semester: { id: string }) => unlocked.has(semester.id))
+        .flatMap((semester: { courses: { id: string; code?: string; status: string; department: string | null }[] }) => semester.courses ?? [])
+        .filter((course: { status: string; department: string | null; code?: string }) =>
+          course.status === 'published' &&
+          (!studentDept || course.department === studentDept || getDeptFromCode(course.code ?? '') === studentDept)
+        ),
+    );
 
     if (starterCourses.length > 0) {
       await supabase.from('user_progress').upsert(
@@ -112,255 +108,212 @@ export default async function DashboardPage() {
         })),
         { onConflict: 'user_id,course_id' },
       );
-
-      const [{ data: refreshedProgress }, { data: refreshedRecent }] = await Promise.all([
-        supabase
-          .from('user_progress')
-          .select('status, courses(name, code, years(level))')
-          .eq('user_id', user.id),
-        supabase
-          .from('user_progress')
-          .select('status, courses(id, name, code, department, years(level))')
-          .eq('user_id', user.id)
-          .order('updated_at', { ascending: false })
-          .limit(12),
-      ]);
-
-      progress = refreshedProgress ?? progress;
-      recentCourses = refreshedRecent ?? recentCourses;
+      progress = (await supabase.from('user_progress').select('status, courses(name, code, years(level))').eq('user_id', user.id)).data;
+      recentCourses = (await supabase.from('user_progress').select('status, courses(id, name, code, department, years(level))').eq('user_id', user.id).order('updated_at', { ascending: false }).limit(12)).data;
     }
   }
 
-  const passedCount = progress?.filter((p) => p.status === 'passed').length ?? 0;
-  const inProgressCount = progress?.filter((p) => p.status === 'in_progress').length ?? 0;
-  const cumulativeGpaValue = Number(displayGpa?.cumulative_gpa ?? 0);
-  const creditsEarnedValue = Number(displayGpa?.total_credits_earned ?? 0);
+  // --- Data Aggregation ---
 
-  // Continue Learning CTA: find the most recent in_progress course, then not_started
-  type RecentCourse = { status: string; courses: { id: string; name: string; code: string; years: { level: number } } | null };
-  const continueCourse = (recentCourses as unknown as RecentCourse[] | null)?.find(
-    (r) => r.courses && r.status === 'in_progress',
-  ) ?? (recentCourses as unknown as RecentCourse[] | null)?.find(
-    (r) => r.courses && r.status === 'not_started',
-  );
-  const allPassed = (progress?.length ?? 0) > 0 && passedCount === (progress?.length ?? 0);
+  const stats = {
+    gpa: Number(displayGpa?.cumulative_gpa ?? 0).toFixed(2),
+    credits: displayGpa?.total_credits_earned ?? 0,
+    completed: (progress ?? []).filter((p: any) => p.status === 'passed').length,
+    inProgress: (progress ?? []).filter((p: any) => p.status === 'in_progress').length,
+  };
 
-  // Unlock nudge: find first locked semester and count remaining courses to unlock it
-  const unlockedSemIds = new Set((semesterProgress ?? []).filter((sp) => sp.is_unlocked).map((sp) => sp.semester_id));
-  let unlockNudge: { label: string; remaining: number; isPremium?: boolean } | null = null;
-  if (!shouldUseDemo) {
-    outer: for (const year of (years ?? [])) {
-      for (const sem of (year.semesters ?? [])) {
-        if (!unlockedSemIds.has(sem.id)) {
-          // This semester is locked — count how many courses in the prior semester are not passed
-          // The unlock count is courses in the previous semester
-          const prevSems = (year.semesters ?? []).filter((s: { id: string }) => s.id !== sem.id);
-          const prevCourses = prevSems.flatMap((s: { courses: { id: string; status: string }[] }) => s.courses ?? []);
-          const remaining = prevCourses.filter((c: { status: string }) => c.status === 'published').length - passedCount;
-          unlockNudge = {
-            label: `Semester ${sem.number} · Year ${year.level}`,
-            remaining: Math.max(0, remaining),
-          };
-          break outer;
-        }
-      }
+  // Most recently active course for "Continue Learning"
+  const activeCourse = (recentCourses?.length ?? 0) > 0 ? (recentCourses![0] as any) : null;
+  const activeCourseData = activeCourse?.courses;
+
+  // Current Year/Semester
+  const firstYear = years?.[0];
+  const currentYearLevel = firstYear?.level ?? 100;
+  const currentSemesterNumber = firstYear?.semesters?.[0]?.number ?? 1;
+
+  // Courses for the current semester
+  const currentSemCourses =
+    firstYear?.semesters
+      ?.find((s: any) => s.number === 1)
+      ?.courses?.filter((c: any) => c.status === 'published') ?? [];
+
+  // Progress for each course in current semester
+  const progressMap: Record<string, string> = {};
+  for (const p of progress ?? []) {
+    if ((p as any).courses) {
+      progressMap[(p as any).courses.id] = p.status;
     }
   }
-
-  const streakCount = (streakProfile as unknown as { streak_count?: number } | null)?.streak_count ?? 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Context Header */}
       <div>
-        {shouldUseDemo && (
-          <Badge variant="outline" className="mb-3 bg-amber-50 text-amber-700 border-amber-200">
-            Demo Mode: backend is unreachable, showing returning-student preview
-          </Badge>
-        )}
-        <p className="text-sm text-muted-foreground">Welcome,</p>
-        <h1 className="text-5xl font-bold tracking-tight mt-1">Welcome back, {firstName}!</h1>
-        <p className="text-muted-foreground mt-2">Track your academic journey at Aorthar Academy.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-white">
+          Welcome back, {firstName}
+        </h1>
+        <p className="mt-2 text-lg text-gray-400">
+          Year {currentYearLevel} · Semester {currentSemesterNumber}
+        </p>
+
+        {/* Quick Stats */}
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <StatCard label="GPA" value={stats.gpa} icon={Award} color="text-emerald-400" />
+          <StatCard label="Credits" value={stats.credits.toString()} icon={BookOpen} color="text-blue-400" />
+          <StatCard label="Completed" value={stats.completed.toString()} icon={Trophy} color="text-amber-400" />
+          <StatCard label="In Progress" value={stats.inProgress.toString()} icon={TrendingUp} color="text-purple-400" />
+        </div>
       </div>
 
-      {/* Continue Learning CTA */}
-      {allPassed ? (
-        <Card className="border-0 bg-green-500/10 dark:bg-green-500/15">
-          <CardContent className="p-5 flex items-center justify-between gap-4">
-            <p className="font-semibold text-green-700 dark:text-green-400">
-              You&apos;re up to date — explore new courses
-            </p>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/courses">Browse Courses <ArrowRight className="ml-2 h-4 w-4" /></Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : continueCourse?.courses ? (
-        <Card className="border-0 bg-foreground text-background">
-          <CardContent className="p-5 flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm opacity-70">Continue Learning</p>
-              <p className="font-semibold text-lg">{continueCourse.courses.name}</p>
-              <p className="text-sm opacity-60">{continueCourse.courses.code}</p>
+      {/* Primary Action: Continue Learning */}
+      {activeCourseData ? (
+        <div className="rounded-xl border border-white/10 bg-white/5 p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400">
+              Continue Learning
+            </h2>
+            {activeCourse.courses?.department && (
+              <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-gray-300">
+                {activeCourse.courses.department}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-sm font-bold text-emerald-400">
+                  {activeCourse.courses.code}
+                </span>
+                <span className="text-xs text-gray-500">·</span>
+                <span className="text-sm text-gray-400">
+                  {activeCourse.courses.years?.level} Level
+                </span>
+              </div>
+              <h3 className="mt-1 truncate text-xl font-semibold text-white">
+                {activeCourse.courses.name}
+              </h3>
+              <p className="mt-1 text-sm text-gray-400">
+                Status: <span className="capitalize text-white">{activeCourse.status.replace('_', ' ')}</span>
+              </p>
             </div>
-            <Button asChild variant="secondary" size="sm" className="shrink-0">
-              <Link href={`/classroom/${continueCourse.courses.id}`}>
-                Continue <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+            <Link
+              href={`/classroom/${activeCourse.courses.id}`}
+              className="flex shrink-0 items-center gap-2 rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-500"
+            >
+              <Play className="h-4 w-4" />
+              Resume
+            </Link>
+          </div>
+        </div>
       ) : (
-        <Card className="border-0 bg-foreground text-background">
-          <CardContent className="p-5 flex items-center justify-between gap-4">
-            <p className="font-semibold">Start your learning journey</p>
-            <Button asChild variant="secondary" size="sm">
-              <Link href="/courses">Start Learning <ArrowRight className="ml-2 h-4 w-4" /></Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border border-dashed border-white/10 bg-white/5 p-12 text-center">
+          <BookOpen className="mx-auto h-12 w-12 text-gray-600" />
+          <h3 className="mt-4 text-lg font-semibold text-white">No active courses</h3>
+          <p className="mt-1 text-sm text-gray-400">
+            Start a course to see your progress here.
+          </p>
+          <Link
+            href="/courses"
+            className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-emerald-400 hover:text-emerald-300"
+          >
+            Browse Courses <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-0 bg-violet-500/10 dark:bg-violet-500/15">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-violet-700 dark:text-violet-400 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Cumulative GPA
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-4xl font-bold">{cumulativeGpaValue.toFixed(2)}</p>
-            <p className="text-sm text-muted-foreground">out of 5.0</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 bg-amber-500/10 dark:bg-amber-500/15">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-amber-700 dark:text-amber-400 flex items-center gap-2">
-              <Award className="h-4 w-4" />
-              Credits Earned
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-4xl font-bold">{creditsEarnedValue}</p>
-            <p className="text-sm text-muted-foreground">credit units</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 bg-green-500/10 dark:bg-green-500/15">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-green-700 dark:text-green-400 flex items-center gap-2">
-              <Trophy className="h-4 w-4" />
-              Courses Passed
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-4xl font-bold">{passedCount}</p>
-            <p className="text-sm text-muted-foreground">completed</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 bg-blue-500/10 dark:bg-blue-500/15">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-400 flex items-center gap-2">
-              <BookOpen className="h-4 w-4" />
-              In Progress
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-4xl font-bold">{inProgressCount}</p>
-            <p className="text-sm text-muted-foreground">active courses</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Streak Tracker */}
-        <Card className="border-0 bg-orange-500/10 dark:bg-orange-500/15">
-          <CardContent className="p-5 flex items-center gap-4">
-            <Flame className="h-8 w-8 text-orange-500 shrink-0" aria-hidden="true" />
-            <div>
-              {streakCount > 0 ? (
-                <>
-                  <p className="font-semibold text-orange-700 dark:text-orange-400">{streakCount} day streak</p>
-                  <p className="text-sm text-muted-foreground">Keep it up — log in daily to maintain your streak.</p>
-                </>
-              ) : (
-                <>
-                  <p className="font-semibold">Start your streak today</p>
-                  <p className="text-sm text-muted-foreground">Open any lesson to begin tracking your streak.</p>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Unlock Nudge */}
-        {unlockNudge ? (
-          <Link href="/progress">
-            <Card className="border-0 bg-muted/40 hover:bg-muted/60 transition-colors cursor-pointer h-full">
-              <CardContent className="p-5 flex items-center gap-4">
-                <Lock className="h-8 w-8 text-muted-foreground shrink-0" aria-hidden="true" />
-                <div>
-                  <p className="font-semibold">
-                    {unlockNudge.remaining === 0
-                      ? `Ready to unlock ${unlockNudge.label}`
-                      : `${unlockNudge.remaining} course${unlockNudge.remaining === 1 ? '' : 's'} left to unlock ${unlockNudge.label}`}
-                  </p>
-                  <p className="text-sm text-muted-foreground">View your progress →</p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ) : null}
-      </div>
-
+      {/* Secondary Action: Your Courses (Current Semester) */}
       <div>
-        <h2 className="text-4xl font-semibold mb-3">Recent Activity</h2>
-        {(recentCourses ?? []).length > 0 ? (
-          <div className="grid gap-3 md:grid-cols-2">
-            {(recentCourses ?? []).map((item) => {
-              const course = item.courses as unknown as { id: string; name: string; code: string; years: { level: number } };
-              if (!course) return null;
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-white">
+            Your Courses — Semester {currentSemesterNumber}
+          </h2>
+          <Link
+            href="/courses"
+            className="text-sm font-medium text-gray-400 hover:text-white"
+          >
+            View All Years →
+          </Link>
+        </div>
+
+        {currentSemCourses.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {currentSemCourses.map((course: any) => {
+              const status = progressMap[course.id] ?? 'not_started';
+              const progressPct = status === 'passed' ? 100 : status === 'in_progress' ? 50 : 0;
+              const statusColor =
+                status === 'passed'
+                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                  : status === 'in_progress'
+                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                  : 'bg-white/5 text-gray-400 border-white/10';
+
               return (
-                <Link key={course.id} href={`/classroom/${course.id}`}>
-                  <Card className="hover:bg-muted/30 transition-colors">
-                    <CardContent className="p-4 flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{course.name}</p>
-                        <p className="text-sm text-muted-foreground">{course.code} · {formatYearLabel(course.years.level)}</p>
-                      </div>
-                      <Badge variant={item.status === 'passed' ? 'default' : 'secondary'}>
-                        {item.status.replace('_', ' ')}
-                      </Badge>
-                    </CardContent>
-                  </Card>
+                <Link
+                  key={course.id}
+                  href={`/classroom/${course.id}`}
+                  className="group rounded-xl border border-white/10 bg-white/5 p-5 transition-colors hover:border-emerald-500/50 hover:bg-white/10"
+                >
+                  <div className="flex items-start justify-between">
+                    <span className="font-mono text-xs font-bold text-gray-500">
+                      {course.code}
+                    </span>
+                    <span
+                      className={`rounded-full border px-2 py-0.5 text-xs font-medium ${statusColor}`}
+                    >
+                      {status.replace('_', ' ')}
+                    </span>
+                  </div>
+                  <h3 className="mt-3 text-base font-semibold text-white group-hover:text-emerald-400 transition-colors">
+                    {course.name}
+                  </h3>
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                      <span>Progress</span>
+                      <span>{progressPct}%</span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+                        style={{ width: `${progressPct}%` }}
+                      />
+                    </div>
+                  </div>
                 </Link>
               );
             })}
           </div>
         ) : (
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-muted-foreground">No activity yet. Open the curriculum to start your first course.</p>
-              <Link href="/courses" className="underline mt-3 inline-block">
-                Go to Courses
-              </Link>
-            </CardContent>
-          </Card>
+          <div className="rounded-xl border border-white/10 bg-white/5 p-8 text-center text-sm text-gray-400">
+            No courses found for this semester.
+          </div>
         )}
       </div>
+    </div>
+  );
+}
 
-      <Card className="bg-muted/20">
-        <CardContent className="p-6">
-          <p className="text-xl font-semibold">Learning Tips</p>
-          <div className="mt-3 text-sm text-muted-foreground space-y-2">
-            <p>1. Keep up with at least one lesson per day.</p>
-            <p>2. Attempt quizzes after each completed module.</p>
-            <p>3. Use Suggest Content to request deep-dive materials.</p>
-          </div>
-        </CardContent>
-      </Card>
+// --- Subcomponents ---
+
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  color,
+}: {
+  label: string;
+  value: string;
+  icon: React.ElementType;
+  color: string;
+}) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="flex items-center gap-2">
+        <Icon className={`h-4 w-4 ${color}`} />
+        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+          {label}
+        </span>
+      </div>
+      <p className="mt-2 text-2xl font-bold text-white">{value}</p>
     </div>
   );
 }
