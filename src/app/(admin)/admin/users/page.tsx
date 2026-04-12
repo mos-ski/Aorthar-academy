@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import UsersTable from './_components/UsersTable';
+import InviteStudentDialog from './_components/InviteStudentDialog';
 
 export default async function AdminUsersPage({
   searchParams,
@@ -148,9 +149,12 @@ export default async function AdminUsersPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold">{title}</h2>
-        <p className="text-sm text-muted-foreground">{subtitle}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">{title}</h2>
+          <p className="text-sm text-muted-foreground">{subtitle}</p>
+        </div>
+        {isBootcamp && <InviteStudentDialog />}
       </div>
 
       {!isBootcamp && !isUniversity && (
