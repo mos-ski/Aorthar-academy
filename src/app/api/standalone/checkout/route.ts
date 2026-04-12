@@ -79,8 +79,8 @@ export async function POST(request: NextRequest) {
   const reference = generateReference(user.id);
   const amountKobo = course.price_ngn * 100;
 
-  const host = request.headers.get('host') ?? 'bootcamp.aorthar.com';
-  const origin = host.includes('localhost') ? `http://${host}` : `https://bootcamp.aorthar.com`;
+  // Use the actual request origin for the callback URL
+  const origin = request.nextUrl.origin;
 
   try {
     const paystack = await initiatePayment({
