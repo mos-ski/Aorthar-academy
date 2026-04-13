@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -29,19 +30,29 @@ export default function InviteStudentDialog() {
     if (courses.length > 0) return;
     setCoursesLoading(true);
     try {
-      const res = await fetch('/api/admin/standalone-courses');
+      const res = await fetch('/api/admin/standalone-courses', { cache: 'no-store' });
+      const contentType = res.headers.get('content-type');
+      console.log('[InviteStudentDialog] Response status:', res.status);
+      console.log('[InviteStudentDialog] Content-Type:', contentType);
+      
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        console.error('Failed to load bootcamps:', res.status, errorData);
-        toast.error(`Failed to load bootcamps: ${errorData.error ?? 'Unknown error'}`);
+        console.error('[InviteStudentDialog] Failed to load bootcamps:', res.status, errorData);
+        toast.error(`Failed to load bootcamps (${res.status}): ${errorData.error ?? 'Unknown error'}`);
         return;
       }
+      
       const data = await res.json();
-      console.log('Loaded bootcamps:', data);
+      console.log('[InviteStudentDialog] Loaded bootcamps:', data?.length ?? 0, data);
+      
+      if (!data || data.length === 0) {
+        toast.warning('No bootcamps found in the database. Create one first at /admin/standalone-courses');
+      }
+      
       setCourses(data ?? []);
     } catch (err) {
-      console.error('Error loading bootcamps:', err);
-      toast.error('Error loading bootcamps');
+      console.error('[InviteStudentDialog] Error loading bootcamps:', err);
+      toast.error('Error loading bootcamps. Check console for details.');
     } finally {
       setCoursesLoading(false);
     }
@@ -145,11 +156,34 @@ export default function InviteStudentDialog() {
 
             {/* Select Bootcamps */}
             <div className="space-y-2">
-              <Label>Bootcamps to Grant</Label>
+              <div className="flex items-center justify-between">
+                <Label>Bootcamps to Grant</Label>
+                {courses.length === 0 && !coursesLoading && (
+                  <button
+                    type="button"
+                    onClick={loadCourses}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Retry
+                  </button>
+                )}
+              </div>
               {coursesLoading ? (
-                <p className="text-sm text-muted-foreground">Loading bootcamps…</p>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading bootcamps…
+                </div>
               ) : courses.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No bootcamps found.</p>
+                <div className="text-sm text-muted-foreground space-y-2">
+                  <p>No bootcamps found in the database.</p>
+                  <p className="text-xs">
+                    Go to{' '}
+                    <Link href="/admin/standalone-courses" className="text-primary hover:underline">
+                      /admin/standalone-courses
+                    </Link>{' '}
+                    to create one first.
+                  </p>
+                </div>
               ) : (
                 <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3 bg-muted/30">
                   {courses.map((course) => {
