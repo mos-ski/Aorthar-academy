@@ -30,10 +30,18 @@ export default function InviteStudentDialog() {
     setCoursesLoading(true);
     try {
       const res = await fetch('/api/admin/standalone-courses');
-      if (res.ok) {
-        const data = await res.json();
-        setCourses(data ?? []);
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        console.error('Failed to load bootcamps:', res.status, errorData);
+        toast.error(`Failed to load bootcamps: ${errorData.error ?? 'Unknown error'}`);
+        return;
       }
+      const data = await res.json();
+      console.log('Loaded bootcamps:', data);
+      setCourses(data ?? []);
+    } catch (err) {
+      console.error('Error loading bootcamps:', err);
+      toast.error('Error loading bootcamps');
     } finally {
       setCoursesLoading(false);
     }

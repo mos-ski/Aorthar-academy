@@ -12,9 +12,14 @@ export async function GET() {
       .from('standalone_courses')
       .select('id, slug, title')
       .order('title');
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      console.error('[standalone-courses] DB error:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    console.log('[standalone-courses] Found', data?.length ?? 0, 'courses');
     return NextResponse.json(data ?? []);
-  } catch {
+  } catch (err) {
+    console.error('[standalone-courses] Auth error:', err);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 }
