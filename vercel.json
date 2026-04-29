@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/repair-links",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/internship/cron/send-exam-links",
+      "schedule": "0 * * * *"
     }
   ]
 }

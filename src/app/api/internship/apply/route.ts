@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendEmail } from '@/lib/email';
-import { internshipOnboardingHtml, internshipOnboardingSubject } from '@/lib/email/templates/internship-onboarding';
+import { internshipWelcomeHtml, internshipWelcomeSubject } from '@/lib/email/templates/internship-welcome';
 
 const INTERNSHIP_URL = process.env.NEXT_PUBLIC_INTERNSHIP_URL ?? 'http://localhost:3000/internship';
 
 // POST /api/internship/apply
 // Body: { reference, full_name, email, phone?, portfolio_url?, track, current_status, motivation }
 // Returns: { ok: true }
+// Flow: saves form → schedules exam link for 24h later → sends welcome/study email immediately
 export async function POST(request: NextRequest) {
   let body: {
     reference?: string;
@@ -63,7 +64,11 @@ export async function POST(request: NextRequest) {
     .limit(1)
     .maybeSingle();
 
-  // Update application with form data
+  // Schedule exam link 24 hours from now
+  const formSubmittedAt = new Date();
+  const examLinkScheduledAt = new Date(formSubmittedAt.getTime() + 24 * 60 * 60 * 1000);
+
+  // Update application with form data + schedule
   const { error: updateError } = await admin
     .from('internship_applications')
     .update({
@@ -75,7 +80,8 @@ export async function POST(request: NextRequest) {
       current_status,
       motivation: motivation.trim(),
       app_status: 'submitted',
-      form_submitted_at: new Date().toISOString(),
+      form_submitted_at: formSubmittedAt.toISOString(),
+      exam_link_scheduled_at: examLinkScheduledAt.toISOString(),
       cohort_id: cohort?.id ?? null,
     })
     .eq('id', application.id);
@@ -85,21 +91,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to save application' }, { status: 500 });
   }
 
-  // Create exam token (24h expiry)
-  const { data: tokenRow, error: tokenError } = await admin
-    .from('internship_exam_tokens')
-    .insert({ application_id: application.id })
-    .select('id, expires_at')
-    .single();
-
-  if (tokenError || !tokenRow) {
-    console.error('[internship/apply] Token creation error:', tokenError);
-    return NextResponse.json({ error: 'Failed to create exam token' }, { status: 500 });
-  }
-
-  // Build exam URL and human-readable expiry
-  const examUrl = `${INTERNSHIP_URL}/exam/${tokenRow.id}`;
-  const expiresAt = new Date(tokenRow.expires_at).toLocaleString('en-NG', {
+  const firstName = full_name.trim().split(' ')[0];
+  const studyUrl = `${INTERNSHIP_URL}/study`;
+  const examScheduledAt = examLinkScheduledAt.toLocaleString('en-NG', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -110,18 +104,16 @@ export async function POST(request: NextRequest) {
     timeZoneName: 'short',
   });
 
-  const firstName = full_name.trim().split(' ')[0];
-
-  // Fire-and-forget onboarding email
+  // Fire-and-forget welcome + study email
   void (async () => {
     try {
       await sendEmail({
         to: email.trim().toLowerCase(),
-        subject: internshipOnboardingSubject(),
-        html: internshipOnboardingHtml({ firstName, examUrl, expiresAt }),
+        subject: internshipWelcomeSubject(),
+        html: internshipWelcomeHtml({ firstName, studyUrl, examScheduledAt }),
       });
     } catch (emailErr) {
-      console.error('[internship/apply] Onboarding email failed:', emailErr);
+      console.error('[internship/apply] Welcome email failed:', emailErr);
     }
   })();
 

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aorthar Standard — Operating Procedures for Product Teams</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #111;
+      background: #fff;
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 48px 40px;
+    }
+
+    /* Cover */
+    .cover { border-bottom: 3px solid #08694a; padding-bottom: 36px; margin-bottom: 40px; }
+    .cover-badge { font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: #08694a; margin-bottom: 16px; }
+    .cover-title { font-size: 40px; font-weight: 900; line-height: 1.05; letter-spacing: -1px; color: #111; margin-bottom: 8px; }
+    .cover-title span { color: #08694a; }
+    .cover-sub { font-size: 16px; color: #555; margin-bottom: 20px; line-height: 1.5; }
+    .cover-meta { font-size: 12px; color: #888; }
+
+    /* Notice */
+    .notice {
+      background: #f0f9f4;
+      border-left: 4px solid #08694a;
+      padding: 14px 18px;
+      font-size: 13px;
+      color: #1a4a35;
+      margin-bottom: 40px;
+      border-radius: 0 6px 6px 0;
+    }
+    .notice strong { color: #08694a; }
+
+    /* Print button */
+    .print-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f7f8f9;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px 18px;
+      margin-bottom: 40px;
+    }
+    .print-bar p { font-size: 13px; color: #555; }
+    .print-bar button {
+      background: #08694a;
+      color: #fff;
+      border: none;
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .print-bar button:hover { background: #065a3e; }
+
+    /* TOC */
+    .toc { margin-bottom: 48px; }
+    .toc h2 { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #888; margin-bottom: 12px; }
+    .toc ol { list-style: none; counter-reset: toc; }
+    .toc ol li { counter-increment: toc; padding: 4px 0; border-bottom: 1px dotted #e5e7eb; display: flex; align-items: baseline; gap: 8px; font-size: 13px; }
+    .toc ol li::before { content: counter(toc) "."; font-weight: 700; color: #08694a; min-width: 20px; }
+    .toc a { color: #111; text-decoration: none; }
+
+    /* Sections */
+    section { margin-bottom: 48px; }
+    section h2 {
+      font-size: 18px;
+      font-weight: 800;
+      color: #08694a;
+      margin-bottom: 4px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #08694a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    section h2 .num {
+      background: #08694a;
+      color: #fff;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+    section p { margin-bottom: 12px; color: #333; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; margin-bottom: 12px; font-size: 13px; }
+    thead tr { background: #08694a; color: #fff; }
+    thead th { padding: 8px 12px; text-align: left; font-weight: 700; }
+    tbody tr { border-bottom: 1px solid #e5e7eb; }
+    tbody tr:nth-child(even) { background: #f7faf9; }
+    tbody td { padding: 8px 12px; }
+    tbody td:first-child { font-weight: 600; }
+
+    /* Callout */
+    .callout {
+      background: #f0f9f4;
+      border-left: 4px solid #83b900;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #333;
+      margin: 12px 0;
+      border-radius: 0 6px 6px 0;
+    }
+    .callout strong { color: #08694a; }
+
+    /* Rules list */
+    ul.rules { list-style: none; margin: 8px 0; }
+    ul.rules li { padding: 5px 0 5px 20px; position: relative; color: #333; font-size: 13.5px; }
+    ul.rules li::before { content: ''; position: absolute; left: 0; top: 12px; width: 7px; height: 7px; border-radius: 50%; background: #83b900; }
+
+    /* Numbered steps */
+    ol.steps { list-style: none; counter-reset: steps; margin: 12px 0; }
+    ol.steps li { counter-increment: steps; padding: 6px 0 6px 32px; position: relative; color: #333; font-size: 13.5px; border-bottom: 1px solid #f0f0f0; }
+    ol.steps li::before { content: counter(steps); position: absolute; left: 0; top: 6px; background: #08694a; color: #fff; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; }
+    ol.steps li strong { color: #08694a; }
+
+    /* Print */
+    @media print {
+      body { padding: 20px; font-size: 11px; }
+      .print-bar { display: none; }
+      .cover-title { font-size: 28px; }
+      section { page-break-inside: avoid; }
+      section h2 { font-size: 14px; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cover -->
+  <div class="cover">
+    <p class="cover-badge">Aorthar Standard · Version 1.0 · 2026</p>
+    <h1 class="cover-title">Operating Procedures<br/><span>for Product Teams</span></h1>
+    <p class="cover-sub">A world-class, company-agnostic framework defining how high-performing product teams operate — from feature development and sprint planning to bug handling, releases, and engineering standards.</p>
+    <p class="cover-meta">Issued by Aorthar Academy &nbsp;·&nbsp; Aorthar Standard Programme &nbsp;·&nbsp; aorthar.com</p>
+  </div>
+
+  <!-- Study notice -->
+  <div class="notice">
+    <strong>Exam notice:</strong> Every question in your Aorthar Internship assessment is drawn directly from this document. Read it carefully. If you understand what is written here, you will know the answers.
+  </div>
+
+  <!-- Save as PDF bar -->
+  <div class="print-bar">
+    <p>Save this document as PDF: File → Print → Save as PDF</p>
+    <button onclick="window.print()">Save as PDF</button>
+  </div>
+
+  <!-- TOC -->
+  <nav class="toc">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#roles">Roles &amp; Responsibilities</a></li>
+      <li><a href="#lifecycle">Feature Development Lifecycle</a></li>
+      <li><a href="#sprint">Sprint Mechanics</a></li>
+      <li><a href="#timelines">Child Issue Timelines</a></li>
+      <li><a href="#ceremonies">Sprint Ceremonies</a></li>
+      <li><a href="#bugs">Bug Severity &amp; Response Times</a></li>
+      <li><a href="#incidents">Incident Management</a></li>
+      <li><a href="#change">Change Management</a></li>
+      <li><a href="#release">Release Management</a></li>
+      <li><a href="#engineering">Engineering Standards</a></li>
+      <li><a href="#communication">Communication &amp; Task Intake</a></li>
+      <li><a href="#security">Security &amp; Compliance</a></li>
+      <li><a href="#qa">Quality Assurance Standards</a></li>
+    </ol>
+  </nav>
+
+  <!-- 1. Roles -->
+  <section id="roles">
+    <h2><span class="num">1</span>Roles &amp; Responsibilities</h2>
+    <table>
+      <thead><tr><th>Role</th><th>Core Responsibilities</th></tr></thead>
+      <tbody>
+        <tr><td>Product Manager (PM)</td><td>Owns roadmap, writes PRDs, prioritises backlog, runs sprint ceremonies, collects user feedback</td></tr>
+        <tr><td>Designer</td><td>Creates low-fi wireframes, develops high-fi Figma designs, reviews prototype with PM &amp; Engineering, hands off to dev, reviews staging build</td></tr>
+        <tr><td>Frontend Engineer</td><td>Implements UI features, integrates APIs, fixes bugs and performance issues, writes unit tests</td></tr>
+        <tr><td>Backend Engineer</td><td>Builds and owns APIs, handles authentication, payments, and business logic, ensures scalability and security</td></tr>
+        <tr><td>QA Engineer</td><td>Writes test cases from PRDs, executes manual and automated tests, logs bugs in the ticketing system</td></tr>
+        <tr><td>Scrum Master</td><td>Facilitates all sprint ceremonies, clears blockers, maintains board hygiene, resolves issues offline</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><strong>Critical rule:</strong> No team member — designer, engineer, or QA — may accept or implement tasks directly from any stakeholder without PM approval. All requests must go through the PM.</div>
+  </section>
+
+  <!-- 2. Feature Development Lifecycle -->
+  <section id="lifecycle">
+    <h2><span class="num">2</span>Feature Development Lifecycle</h2>
+    <p>Every feature follows this exact sequence — skipping steps is not permitted:</p>
+    <ol class="steps">
+      <li><strong>PM creates a PRD</strong> — defines scope, success metrics, and acceptance criteria using the standard template.</li>
+      <li><strong>Design creates Figma prototype</strong> — low-fi wireframes first, then high-fi designs. Reviewed by PM and Engineering before any code is written.</li>
+      <li><strong>Engineering breaks PRD into tickets</strong> — Frontend, Backend, and QA tickets created in the board with effort estimates.</li>
+      <li><strong>Sprint planning</strong> — tickets assigned, estimated, and committed to the sprint.</li>
+      <li><strong>Code pushed to Dev environment</strong> — QA executes test cases derived from the PRD.</li>
+      <li><strong>Staging deployment</strong> — PM or product team conducts User Acceptance Testing (UAT).</li>
+      <li><strong>Merge and deploy to Production</strong> — only after QA sign-off. Deployed via CI/CD pipeline.</li>
+    </ol>
+  </section>
+
+  <!-- 3. Sprint Mechanics -->
+  <section id="sprint">
+    <h2><span class="num">3</span>Sprint Mechanics</h2>
+    <table>
+      <thead><tr><th>Rule</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Sprint duration</td><td>2–4 weeks</td></tr>
+        <tr><td>Maximum sprint capacity</td><td>140 story points — never exceed this</td></tr>
+        <tr><td>Story owner</td><td>Backend Engineer is the ultimate owner of a Story</td></tr>
+        <tr><td>Story deadline</td><td>2–4 weeks. Stories longer than 2 weeks must be split into phases</td></tr>
+        <tr><td>Definition of Done</td><td>Feature passes QA, PM, and Scrum Master sign-off. No engineer can mark Done unilaterally</td></tr>
+      </tbody>
+    </table>
+    <table>
+      <thead><tr><th>Ticket Type</th><th>Points</th><th>Completion Expectation</th></tr></thead>
+      <tbody>
+        <tr><td>Bug / Support</td><td>1 point</td><td>Same day</td></tr>
+        <tr><td>Task</td><td>2 points</td><td>Anytime within sprint</td></tr>
+        <tr><td>Story</td><td>4 points</td><td>Within that sprint</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 4. Child Issue Timelines -->
+  <section id="timelines">
+    <h2><span class="num">4</span>Child Issue Timelines</h2>
+    <p>Every Story is broken into child issues with strict maximum timelines:</p>
+    <table>
+      <thead><tr><th>Child Issue</th><th>Assigned To</th><th>Max Timeline</th></tr></thead>
+      <tbody>
+        <tr><td>Design (Web &amp; Mobile)</td><td>Designer in charge</td><td>2 days</td></tr>
+        <tr><td>Endpoint Development (incl. research)</td><td>Backend Engineer</td><td>1 week</td></tr>
+        <tr><td>Frontend UI Implementation</td><td>Frontend Engineer</td><td>3 days</td></tr>
+        <tr><td>Endpoint Integration</td><td>Frontend Engineer</td><td>3 days</td></tr>
+        <tr><td>Testing &amp; Review</td><td>QA Engineer</td><td>1 day</td></tr>
+        <tr><td>Go Live</td><td>PM (or unassigned)</td><td>Last day of sprint</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 5. Sprint Ceremonies -->
+  <section id="ceremonies">
+    <h2><span class="num">5</span>Sprint Ceremonies</h2>
+    <table>
+      <thead><tr><th>Ceremony</th><th>When</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td>Sprint Planning</td><td>Before each sprint</td><td>Finalise, estimate, and agree on deliverables</td></tr>
+        <tr><td>Daily Stand-up</td><td>Every day (15 min max)</td><td>Three questions: What did I do? What will I do? What is blocking me?</td></tr>
+        <tr><td>Backlog Refinement</td><td>Mid-sprint</td><td>Estimate and prioritise future items, resolve ambiguities</td></tr>
+        <tr><td>Sprint Demo</td><td>After sprint ends</td><td>Show deliverables to stakeholders, get Product Owner sign-off</td></tr>
+        <tr><td>Sprint Retrospective</td><td>After Demo</td><td>Review performance and identify improvements. External stakeholders NOT invited</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><strong>Stand-up questions (memorise):</strong> "What did I do? What will I do? What is blocking me?" — Issues are resolved offline by the Scrum Master, not discussed during stand-up.</div>
+  </section>
+
+  <!-- 6. Bug Severity -->
+  <section id="bugs">
+    <h2><span class="num">6</span>Bug Severity &amp; Response Times</h2>
+    <table>
+      <thead><tr><th>Priority</th><th>Description</th><th>Response Time</th></tr></thead>
+      <tbody>
+        <tr><td>P0</td><td>System Down / Production Bug — complete outage</td><td><strong>30 minutes</strong></td></tr>
+        <tr><td>P1</td><td>Payment / Revenue Affected — financial impact</td><td><strong>2 hours</strong></td></tr>
+        <tr><td>P2</td><td>Minor Functional Bug — feature broken, workaround exists</td><td><strong>24 hours</strong></td></tr>
+        <tr><td>P3</td><td>Cosmetic / UI — visual issue, no functional impact</td><td><strong>Next release cycle</strong></td></tr>
+      </tbody>
+    </table>
+    <div class="callout">Response times begin from the moment the bug is <strong>confirmed and triaged</strong>, not from when it was first reported.</div>
+  </section>
+
+  <!-- 7. Incident Management -->
+  <section id="incidents">
+    <h2><span class="num">7</span>Incident Management</h2>
+    <ul class="rules">
+      <li>Bugs are detected via monitoring tools (e.g., Sentry, UptimeRobot) or user reports.</li>
+      <li>All bugs must be logged immediately to the ticketing system — never via chat or verbally.</li>
+      <li>Bug reports must include: recorded test steps, severity level. Screenshots alone are not sufficient.</li>
+      <li>Level 1 triage is performed by Engineering on-call (rotation-based).</li>
+      <li>If urgent: alert the Product team channel immediately and notify CTO/PM.</li>
+    </ul>
+  </section>
+
+  <!-- 8. Change Management -->
+  <section id="change">
+    <h2><span class="num">8</span>Change Management</h2>
+    <ul class="rules">
+      <li>All production-affecting changes must have a PRD or a documented change log before work begins.</li>
+      <li>Relevant teams must be notified <strong>24 hours before</strong> changes are pushed to production.</li>
+      <li>System downtime may only be scheduled during <strong>off-peak hours</strong>.</li>
+      <li>Emergency changes require explicit <strong>CTO or PM approval</strong> before proceeding.</li>
+    </ul>
+  </section>
+
+  <!-- 9. Release Management -->
+  <section id="release">
+    <h2><span class="num">9</span>Release Management</h2>
+    <ul class="rules">
+      <li>Releases follow a fixed <strong>weekly cadence</strong> (e.g., every Monday at 4PM local time).</li>
+      <li><strong>QA must sign off</strong> before any code is merged to production.</li>
+      <li>All releases are announced in the team communication channel and the changelog is updated.</li>
+      <li>Post-release: logs are monitored for early issue identification; QA confirms the deployed version.</li>
+    </ul>
+  </section>
+
+  <!-- 10. Engineering Standards -->
+  <section id="engineering">
+    <h2><span class="num">10</span>Engineering Standards</h2>
+    <table>
+      <thead><tr><th>Standard</th><th>Rule</th></tr></thead>
+      <tbody>
+        <tr><td>Branch naming</td><td>feature/xyz for new features · bugfix/abc for bug fixes · hotfix/xyz for emergency fixes</td></tr>
+        <tr><td>Commit messages</td><td>Clear and descriptive — e.g., "feat: add login modal", "fix: resolve payment timeout"</td></tr>
+        <tr><td>Pull Requests</td><td>Require peer review AND passing CI checks before merging. No exceptions.</td></tr>
+        <tr><td>Direct commits to main</td><td>Strictly prohibited. All changes go through a branch and PR.</td></tr>
+        <tr><td>Environment configs</td><td>Use .env files. Never hardcode secrets, tokens, or credentials in source code.</td></tr>
+        <tr><td>Unit tests</td><td>Written for all critical logic. Engineers test with both mock and real data.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 11. Communication & Task Intake -->
+  <section id="communication">
+    <h2><span class="num">11</span>Communication &amp; Task Intake</h2>
+    <div class="callout"><strong>"If it's not in the backlog, it doesn't exist."</strong></div>
+    <ul class="rules">
+      <li>No team member may accept or implement tasks directly from external stakeholders without PM approval.</li>
+      <li>All requests must be submitted to the PM as a requirement or feature request.</li>
+      <li>The PM reviews, prioritises, and — if valid — creates a ticket in the project board.</li>
+      <li>Only after the ticket is documented and approved can it be assigned to a team member.</li>
+      <li>Every update must include the ticket link and clear context on what was done.</li>
+      <li>QA reports must include: list of tested tickets, test evidence (logs or recordings), and confirmation of retesting.</li>
+    </ul>
+  </section>
+
+  <!-- 12. Security & Compliance -->
+  <section id="security">
+    <h2><span class="num">12</span>Security &amp; Compliance</h2>
+    <table>
+      <thead><tr><th>Area</th><th>Standard</th></tr></thead>
+      <tbody>
+        <tr><td>Data encryption</td><td>AES-256 at rest, SSL/TLS in transit — minimum requirement</td></tr>
+        <tr><td>Database backups</td><td>Daily backups, retained for 30 days</td></tr>
+        <tr><td>Access control</td><td>Principle of least-privilege for all roles and team access</td></tr>
+        <tr><td>Key rotation</td><td>All credentials and keys rotated monthly</td></tr>
+        <tr><td>Dependency scanning</td><td>Regular automated scans (e.g., Snyk or Dependabot)</td></tr>
+        <tr><td>Vulnerability testing</td><td>Regular VAPT (Vulnerability Assessment &amp; Penetration Testing)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 13. QA Standards -->
+  <section id="qa">
+    <h2><span class="num">13</span>Quality Assurance Standards</h2>
+    <ul class="rules">
+      <li>QA tests all features before merging to the staging environment.</li>
+      <li>Regression tests are run for every major feature — not just the new code.</li>
+      <li>Load testing is performed for all APIs before public releases.</li>
+      <li>Bug tracking is mandatory: every bug must have a ticket with status flow (To Do → In Progress → Done).</li>
+      <li>Automated testing is used alongside manual testing for comprehensive coverage.</li>
+      <li>QA signs off on the staging build before any production deployment.</li>
+    </ul>
+  </section>
+
+  <div style="margin-top:48px;padding-top:24px;border-top:2px solid #08694a;font-size:12px;color:#888;text-align:center;">
+    Aorthar Standard v1.0 · © 2026 Aorthar Academy · aorthar.com<br/>
+    This document is the exclusive study material for the Aorthar Internship Programme assessment.
+  </div>
+
+  <script>
+    // Auto-trigger save-as-PDF prompt if ?print=1 is in the URL
+    if (new URLSearchParams(window.location.search).get('print') === '1') {
+      window.addEventListener('load', () => window.print());
+    }
+  </script>
+</body>
+</html>
