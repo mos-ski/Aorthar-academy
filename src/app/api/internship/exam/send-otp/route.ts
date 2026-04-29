@@ -75,13 +75,12 @@ export async function POST(request: NextRequest) {
     .from('internship_otp_codes')
     .insert({ application_id: application.id, otp_code: otp });
 
-  // Send OTP email
-  void (async () => {
-    try {
-      await sendEmail({
-        to: email.toLowerCase().trim(),
-        subject: `Your Aorthar assessment code: ${otp}`,
-        html: `<!DOCTYPE html>
+  // Send OTP email — awaited so failures surface to the client
+  try {
+    await sendEmail({
+      to: email.toLowerCase().trim(),
+      subject: `Your Aorthar assessment code: ${otp}`,
+      html: `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
 <body style="margin:0;padding:0;background-color:#ffffff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
@@ -110,11 +109,14 @@ export async function POST(request: NextRequest) {
   </table>
 </body>
 </html>`,
-      });
-    } catch (emailErr) {
-      console.error('[internship/exam/send-otp] OTP email failed:', emailErr);
-    }
-  })();
+    });
+  } catch (emailErr) {
+    console.error('[internship/exam/send-otp] OTP email failed:', emailErr);
+    return NextResponse.json(
+      { error: 'Failed to send the verification code. Please try again or contact support.' },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({ ok: true });
 }
