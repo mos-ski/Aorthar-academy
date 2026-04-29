@@ -104,8 +104,13 @@ const adminOverviewNav: NavItem[] = [
   { href: '/admin/ops', label: 'Ops Hub (Quick CTAs)', icon: BriefcaseBusiness },
 ];
 
+const adminInternshipNav: NavItem[] = [
+  { href: '/admin/internship', label: 'Applicants', icon: Users },
+  { href: '/admin/internship/questions', label: 'Exam Questions', icon: GraduationCap },
+];
+
 const adminPrimaryModules: Array<{
-  key: 'overview' | 'university' | 'courses' | 'admin_access' | 'audit_logs' | 'profile';
+  key: 'overview' | 'university' | 'courses' | 'internship' | 'admin_access' | 'audit_logs' | 'profile';
   label: string;
   icon: LucideIcon;
   href: string;
@@ -113,6 +118,7 @@ const adminPrimaryModules: Array<{
   { key: 'overview', label: 'Overview', icon: LayoutDashboard, href: '/admin' },
   { key: 'university', label: 'University', icon: Building2, href: '/admin/courses' },
   { key: 'courses', label: 'Bootcamps', icon: BookOpen, href: '/admin/standalone-courses' },
+  { key: 'internship', label: 'Internship', icon: BriefcaseBusiness, href: '/admin/internship' },
   { key: 'admin_access', label: 'Admin Access', icon: ShieldCheck, href: '/admin/admin-access' },
   { key: 'audit_logs', label: 'Audit Logs', icon: ScrollText, href: '/admin/audit-logs' },
   { key: 'profile', label: 'Profile Settings', icon: CircleUser, href: '/settings' },
@@ -192,13 +198,16 @@ export default function Sidebar({
 
   const inAdminAccessPath = pathname.startsWith('/admin/admin-access');
   const inAuditLogsPath = pathname.startsWith('/admin/audit-logs');
+  const inInternshipPath = pathname.startsWith('/admin/internship');
 
-  const activeModule: 'overview' | 'university' | 'courses' | 'admin_access' | 'audit_logs' | 'profile' = inProfilePath
+  const activeModule: 'overview' | 'university' | 'courses' | 'internship' | 'admin_access' | 'audit_logs' | 'profile' = inProfilePath
     ? 'profile'
     : inAdminAccessPath
     ? 'admin_access'
     : inAuditLogsPath
     ? 'audit_logs'
+    : inInternshipPath
+    ? 'internship'
     : inCoursesPath
     ? 'courses'
     : inUniversityPath
@@ -210,6 +219,8 @@ export default function Sidebar({
       ? adminUniversityNav
       : activeModule === 'courses'
       ? adminExternalNav
+      : activeModule === 'internship'
+      ? adminInternshipNav
       : activeModule === 'admin_access'
       ? [{ href: '/admin/admin-access', label: 'Admin Access', icon: ShieldCheck }]
       : activeModule === 'audit_logs'
@@ -223,6 +234,8 @@ export default function Sidebar({
       ? 'University'
     : activeModule === 'courses'
       ? 'Bootcamps'
+      : activeModule === 'internship'
+      ? 'Internship'
       : activeModule === 'admin_access'
       ? 'Admin Access'
       : activeModule === 'audit_logs'
@@ -230,11 +243,12 @@ export default function Sidebar({
       : activeModule === 'profile'
       ? 'Profile Settings'
       : 'Admin';
-  const showSecondaryPane = activeModule === 'university' || activeModule === 'courses';
+  const showSecondaryPane = activeModule === 'university' || activeModule === 'courses' || activeModule === 'internship';
   const visiblePrimaryModules = adminPrimaryModules.filter((module) => {
     if (module.key === 'admin_access') return hasAdminPermission(adminLevel, 'admin_management');
     if (module.key === 'audit_logs') return hasAdminPermission(adminLevel, 'audit');
     if (module.key === 'university' || module.key === 'courses') return hasAdminPermission(adminLevel, 'content') || hasAdminPermission(adminLevel, 'finance');
+    if (module.key === 'internship') return hasAdminPermission(adminLevel, 'internship');
     return true;
   });
 

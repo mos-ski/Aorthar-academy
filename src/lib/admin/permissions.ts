@@ -1,5 +1,5 @@
 export type AdminLevel = 'super_admin' | 'content_admin' | 'finance_admin';
-export type AdminPermission = 'admin_management' | 'audit' | 'content' | 'finance';
+export type AdminPermission = 'admin_management' | 'audit' | 'content' | 'finance' | 'internship';
 
 export function normalizeAdminLevel(value: string | null | undefined): AdminLevel {
   if (value === 'content_admin' || value === 'finance_admin' || value === 'super_admin') {
@@ -11,10 +11,10 @@ export function normalizeAdminLevel(value: string | null | undefined): AdminLeve
 export function hasAdminPermission(level: AdminLevel, permission: AdminPermission): boolean {
   if (level === 'super_admin') return true;
   if (level === 'content_admin') {
-    return permission === 'content';
+    return permission === 'content' || permission === 'internship';
   }
   if (level === 'finance_admin') {
-    return permission === 'finance' || permission === 'audit';
+    return permission === 'finance' || permission === 'audit' || permission === 'internship';
   }
   return false;
 }
@@ -64,6 +64,13 @@ export function getPermissionForPath(pathname: string): AdminPermission | null {
     || pathname.startsWith('/api/admin/students')
   ) {
     return 'admin_management';
+  }
+
+  if (
+    pathname.startsWith('/admin/internship')
+    || pathname.startsWith('/api/admin/internship')
+  ) {
+    return 'internship';
   }
 
   return null;

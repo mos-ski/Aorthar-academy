@@ -103,6 +103,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, type: 'standalone_course' });
   }
 
+  // Handle internship application payment
+  if (
+    event.event === 'charge.success' &&
+    event.data.metadata?.type === 'internship_application'
+  ) {
+    if (event.data.status !== 'success') {
+      return NextResponse.json({ ok: true, skipped: 'non-success status' });
+    }
+
+    const { reference } = event.data;
+    const adminSupabase = createAdminClient();
+
+    await adminSupabase
+      .from('internship_applications')
+      .update({
+        payment_status: 'paid',
+        amount_paid_ngn: 10000,
+        paid_at: new Date().toISOString(),
+      })
+      .eq('paystack_reference', reference)
+      .eq('payment_status', 'pending');
+
+    return NextResponse.json({ ok: true, type: 'internship_application' });
+  }
+
   // All other events → forward to Supabase Edge Function (university subscriptions)
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/verify-payment`,

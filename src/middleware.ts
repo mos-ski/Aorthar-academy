@@ -31,6 +31,8 @@ const PUBLIC_ROUTES = [
   '/api/auth/callback',
   // courses-app / bootcamp public routes
   '/courses-app',
+  // internship public API routes (no Supabase auth — external applicants)
+  '/api/internship',
 ];
 const AUTH_ROUTES = ['/login', '/register', '/verify'];
 const PREMIUM_ROUTES = ['/courses/400', '/transcript/export', '/mentorship', '/capstone'];
