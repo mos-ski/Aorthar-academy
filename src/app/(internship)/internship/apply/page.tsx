@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 function InternshipNav() {
@@ -20,6 +20,18 @@ export default function ApplyPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [priceLabel, setPriceLabel] = useState('₦10,000');
+
+  useEffect(() => {
+    fetch('/api/internship/price')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.price_ngn) {
+          setPriceLabel(`₦${Number(d.price_ngn).toLocaleString('en-NG')}`);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -77,7 +89,7 @@ export default function ApplyPage() {
             Ready to Apply?
           </h1>
           <p className="text-[15px] sm:text-[17px] leading-7 mb-10" style={{ color: '#b1b1b1' }}>
-            Enter your email to begin. You'll be redirected to Paystack to complete the ₦10,000 application fee, then returned here to fill in your details.
+            Enter your email to begin. You'll be redirected to Paystack to complete the {priceLabel} application fee, then returned here to fill in your details.
           </p>
 
           {/* What happens next */}
@@ -86,7 +98,7 @@ export default function ApplyPage() {
             style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
           >
             {[
-              { n: '1', text: 'Pay ₦10,000 via Paystack — your application fee' },
+              { n: '1', text: `Pay ${priceLabel} via Paystack — your application fee` },
               { n: '2', text: 'Complete your application form with your track and background' },
               { n: '3', text: 'Receive your 24-hour assessment link by email' },
               { n: '4', text: 'Take the exam and see your results instantly' },
@@ -127,7 +139,7 @@ export default function ApplyPage() {
               className="w-full py-3.5 font-bold text-[15px] hover:opacity-90 transition-opacity disabled:opacity-60"
               style={{ backgroundColor: '#08694a', color: '#ffffff' }}
             >
-              {loading ? 'Redirecting to payment…' : 'Pay ₦10,000 and Apply →'}
+              {loading ? 'Redirecting to payment…' : `Pay ${priceLabel} and Apply →`}
             </button>
           </form>
 

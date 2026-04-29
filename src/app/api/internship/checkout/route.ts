@@ -39,6 +39,16 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  // Read price from the current open cohort
+  const { data: cohort } = await admin
+    .from('internship_cohorts')
+    .select('id, price_ngn')
+    .eq('status', 'open')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const priceNgn = cohort?.price_ngn ?? 10000;
   const reference = `int-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   // Pre-create the application row with pending status
@@ -54,7 +64,7 @@ export async function POST(request: NextRequest) {
   try {
     const paystack = await initiatePayment({
       email,
-      amount_kobo: 1_000_000, // ₦10,000
+      amount_kobo: priceNgn * 100,
       reference,
       metadata: {
         type: 'internship_application',

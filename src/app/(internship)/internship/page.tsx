@@ -1,4 +1,21 @@
 import Link from 'next/link';
+import { createAdminClient } from '@/lib/supabase/admin';
+
+async function getActiveCohortPrice(): Promise<number> {
+  try {
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from('internship_cohorts')
+      .select('price_ngn')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return data?.price_ngn ?? 10000;
+  } catch {
+    return 10000;
+  }
+}
 
 const STEPS = [
   { n: '1', label: 'Apply' },
@@ -72,7 +89,10 @@ const OUTCOMES = [
   { Icon: IconBadge, title: 'Certificate of Completion', body: 'Receive an Aorthar certificate recognising your training and achievement.' },
 ];
 
-export default function InternshipPage() {
+export default async function InternshipPage() {
+  const priceNgn = await getActiveCohortPrice();
+  const priceLabel = `₦${priceNgn.toLocaleString('en-NG')}`;
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#18191a', color: '#ffffff' }}>
 
@@ -119,7 +139,7 @@ export default function InternshipPage() {
               { n: '2×', label: 'Per year' },
               { n: '3 months', label: 'Duration' },
               { n: '10–20', label: 'Selected per cohort' },
-              { n: '₦10,000', label: 'Application fee' },
+              { n: priceLabel, label: 'Application fee' },
             ].map(({ n, label }) => (
               <div key={label} className="text-center sm:text-left">
                 <p className="text-[26px] sm:text-[30px] font-bold text-white">{n}</p>
@@ -135,7 +155,7 @@ export default function InternshipPage() {
               className="flex items-center justify-center font-bold text-[14px] sm:text-[15px] px-6 py-3 hover:opacity-90 transition-opacity"
               style={{ backgroundColor: '#08694a', color: '#ffffff' }}
             >
-              Apply Now — ₦10,000 →
+              Apply Now — {priceLabel} →
             </Link>
             <a
               href="#how"
@@ -172,7 +192,7 @@ export default function InternshipPage() {
                   <p className="font-semibold text-white text-[15px]">{s.label}</p>
                   <p className="text-[13px] mt-1 leading-5" style={{ color: '#a0aba7' }}>
                     {[
-                      'Pay the ₦10,000 application fee, fill your application form and receive your assessment link by email.',
+                      `Pay the ${priceLabel} application fee, fill your application form and receive your assessment link by email.`,
                       'Complete a short skills quiz to help us place you in the right track.',
                       'Top applicants are chosen. Everyone gets notified within 5 business days.',
                       '3 months of real project work, mentorship, and structured learning.',
@@ -199,7 +219,7 @@ export default function InternshipPage() {
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               {[
-                { n: '1', title: 'Pay ₦10,000', body: 'Your application fee is processed securely via Paystack. This confirms your intent to apply.' },
+                { n: '1', title: `Pay ${priceLabel}`, body: 'Your application fee is processed securely via Paystack. This confirms your intent to apply.' },
                 { n: '2', title: 'Fill Your Application', body: 'Tell us about your background, the track you\'re applying for, and why you want to join Aorthar.' },
                 { n: '3', title: 'Take the Assessment', body: 'You\'ll receive a 24-hour exam link by email. Verify your identity with a one-time code and complete the quiz.' },
               ].map((step) => (
@@ -223,7 +243,7 @@ export default function InternshipPage() {
                 className="inline-flex items-center justify-center font-bold text-[14px] px-6 py-3 hover:opacity-90 transition-opacity"
                 style={{ backgroundColor: '#08694a', color: '#ffffff' }}
               >
-                Apply Now — ₦10,000 →
+                Apply Now — {priceLabel} →
               </Link>
             </div>
           </div>
@@ -318,14 +338,14 @@ export default function InternshipPage() {
             Ready to take the leap?
           </h2>
           <p className="text-[16px] leading-7 max-w-[480px] mx-auto" style={{ color: '#b1b1b1' }}>
-            The ₦10,000 application fee covers your assessment. Top performers earn a placement in a real startup.
+            The {priceLabel} application fee covers your assessment. Top performers earn a placement in a real startup.
           </p>
           <Link
             href="/internship/apply"
             className="inline-flex items-center justify-center font-bold text-[15px] px-8 py-4 hover:opacity-90 transition-opacity"
             style={{ backgroundColor: '#08694a', color: '#ffffff' }}
           >
-            Apply Now — ₦10,000 →
+            Apply Now — {priceLabel} →
           </Link>
         </div>
       </section>

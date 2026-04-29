@@ -115,11 +115,13 @@ export async function POST(req: NextRequest) {
     const { reference } = event.data;
     const adminSupabase = createAdminClient();
 
+    const amountNgn = Math.round((event.data as { amount?: number }).amount ?? 0) / 100;
+
     await adminSupabase
       .from('internship_applications')
       .update({
         payment_status: 'paid',
-        amount_paid_ngn: 10000,
+        amount_paid_ngn: amountNgn,
         paid_at: new Date().toISOString(),
       })
       .eq('paystack_reference', reference)

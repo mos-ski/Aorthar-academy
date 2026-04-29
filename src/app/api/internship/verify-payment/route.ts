@@ -41,12 +41,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Payment has not been confirmed yet.' }, { status: 402 });
   }
 
+  const amountNgn = Math.round((tx?.data?.amount ?? 0) / 100);
+
   // Update to paid
   const { error: updateError } = await admin
     .from('internship_applications')
     .update({
       payment_status: 'paid',
-      amount_paid_ngn: 10000,
+      amount_paid_ngn: amountNgn,
       paid_at: new Date().toISOString(),
     })
     .eq('paystack_reference', ref);
