@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/internship/cron/send-exam-links",
-      "schedule": "0 * * * *"
+      "schedule": "0 7 * * *"
     }
   ]
 }
