@@ -83,13 +83,15 @@ export default function ConfirmationPage() {
           </p>
 
           {/* Study link */}
-          <Link
-            href="/internship/study"
+          <a
+            href="/aorthar-standard-sop.html"
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-2 font-bold text-[14px] px-6 py-3 hover:opacity-90 transition-opacity"
             style={{ backgroundColor: '#08694a', color: '#ffffff' }}
           >
-            Download Study Material →
-          </Link>
+            Open Study Material →
+          </a>
 
           <p className="text-[13px]" style={{ color: '#6b7280' }}>
             <Link href="/internship" className="underline hover:text-white transition-colors">Back to internship page</Link>

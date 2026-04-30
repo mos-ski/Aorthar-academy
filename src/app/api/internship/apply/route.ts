@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
   }
 
   const firstName = full_name.trim().split(' ')[0];
-  const studyUrl = `${INTERNSHIP_URL}/study`;
+  const studyUrl = `${INTERNSHIP_URL}/aorthar-standard-sop.html?print=1`;
   const examScheduledAt = examLinkScheduledAt.toLocaleString('en-NG', {
     weekday: 'long',
     day: 'numeric',
