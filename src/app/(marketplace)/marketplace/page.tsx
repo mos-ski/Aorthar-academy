@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import MarketplaceNav from './_components/MarketplaceNav';
 import MarketplaceStorefront from './_components/MarketplaceStorefront';
 
@@ -12,14 +12,18 @@ export const metadata: Metadata = {
 };
 
 export default async function MarketplacePage() {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
-  const { data: products } = await supabase
+  const { data: products, error } = await supabase
     .from('marketplace_products')
     .select('id, slug, name, description, price_ngn, category, thumbnail_url')
     .eq('is_active', true)
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('[marketplace] products query error:', error);
+  }
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#18191a', color: '#ffffff' }}>
