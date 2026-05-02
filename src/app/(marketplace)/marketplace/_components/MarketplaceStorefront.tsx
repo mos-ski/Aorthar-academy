@@ -48,7 +48,7 @@ export default function MarketplaceStorefront({ products }: { products: Product[
               <img
                 src={product.thumbnail_url}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain p-3"
               />
             ) : (
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none">

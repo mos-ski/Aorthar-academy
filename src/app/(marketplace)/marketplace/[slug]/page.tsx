@@ -72,7 +72,7 @@ export default async function MarketplaceProductPage({ params }: Props) {
                   <img
                     src={product.thumbnail_url}
                     alt={product.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain p-4"
                   />
                 ) : (
                   <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
