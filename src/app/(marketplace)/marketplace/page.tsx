@@ -4,6 +4,8 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import MarketplaceNav from './_components/MarketplaceNav';
 import MarketplaceStorefront from './_components/MarketplaceStorefront';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Marketplace — Aorthar',
   description: 'PDFs, templates, guides, and toolkits from Aorthar.',
