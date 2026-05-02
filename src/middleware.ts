@@ -14,6 +14,7 @@ const PUBLIC_ROUTES = [
   '/cookies',
   '/explore-courses',
   '/internship',
+  '/marketplace',
   '/login',
   '/partnership',
   '/pricing',
@@ -33,6 +34,8 @@ const PUBLIC_ROUTES = [
   '/courses-app',
   // internship public API routes (no Supabase auth — external applicants)
   '/api/internship',
+  // marketplace public API routes (no Supabase auth — external buyers)
+  '/api/marketplace',
 ];
 const AUTH_ROUTES = ['/login', '/register', '/verify'];
 const PREMIUM_ROUTES = ['/courses/400', '/transcript/export', '/mentorship', '/capstone'];
