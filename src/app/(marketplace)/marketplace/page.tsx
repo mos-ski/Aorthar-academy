@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
 import MarketplaceNav from './_components/MarketplaceNav';
 import MarketplaceStorefront from './_components/MarketplaceStorefront';
 
@@ -12,9 +12,9 @@ export const metadata: Metadata = {
 };
 
 export default async function MarketplacePage() {
-  const admin = createAdminClient();
+  const supabase = await createClient();
 
-  const { data: products } = await admin
+  const { data: products } = await supabase
     .from('marketplace_products')
     .select('id, slug, name, description, price_ngn, category, thumbnail_url')
     .eq('is_active', true)
