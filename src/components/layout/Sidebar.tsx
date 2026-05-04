@@ -107,6 +107,7 @@ const adminOverviewNav: NavItem[] = [
 
 const adminInternshipNav: NavItem[] = [
   { href: '/admin/internship', label: 'Applicants', icon: Users },
+  { href: '/admin/internship/transactions', label: 'Transactions', icon: ClipboardList },
   { href: '/admin/internship/questions', label: 'Exam Questions', icon: GraduationCap },
 ];
 
