@@ -1,4 +1,11 @@
 import type { Metadata } from 'next';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { verifyTransaction } from '@/lib/paystack';
+import { sendEmail } from '@/lib/email';
+import {
+  marketplaceDownloadHtml,
+  marketplaceDownloadSubject,
+} from '@/lib/email/templates/marketplace-download';
 import MarketplaceNav from '../_components/MarketplaceNav';
 import SuccessPage from '../_components/SuccessPage';
 
@@ -26,7 +33,6 @@ export default async function MarketplaceSuccessPage({
     );
   }
 
-  // Verify payment server-side
   let downloadToken: string | null = null;
   let tokenExpiresAt: string | null = null;
   let productName = '';
@@ -34,28 +40,90 @@ export default async function MarketplaceSuccessPage({
   let error: string | null = null;
 
   try {
-    // Use absolute URL for server-side fetch
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL
-      ?? process.env.NEXT_PUBLIC_INTERNSHIP_URL?.replace('/internship', '')
-      ?? 'http://localhost:3000';
+    const admin = createAdminClient();
 
-    const res = await fetch(
-      `${baseUrl}/api/marketplace/verify-payment?ref=${encodeURIComponent(ref)}`,
-      { cache: 'no-store' },
-    );
+    const { data: purchase } = await admin
+      .from('marketplace_purchases')
+      .select('id, email, payment_status, product_id, download_token, token_expires_at')
+      .eq('paystack_reference', ref)
+      .maybeSingle();
 
-    const data = await res.json();
-
-    if (res.ok && data.ok) {
-      downloadToken = data.download_token;
-      tokenExpiresAt = data.token_expires_at;
-      productName = data.product_name ?? '';
-      email = data.email ?? '';
+    if (!purchase) {
+      error = 'Purchase not found.';
+    } else if (purchase.payment_status === 'paid') {
+      downloadToken = purchase.download_token;
+      tokenExpiresAt = purchase.token_expires_at;
+      const { data: product } = await admin
+        .from('marketplace_products')
+        .select('name')
+        .eq('id', purchase.product_id)
+        .single();
+      productName = product?.name ?? '';
+      email = purchase.email;
     } else {
-      error = data.error ?? 'Payment could not be verified.';
+      const tx = await verifyTransaction(ref);
+
+      if (tx?.data?.status !== 'success') {
+        error = 'Payment has not been confirmed yet.';
+      } else {
+        const amountNgn = Math.round((tx?.data?.amount ?? 0) / 100);
+
+        const { error: updateError } = await admin
+          .from('marketplace_purchases')
+          .update({
+            payment_status: 'paid',
+            amount_paid_ngn: amountNgn,
+            paid_at: new Date().toISOString(),
+          })
+          .eq('paystack_reference', ref);
+
+        if (updateError) {
+          console.error('[success] DB update error:', updateError);
+          error = 'Failed to record payment. Please contact support.';
+        } else {
+          const { data: updated } = await admin
+            .from('marketplace_purchases')
+            .select('download_token, token_expires_at')
+            .eq('paystack_reference', ref)
+            .single();
+
+          const { data: product } = await admin
+            .from('marketplace_products')
+            .select('name')
+            .eq('id', purchase.product_id)
+            .single();
+
+          productName = product?.name ?? 'your purchase';
+          email = purchase.email;
+          downloadToken = updated?.download_token ?? null;
+          tokenExpiresAt = updated?.token_expires_at ?? null;
+
+          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+          const downloadUrl = `${siteUrl}/api/marketplace/download?token=${downloadToken}`;
+
+          void (async () => {
+            try {
+              await sendEmail({
+                to: email,
+                subject: marketplaceDownloadSubject(productName),
+                html: marketplaceDownloadHtml({
+                  productName,
+                  downloadUrl,
+                  tokenExpiresAt: tokenExpiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                  amountNgn,
+                  email,
+                }),
+              });
+            } catch (e) {
+              console.error('[success] download email failed:', e);
+            }
+          })();
+        }
+      }
     }
-  } catch {
-    error = 'Could not connect to payment service. Please refresh to try again.';
+  } catch (err) {
+    console.error('[success] verification error:', err);
+    error = 'Could not verify payment. Please refresh to try again.';
   }
 
   return (
