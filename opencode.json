@@ -10,6 +10,27 @@
         "models": {
           "qwen2.5-coder:7b": {
             "name": "Qwen2.5 Coder 7B"
+          },
+          "gemma4": {
+            "name": "Gemma 4"
+          }
+        }
+      },
+      "deepseek": {
+        "npm": "@ai-sdk/openai-compatible",
+        "name": "DeepSeek",
+        "options": {
+          "baseURL": "https://api.deepseek.com/v1",
+          "headers": {
+            "Authorization": "Bearer ${DEEPSEEK_API_KEY}"
+          }
+        },
+        "models": {
+          "deepseek-chat": {
+            "name": "DeepSeek Chat"
+          },
+          "deepseek-reasoner": {
+            "name": "DeepSeek Reasoner"
           }
         }
       }

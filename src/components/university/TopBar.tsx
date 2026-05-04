@@ -38,7 +38,6 @@ export default function UniversityTopBar({
   const menuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdowns on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -59,7 +58,6 @@ export default function UniversityTopBar({
     router.refresh();
   }
 
-  // Keyboard shortcut for search
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -77,10 +75,9 @@ export default function UniversityTopBar({
   const firstName = userName.split(' ')[0];
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 md:px-6">
-      {/* Left: Breadcrumb / Page title area */}
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background px-4 md:px-6">
+      {/* Mobile spacer */}
       <div className="flex items-center gap-3 md:hidden">
-        {/* Mobile: just the hamburger is handled in sidebar */}
         <div className="w-10" />
       </div>
 
@@ -88,11 +85,11 @@ export default function UniversityTopBar({
       <div className="flex-1 max-w-md mx-4">
         <button
           onClick={() => setSearchOpen(true)}
-          className="flex w-full items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-400 hover:border-gray-300 hover:bg-white transition-colors"
+          className="flex w-full items-center gap-2 rounded-lg border border-input bg-muted/50 px-3 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors"
         >
           <Search className="h-4 w-4" />
           <span>Search courses, lessons...</span>
-          <kbd className="ml-auto hidden rounded bg-gray-200 px-1.5 py-0.5 text-xs font-mono text-gray-500 md:inline-flex">
+          <kbd className="ml-auto hidden rounded bg-muted px-1.5 py-0.5 text-xs font-mono text-muted-foreground md:inline-flex">
             ⌘K
           </kbd>
         </button>
@@ -125,21 +122,20 @@ export default function UniversityTopBar({
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="relative rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            className="relative rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             aria-label="Notifications"
           >
             <Bell className="h-5 w-5" />
-            {/* Notification dot */}
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white" />
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
           </button>
 
           {notificationsOpen && (
-            <div className="absolute right-0 mt-2 w-80 rounded-xl border border-gray-200 bg-white shadow-lg">
-              <div className="px-4 py-3 border-b border-gray-100">
-                <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
+            <div className="absolute right-0 mt-2 w-80 rounded-xl border border-border bg-popover shadow-lg">
+              <div className="px-4 py-3 border-b border-border">
+                <h3 className="text-sm font-semibold text-popover-foreground">Notifications</h3>
               </div>
               <div className="max-h-64 overflow-y-auto">
-                <div className="px-4 py-8 text-center text-sm text-gray-400">
+                <div className="px-4 py-8 text-center text-sm text-muted-foreground">
                   No new notifications
                 </div>
               </div>
@@ -151,35 +147,35 @@ export default function UniversityTopBar({
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-muted transition-colors"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
               <User className="h-4 w-4" />
             </div>
-            <span className="hidden text-sm font-medium text-gray-700 md:inline-flex">
+            <span className="hidden text-sm font-medium text-foreground md:inline-flex">
               {firstName}
             </span>
-            <ChevronDown className="hidden h-4 w-4 text-gray-400 md:inline-flex" />
+            <ChevronDown className="hidden h-4 w-4 text-muted-foreground md:inline-flex" />
           </button>
 
           {userMenuOpen && (
-            <div className="absolute right-0 mt-2 w-56 rounded-xl border border-gray-200 bg-white shadow-lg">
-              <div className="px-4 py-3 border-b border-gray-100">
-                <p className="text-sm font-semibold text-gray-900">{userName}</p>
-                <p className="text-xs text-gray-500 truncate">{userEmail}</p>
+            <div className="absolute right-0 mt-2 w-56 rounded-xl border border-border bg-popover shadow-lg">
+              <div className="px-4 py-3 border-b border-border">
+                <p className="text-sm font-semibold text-popover-foreground">{userName}</p>
+                <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
               </div>
               <div className="py-1">
                 <Link
                   href="/settings"
                   onClick={() => setUserMenuOpen(false)}
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-popover-foreground hover:bg-muted"
                 >
-                  <Settings className="h-4 w-4 text-gray-400" />
+                  <Settings className="h-4 w-4 text-muted-foreground" />
                   Settings
                 </Link>
                 <button
                   onClick={handleSignOut}
-                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-destructive/10"
                 >
                   <LogOut className="h-4 w-4" />
                   Sign Out
@@ -197,40 +193,40 @@ export default function UniversityTopBar({
             className="absolute inset-0 bg-black/50"
             onClick={() => setSearchOpen(false)}
           />
-          <div className="relative w-full max-w-lg rounded-xl border border-gray-200 bg-white shadow-xl">
-            <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3">
-              <Search className="h-5 w-5 text-gray-400" />
+          <div className="relative w-full max-w-lg rounded-xl border border-border bg-popover shadow-xl">
+            <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+              <Search className="h-5 w-5 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Search courses, lessons, materials..."
-                className="flex-1 text-sm outline-none placeholder:text-gray-400"
+                className="flex-1 text-sm outline-none placeholder:text-muted-foreground text-popover-foreground"
                 autoFocus
               />
               <kbd
-                className="rounded bg-gray-100 px-2 py-0.5 text-xs font-mono text-gray-500"
+                className="rounded bg-muted px-2 py-0.5 text-xs font-mono text-muted-foreground"
                 onClick={() => setSearchOpen(false)}
               >
                 ESC
               </kbd>
             </div>
             <div className="max-h-80 overflow-y-auto p-2">
-              <p className="px-2 py-2 text-xs font-medium text-gray-400 uppercase">
+              <p className="px-2 py-2 text-xs font-medium text-muted-foreground uppercase">
                 Quick Links
               </p>
               <Link
                 href="/courses"
                 onClick={() => setSearchOpen(false)}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-popover-foreground hover:bg-muted"
               >
-                <BookOpen className="h-4 w-4 text-gray-400" />
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
                 Browse Courses
               </Link>
               <Link
                 href="/dashboard"
                 onClick={() => setSearchOpen(false)}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-popover-foreground hover:bg-muted"
               >
-                <LayoutDashboard className="h-4 w-4 text-gray-400" />
+                <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
                 Dashboard
               </Link>
             </div>

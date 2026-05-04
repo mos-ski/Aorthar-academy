@@ -112,6 +112,7 @@ const adminInternshipNav: NavItem[] = [
 
 const adminMarketplaceNav: NavItem[] = [
   { href: '/admin/marketplace', label: 'Products', icon: ShoppingBag },
+  { href: '/admin/marketplace/transactions', label: 'Transactions', icon: ClipboardList },
 ];
 
 const adminPrimaryModules: Array<{

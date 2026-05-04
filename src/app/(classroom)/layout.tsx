@@ -13,7 +13,6 @@ export default async function ClassroomLayout({
   const demo = await isDemoMode();
   const appEnv = process.env.NEXT_PUBLIC_APP_ENV ?? 'development';
 
-  // Fetch user's enrolled courses for sidebar
   let courses: { id: string; code: string; name: string; progress: number }[] = [];
   try {
     const supabase = await createClient();
@@ -38,7 +37,7 @@ export default async function ClassroomLayout({
   }
 
   return (
-    <div className="flex h-screen bg-[#060708]">
+    <div className="flex h-screen dark bg-[#101112] text-foreground">
       <UniversitySidebar
         role={profile?.role ?? 'student'}
         department={profile?.department ?? null}

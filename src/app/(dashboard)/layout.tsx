@@ -38,7 +38,7 @@ export default async function UniversityLayout({
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
       <UniversitySidebar
         role={profile?.role ?? 'student'}
         department={profile?.department ?? null}
