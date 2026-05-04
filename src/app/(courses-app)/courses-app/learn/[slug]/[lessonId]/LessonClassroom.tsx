@@ -48,8 +48,8 @@ export default function LessonClassroom({ course, lessons, currentLessonId, user
   );
   const [isPending, startTransition] = useTransition();
 
-  const currentLesson = lessons.find((l) => l.id === currentLessonId) ?? lessons[0];
-  const currentIndex = lessons.findIndex((l) => l.id === currentLesson.id);
+  const currentLesson = lessons.find((l) => l.id === currentLessonId) ?? lessons?.[0];
+  const currentIndex = currentLesson ? lessons.findIndex((l) => l.id === currentLesson.id) : -1;
   const nextLesson = lessons[currentIndex + 1] ?? null;
   const prevLesson = currentIndex > 0 ? lessons[currentIndex - 1] : null;
 

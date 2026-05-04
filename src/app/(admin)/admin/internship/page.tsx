@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Users, CreditCard, CheckCircle, XCircle, ClipboardList, Settings, Plus } from 'lucide-react';
+import { Users, CheckCircle, XCircle, ClipboardList, Settings, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -161,11 +161,10 @@ export default function AdminInternshipPage() {
     }
   }
 
-  const totalPaid = applications.length;
   const totalSubmitted = applications.filter((a) => a.form_submitted_at).length;
-  const totalExamDone = applications.filter((a) => a.internship_exam_attempts[0]?.completed_at).length;
-  const totalPassed = applications.filter((a) => a.internship_exam_attempts[0]?.passed === true).length;
-  const totalFailed = applications.filter((a) => a.internship_exam_attempts[0]?.passed === false).length;
+  const totalExamDone = applications.filter((a) => a.internship_exam_attempts?.[0]?.completed_at).length;
+  const totalPassed = applications.filter((a) => a.internship_exam_attempts?.[0]?.passed === true).length;
+  const totalFailed = applications.filter((a) => a.internship_exam_attempts?.[0]?.passed === false).length;
 
   const activeCohort = cohorts.find((c) => c.status === 'open');
 
@@ -245,10 +244,9 @@ export default function AdminInternshipPage() {
       </Card>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
-          { label: 'Total Paid', value: totalPaid, Icon: CreditCard, color: 'text-blue-500' },
-          { label: 'Form Submitted', value: totalSubmitted, Icon: Users, color: 'text-purple-500' },
+          { label: 'Form Submitted', value: totalSubmitted, Icon: Users, color: 'text-blue-500' },
           { label: 'Exam Completed', value: totalExamDone, Icon: ClipboardList, color: 'text-yellow-500' },
           { label: 'Passed (≥70%)', value: totalPassed, Icon: CheckCircle, color: 'text-green-500' },
           { label: 'Failed (<70%)', value: totalFailed, Icon: XCircle, color: 'text-red-500' },
@@ -288,7 +286,6 @@ export default function AdminInternshipPage() {
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Track</TableHead>
-                    <TableHead>Paid</TableHead>
                     <TableHead>Form</TableHead>
                     <TableHead>Score</TableHead>
                     <TableHead>Result</TableHead>
@@ -297,7 +294,7 @@ export default function AdminInternshipPage() {
                 </TableHeader>
                 <TableBody>
                   {applications.map((app) => {
-                    const attempt = app.internship_exam_attempts[0];
+                    const attempt = app.internship_exam_attempts?.[0];
                     const score = attempt?.score_percent;
                     const passed = attempt?.passed;
                     const examDone = Boolean(attempt?.completed_at);
@@ -316,9 +313,6 @@ export default function AdminInternshipPage() {
                               {app.track}
                             </span>
                           ) : '—'}
-                        </TableCell>
-                        <TableCell className="text-sm font-medium">
-                          {app.amount_paid_ngn ? formatNgn(app.amount_paid_ngn) : '—'}
                         </TableCell>
                         <TableCell>
                           {app.form_submitted_at ? (
