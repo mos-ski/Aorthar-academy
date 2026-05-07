@@ -143,7 +143,25 @@ function getSubdomainRewrite(request: NextRequest): NextResponse | null {
     return NextResponse.rewrite(url);
   }
 
-  // aorthar.com (base/marketing) — no rewrite needed
+  // aorthar.com (base/marketing) — redirect subdomain-specific paths to their subdomains
+  if (product === 'base' || product === 'university') {
+    if (pathname.startsWith('/internship')) {
+      const url = new URL(`https://internship.aorthar.com${pathname}`);
+      url.search = request.nextUrl.search;
+      return NextResponse.redirect(url);
+    }
+    if (pathname.startsWith('/courses-app')) {
+      const url = new URL(`https://bootcamp.aorthar.com${pathname}`);
+      url.search = request.nextUrl.search;
+      return NextResponse.redirect(url);
+    }
+    if (pathname.startsWith('/admin')) {
+      const url = new URL(`https://admin.aorthar.com${pathname}`);
+      url.search = request.nextUrl.search;
+      return NextResponse.redirect(url);
+    }
+  }
+
   return null;
 }
 
