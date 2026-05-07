@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { createAdminClient } from '@/lib/supabase/admin';
 
+export const revalidate = 0;
+
 async function getActiveCohortPrice(): Promise<number> {
   try {
     const admin = createAdminClient();
