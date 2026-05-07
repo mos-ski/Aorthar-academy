@@ -115,6 +115,13 @@ export default async function InternshipPage() {
         >
           Join Community
         </a>
+        <Link
+          href="/internship/scoreboard"
+          className="text-sm hover:opacity-80 transition-opacity"
+          style={{ color: '#a7d252' }}
+        >
+          Scoreboard
+        </Link>
       </header>
 
       {/* Hero */}

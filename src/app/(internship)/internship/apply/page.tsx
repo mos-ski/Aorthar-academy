@@ -12,12 +12,19 @@ function InternshipNav() {
       <Link href="/internship">
         <img src="/Aorthar Logo long complete.svg" alt="Aorthar" width={99} height={43} />
       </Link>
+      <Link href="/internship/scoreboard" className="text-sm hover:opacity-80 transition-opacity" style={{ color: '#a7d252' }}>
+        Scoreboard
+      </Link>
     </header>
   );
 }
 
 export default function ApplyPage() {
-  const [email, setEmail] = useState('');
+  const [form, setForm] = useState({
+    full_name: '',
+    email: '',
+    address: '',
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [priceLabel, setPriceLabel] = useState('₦10,000');
@@ -33,9 +40,13 @@ export default function ApplyPage() {
       .catch(() => {});
   }, []);
 
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!form.full_name.trim() || !form.email.trim() || !form.address.trim()) return;
     setLoading(true);
     setError('');
 
@@ -43,7 +54,11 @@ export default function ApplyPage() {
       const res = await fetch('/api/internship/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({
+          full_name: form.full_name.trim(),
+          email: form.email.trim(),
+          address: form.address.trim(),
+        }),
       });
 
       const data = await res.json();
@@ -55,7 +70,6 @@ export default function ApplyPage() {
       }
 
       if (data.payment_url === null && data.ref) {
-        // Already paid but form not submitted — redirect to application
         window.location.href = `/internship/application?ref=${data.ref}`;
         return;
       }
@@ -89,7 +103,7 @@ export default function ApplyPage() {
             Ready to Apply?
           </h1>
           <p className="text-[15px] sm:text-[17px] leading-7 mb-10" style={{ color: '#b1b1b1' }}>
-            Enter your email to begin. You'll be redirected to Paystack to complete the {priceLabel} application fee, then returned here to fill in your details.
+            Fill in your details below. You'll be redirected to Paystack to complete the {priceLabel} application fee, then return to finish your application.
           </p>
 
           {/* What happens next */}
@@ -117,13 +131,42 @@ export default function ApplyPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-[13px] font-medium text-white">Email address</label>
+              <label className="text-[13px] font-medium text-white">Full name *</label>
+              <input
+                type="text"
+                name="full_name"
+                value={form.full_name}
+                onChange={handleChange}
+                required
+                placeholder="John Doe"
+                className="w-full px-4 py-3 text-[15px] text-white placeholder-white/30 outline-none focus:border-[#a7d252] transition-colors"
+                style={{ backgroundColor: '#1c1c1c', border: '1px solid rgba(255,255,255,0.12)' }}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-medium text-white">Email address *</label>
               <input
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                name="email"
+                value={form.email}
+                onChange={handleChange}
                 required
                 placeholder="you@email.com"
+                className="w-full px-4 py-3 text-[15px] text-white placeholder-white/30 outline-none focus:border-[#a7d252] transition-colors"
+                style={{ backgroundColor: '#1c1c1c', border: '1px solid rgba(255,255,255,0.12)' }}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[13px] font-medium text-white">Address (City, Country) *</label>
+              <input
+                type="text"
+                name="address"
+                value={form.address}
+                onChange={handleChange}
+                required
+                placeholder="Lagos, Nigeria"
                 className="w-full px-4 py-3 text-[15px] text-white placeholder-white/30 outline-none focus:border-[#a7d252] transition-colors"
                 style={{ backgroundColor: '#1c1c1c', border: '1px solid rgba(255,255,255,0.12)' }}
               />
