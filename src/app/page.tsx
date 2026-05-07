@@ -117,6 +117,7 @@ export default function HomePage() {
             { label: "Internship", href: "https://internship.aorthar.com", external: true },
             { label: "University", href: "https://university.aorthar.com", external: true },
             { label: "Bootcamps", href: "https://bootcamp.aorthar.com", external: true },
+            { label: "Marketplace", href: "/marketplace", external: false },
             { label: "X", href: "https://x.com/aorthar", external: true },
             { label: "Instagram", href: "https://instagram.com/aortharhq", external: true },
             { label: "YouTube", href: "https://youtube.com/@aorthar", external: true },
@@ -504,6 +505,7 @@ export default function HomePage() {
                     { label: "Bootcamps", href: "https://bootcamp.aorthar.com", external: true },
                     { label: "Internship", href: "https://internship.aorthar.com", external: true },
                     { label: "University", href: "https://university.aorthar.com", badge: "New", external: true },
+                    { label: "Marketplace", href: "/marketplace", external: false },
                     { label: "Hire Talent", href: "https://www.motivv.co/post-job", external: true },
                   ].map((link) => (
                     <div key={link.label} className="flex items-center gap-2">
