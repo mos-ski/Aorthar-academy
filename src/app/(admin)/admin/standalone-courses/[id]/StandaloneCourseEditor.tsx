@@ -256,59 +256,48 @@ export default function StandaloneCourseEditor({
               </select>
             </Field>
             <Field label="Instructor">
-              <div className="grid gap-2">
-                <input
-                  className="input"
-                  value={fields.instructor_name}
-                  onChange={(e) => setFields((f) => ({ ...f, instructor_name: e.target.value }))}
-                  placeholder="Instructor display name"
-                />
-                <div className="relative">
-                  <button
-                    type="button"
-                    className="input flex h-10 w-full items-center justify-between gap-3 text-left"
-                    onClick={() => setInstructorMenuOpen((open) => !open)}
-                  >
-                    <span className="flex min-w-0 items-center gap-2">
-                      <AvatarPreview name={fields.instructor_name} avatarUrl={fields.instructor_avatar_url} className="size-6" />
-                      <span className="truncate">Use saved admin profile</span>
-                    </span>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                  {instructorMenuOpen && (
-                    <div className="absolute z-30 mt-2 max-h-72 w-full overflow-y-auto rounded-md border bg-background p-1 shadow-xl">
-                      {instructors.length === 0 ? (
-                        <p className="px-3 py-2 text-sm text-muted-foreground">No admin instructors found.</p>
-                      ) : (
-                        instructors.map((instructor) => (
-                          <button
-                            key={instructor.id}
-                            type="button"
-                            className="flex w-full items-center gap-3 rounded px-3 py-2 text-left text-sm hover:bg-muted"
-                            onClick={() => selectInstructor(instructor)}
-                          >
-                            <AvatarPreview
-                              name={instructor.full_name ?? instructor.email ?? 'Instructor'}
-                              avatarUrl={instructor.avatar_url}
-                              className="size-8"
-                            />
-                            <span className="min-w-0">
-                              <span className="block truncate font-medium">
-                                {instructor.full_name ?? instructor.email ?? 'Unnamed admin'}
-                              </span>
-                              {instructor.email && (
-                                <span className="block truncate text-xs text-muted-foreground">{instructor.email}</span>
-                              )}
+              <div className="relative">
+                <button
+                  type="button"
+                  className="input flex h-10 w-full items-center justify-between gap-3 text-left"
+                  onClick={() => setInstructorMenuOpen((open) => !open)}
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <AvatarPreview name={fields.instructor_name} avatarUrl={fields.instructor_avatar_url} className="size-6" />
+                    <span className="truncate">{fields.instructor_name || 'Select instructor'}</span>
+                  </span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </button>
+                {instructorMenuOpen && (
+                  <div className="absolute z-30 mt-2 max-h-72 w-full overflow-y-auto rounded-md border bg-background p-1 shadow-xl">
+                    {instructors.length === 0 ? (
+                      <p className="px-3 py-2 text-sm text-muted-foreground">No instructors found. Add one in Bootcamps → Instructors.</p>
+                    ) : (
+                      instructors.map((instructor) => (
+                        <button
+                          key={instructor.id}
+                          type="button"
+                          className="flex w-full items-center gap-3 rounded px-3 py-2 text-left text-sm hover:bg-muted"
+                          onClick={() => selectInstructor(instructor)}
+                        >
+                          <AvatarPreview
+                            name={instructor.full_name ?? instructor.email ?? 'Instructor'}
+                            avatarUrl={instructor.avatar_url}
+                            className="size-8"
+                          />
+                          <span className="min-w-0">
+                            <span className="block truncate font-medium">
+                              {instructor.full_name ?? instructor.email ?? 'Unnamed instructor'}
                             </span>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
-                <p className="text-[11px] leading-4 text-muted-foreground">
-                  Type any instructor name, or pick an admin profile to reuse its avatar.
-                </p>
+                            {instructor.email && (
+                              <span className="block truncate text-xs text-muted-foreground">{instructor.email}</span>
+                            )}
+                          </span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             </Field>
             <Field label="Sale Type">
