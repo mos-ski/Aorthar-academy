@@ -1,11 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   BookOpen,
   BriefcaseBusiness,
+  ChevronLeft,
   ClipboardList,
   ChevronRight,
   CircleUser,
@@ -156,6 +159,10 @@ export default function Sidebar({
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [adminMenuCollapsed, setAdminMenuCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem('aorthar:admin-menu-collapsed') === '1';
+  });
   const tab = searchParams.get('tab');
   const courseTab = searchParams.get('courseTab');
   const moduleParam = searchParams.get('module');
@@ -268,42 +275,85 @@ export default function Sidebar({
     return true;
   });
 
+  function toggleAdminMenu(): void {
+    setAdminMenuCollapsed((collapsed) => {
+      const next = !collapsed;
+      window.localStorage.setItem('aorthar:admin-menu-collapsed', next ? '1' : '0');
+      return next;
+    });
+  }
+
   return (
     <>
       {/* Desktop sidebar */}
       {isAdmin ? (
         <aside
           className={cn(
-            'hidden shrink-0 border-r bg-background md:flex',
-            showSecondaryPane ? 'w-[400px]' : 'w-60',
+            'hidden shrink-0 border-r bg-background transition-[width] duration-200 md:flex',
+            showSecondaryPane
+              ? adminMenuCollapsed ? 'w-[248px]' : 'w-[400px]'
+              : adminMenuCollapsed ? 'w-20' : 'w-60',
           )}
         >
-          <div className="w-60 border-r bg-[#111214] text-white flex flex-col">
-            <div className="p-6 border-b border-white/10">
-              <Link href="/admin" className="flex items-center gap-2">
-                <img src="/Aorthar Logo long complete.svg" alt="Aorthar" width={118} height={51} className="brightness-0 invert" />
+          <div className={cn(
+            'border-r bg-[#111214] text-white flex flex-col transition-[width] duration-200',
+            adminMenuCollapsed ? 'w-20' : 'w-60',
+          )}>
+            <div className={cn(
+              'h-[73px] border-b border-white/10 flex items-center',
+              'relative',
+              adminMenuCollapsed ? 'justify-center px-3' : 'justify-between px-6',
+            )}>
+              <Link href="/admin" className="flex items-center justify-center">
+                <Image src="/Aorthar Favion.svg" alt="Aorthar" width={30} height={30} className="brightness-0 invert" unoptimized />
               </Link>
+              {!adminMenuCollapsed && (
+                <button
+                  type="button"
+                  aria-label="Collapse main menu"
+                  className="inline-flex size-8 items-center justify-center rounded-md text-white/50 hover:bg-white/10 hover:text-white"
+                  onClick={toggleAdminMenu}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+              )}
+              {adminMenuCollapsed && (
+                <button
+                  type="button"
+                  aria-label="Expand main menu"
+                  className="absolute left-[52px] top-5 inline-flex size-7 items-center justify-center rounded-full border border-white/10 bg-[#161719] text-white/60 shadow-sm hover:text-white"
+                  onClick={toggleAdminMenu}
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
-            <nav className="flex-1 p-4 space-y-1">
-              <p className="px-3 pb-2 text-[11px] tracking-[0.12em] uppercase text-white/45">Main Menu</p>
+            <nav className={cn('flex-1 space-y-1', adminMenuCollapsed ? 'p-3' : 'p-4')}>
+              {!adminMenuCollapsed && (
+                <p className="px-3 pb-2 text-[11px] tracking-[0.12em] uppercase text-white/45">Main Menu</p>
+              )}
               {visiblePrimaryModules.map(({ key, href, label, icon: Icon }) => {
                 const active = activeModule === key;
                 return (
                   <Link
                     key={href}
                     href={href}
+                    title={adminMenuCollapsed ? label : undefined}
                     className={cn(
-                      'flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                      'flex items-center rounded-lg text-sm font-medium transition-colors',
+                      adminMenuCollapsed ? 'justify-center px-0 py-3' : 'justify-between gap-3 px-3 py-2.5',
                       active
                         ? 'bg-white text-black shadow-sm'
                         : 'text-white/70 hover:bg-white/10 hover:text-white',
                     )}
                   >
-                    <span className="flex items-center gap-3">
+                    <span className={cn('flex items-center', adminMenuCollapsed ? 'justify-center' : 'gap-3')}>
                       <Icon className="h-4 w-4" />
-                      <span>{label}</span>
+                      {!adminMenuCollapsed && <span>{label}</span>}
                     </span>
-                    <ChevronRight className={cn('h-4 w-4', active ? 'opacity-100' : 'opacity-30')} />
+                    {!adminMenuCollapsed && (
+                      <ChevronRight className={cn('h-4 w-4', active ? 'opacity-100' : 'opacity-30')} />
+                    )}
                   </Link>
                 );
               })}
@@ -311,26 +361,25 @@ export default function Sidebar({
           </div>
 
           {showSecondaryPane && (
-            <div className="flex-1 bg-muted/30 flex flex-col">
+            <div className="flex-1 bg-muted/30 flex flex-col min-w-0">
               <div className="h-[73px] px-6 flex items-center border-b">
-                <h3 className="text-2xl font-semibold text-foreground tracking-tight">{secondaryTitle}</h3>
+                <h3 className="truncate text-2xl font-semibold text-foreground tracking-tight">{secondaryTitle}</h3>
               </div>
               <nav className="p-4 space-y-1 overflow-y-auto">
-                {secondaryNav.map(({ href, label, icon: Icon, match }) => {
-                  const active = isNavItemActive({ href, label, icon: Icon, match });
+                {secondaryNav.map(({ href, label, icon, match }) => {
+                  const active = isNavItemActive({ href, label, icon, match });
                   return (
                     <Link
                       key={href}
                       href={href}
                       className={cn(
-                        'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors border',
+                        'block rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
                         active
-                          ? 'bg-background text-foreground shadow-sm border-border'
-                          : 'text-foreground/75 border-transparent hover:bg-background/70 hover:text-foreground',
+                          ? 'text-primary'
+                          : 'text-foreground/70 hover:bg-background/60 hover:text-foreground',
                       )}
                     >
-                      <Icon className="h-4 w-4" />
-                      <span>{label}</span>
+                      <span className="truncate">{label}</span>
                     </Link>
                   );
                 })}
@@ -342,7 +391,7 @@ export default function Sidebar({
         <aside className="hidden w-64 shrink-0 border-r bg-background md:flex md:flex-col">
           <div className="p-6 border-b">
             <Link href="/dashboard">
-              <img src="/Aorthar Logo long complete.svg" alt="Aorthar" width={118} height={51} className="brightness-0 dark:brightness-100" />
+              <Image src="/Aorthar Logo long complete.svg" alt="Aorthar" width={118} height={51} className="brightness-0 dark:brightness-100" unoptimized />
             </Link>
           </div>
           <nav className="flex-1 p-4 space-y-1">
