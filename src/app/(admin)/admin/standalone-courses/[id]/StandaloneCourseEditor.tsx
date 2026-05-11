@@ -32,11 +32,10 @@ interface Course {
 type SaleType = 'pre_sale' | 'live_class' | 'recorded_course';
 
 type Instructor = {
-  user_id: string;
+  id: string;
   full_name: string | null;
   email: string | null;
   avatar_url: string | null;
-  role: 'admin' | 'student' | 'contributor';
 };
 
 type CourseFields = {
@@ -283,7 +282,7 @@ export default function StandaloneCourseEditor({
                       ) : (
                         instructors.map((instructor) => (
                           <button
-                            key={instructor.user_id}
+                            key={instructor.id}
                             type="button"
                             className="flex w-full items-center gap-3 rounded px-3 py-2 text-left text-sm hover:bg-muted"
                             onClick={() => selectInstructor(instructor)}

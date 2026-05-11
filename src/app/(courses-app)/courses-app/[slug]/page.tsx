@@ -9,12 +9,27 @@ export async function generateMetadata({ params }: Props) {
   const supabase = await createClient();
   const { data } = await supabase
     .from('standalone_courses')
-    .select('title, description')
+    .select('title, description, thumbnail_url')
     .eq('slug', slug)
     .eq('status', 'published')
     .single();
   if (!data) return { title: 'Course Not Found' };
-  return { title: `${data.title} — Aorthar`, description: data.description };
+  const title = `${data.title} — Aorthar`;
+  return {
+    title,
+    description: data.description,
+    openGraph: {
+      title,
+      description: data.description,
+      images: data.thumbnail_url ? [{ url: data.thumbnail_url, alt: data.title }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description: data.description,
+      images: data.thumbnail_url ? [data.thumbnail_url] : undefined,
+    },
+  };
 }
 
 export default async function CourseDetailPage({ params }: Props) {

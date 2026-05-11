@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import YouTubePlayer from '@/components/standalone/YouTubePlayer';
 import DrivePlayer from '@/components/standalone/DrivePlayer';
@@ -91,7 +92,7 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
         style={{ borderColor: 'rgba(255,255,255,0.07)', backgroundColor: '#0f1011' }}
       >
         <Link href="/courses-app" className="flex items-center gap-2">
-          <img src="/Aorthar Logo long complete.svg" alt="Aorthar" className="h-8 w-auto" />
+          <Image src="/Aorthar Logo long complete.svg" alt="Aorthar" width={104} height={45} className="h-8 w-auto" unoptimized />
         </Link>
         <div className="flex items-center gap-4">
           {isLoggedIn ? (
@@ -326,12 +327,20 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
             ) : (
               <div className="aspect-video flex flex-col items-center justify-center gap-3 relative" style={{ backgroundColor: '#0d0e10' }}>
                 {course.thumbnail_url ? (
-                  <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover opacity-20 absolute inset-0" />
-                ) : null}
-                <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.1)" strokeWidth="1">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
-                </svg>
-                <p className="text-sm text-white/25 relative">Lessons coming soon</p>
+                  <>
+                    <Image src={course.thumbnail_url} alt={course.title} fill className="object-cover" unoptimized priority />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-5">
+                      <p className="text-sm font-semibold text-white">Lessons coming soon</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.1)" strokeWidth="1">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+                    </svg>
+                    <p className="text-sm text-white/25 relative">Lessons coming soon</p>
+                  </>
+                )}
               </div>
             )}
           </div>

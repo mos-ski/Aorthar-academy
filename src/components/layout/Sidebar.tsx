@@ -87,6 +87,7 @@ const adminUniversityNav: NavItem[] = [
 
 const adminExternalNav: NavItem[] = [
   { href: '/admin/standalone-courses', label: 'Catalog', icon: BookOpen },
+  { href: '/admin/instructors', label: 'Instructors', icon: Users },
   {
     href: '/admin/users?module=courses',
     label: 'Students',
@@ -200,6 +201,7 @@ export default function Sidebar({
   const inCoursesPath =
     moduleParam === 'courses'
     || pathname.startsWith('/admin/standalone-courses')
+    || pathname.startsWith('/admin/instructors')
     || (
       (pathname.startsWith('/admin/users')
         || pathname.startsWith('/admin/pricing')
