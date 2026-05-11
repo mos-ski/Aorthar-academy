@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { ChevronDown, ImagePlus, Upload } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -26,16 +28,41 @@ interface Course {
   status: 'draft' | 'published';
 }
 
+type Instructor = {
+  user_id: string;
+  full_name: string | null;
+  email: string | null;
+  avatar_url: string | null;
+  role: 'admin' | 'student' | 'contributor';
+};
+
+type CourseFields = {
+  title: string;
+  slug: string;
+  description: string;
+  long_description: string;
+  thumbnail_url: string;
+  price_ngn: string;
+  instructor_name: string;
+  instructor_avatar_url: string;
+  status: 'draft' | 'published';
+};
+
 export default function StandaloneCourseEditor({
   course,
+  instructors,
   lessons: initialLessons,
 }: {
   course: Course;
+  instructors: Instructor[];
   lessons: Lesson[];
 }) {
   const router = useRouter();
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
-  const [fields, setFields] = useState({
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const [instructorMenuOpen, setInstructorMenuOpen] = useState(false);
+  const [fields, setFields] = useState<CourseFields>({
     title: course.title,
     slug: course.slug,
     description: course.description,
@@ -52,7 +79,13 @@ export default function StandaloneCourseEditor({
   const [newLesson, setNewLesson] = useState({ title: '', youtube_url: '' });
   const [lessonSaving, setLessonSaving] = useState<string | null>(null);
 
-  async function saveCourse(e: React.FormEvent) {
+  const selectedInstructor = instructors.find(
+    (instructor) =>
+      instructor.full_name === fields.instructor_name
+      && (instructor.avatar_url ?? '') === fields.instructor_avatar_url,
+  );
+
+  async function saveCourse(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     setSaving(true);
     try {
@@ -73,7 +106,42 @@ export default function StandaloneCourseEditor({
     }
   }
 
-  async function addLesson(e: React.FormEvent) {
+  async function uploadThumbnail(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingThumbnail(true);
+    try {
+      const formData = new FormData();
+      formData.append('thumbnail', file);
+      const res = await fetch(`/api/admin/standalone-courses/${course.id}/thumbnail`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json() as { thumbnail_url?: string; error?: string };
+      if (!res.ok || !data.thumbnail_url) {
+        toast.error(data.error ?? 'Thumbnail upload failed');
+        return;
+      }
+      setFields((f) => ({ ...f, thumbnail_url: data.thumbnail_url ?? '' }));
+      toast.success('Thumbnail uploaded');
+      router.refresh();
+    } finally {
+      setUploadingThumbnail(false);
+      e.target.value = '';
+    }
+  }
+
+  function selectInstructor(instructor: Instructor): void {
+    setFields((f) => ({
+      ...f,
+      instructor_name: instructor.full_name ?? instructor.email ?? 'Aorthar Instructor',
+      instructor_avatar_url: instructor.avatar_url ?? '',
+    }));
+    setInstructorMenuOpen(false);
+  }
+
+  async function addLesson(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     setLessonSaving('new');
     try {
@@ -101,7 +169,7 @@ export default function StandaloneCourseEditor({
     }
   }
 
-  async function updateLesson(lessonId: string, patch: Partial<Lesson>) {
+  async function updateLesson(lessonId: string, patch: Partial<Lesson>): Promise<void> {
     setLessonSaving(lessonId);
     try {
       const res = await fetch(`/api/admin/standalone-courses/${course.id}/lessons/${lessonId}`, {
@@ -119,7 +187,7 @@ export default function StandaloneCourseEditor({
     }
   }
 
-  async function deleteLesson(lessonId: string) {
+  async function deleteLesson(lessonId: string): Promise<void> {
     if (!confirm('Delete this lesson?')) return;
     setLessonSaving(lessonId);
     try {
@@ -132,18 +200,20 @@ export default function StandaloneCourseEditor({
   }
 
   return (
-    <div className="max-w-3xl">
-      <div className="flex items-center gap-3 mb-8">
+    <div className="max-w-7xl">
+      <div className="mb-8 flex items-center gap-3">
         <Link href="/admin/standalone-courses" className="text-sm text-muted-foreground hover:text-foreground">
           ← Back
         </Link>
         <span className="text-muted-foreground">/</span>
-        <h1 className="text-xl font-bold truncate">{course.title}</h1>
+        <h1 className="truncate text-xl font-bold">{course.title}</h1>
       </div>
 
-      {/* Course details form */}
-      <section className="mb-10">
-        <h2 className="text-base font-semibold mb-4">Course Details</h2>
+      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="min-w-0">
+          {/* Course details form */}
+          <section className="mb-10">
+            <h2 className="mb-4 text-base font-semibold">Course Details</h2>
         <form onSubmit={saveCourse} className="flex flex-col gap-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Title">
@@ -162,13 +232,94 @@ export default function StandaloneCourseEditor({
               </select>
             </Field>
             <Field label="Instructor Name">
-              <input className="input" value={fields.instructor_name} onChange={(e) => setFields((f) => ({ ...f, instructor_name: e.target.value }))} />
+              <div className="relative">
+                <button
+                  type="button"
+                  className="input flex h-10 w-full items-center justify-between gap-3 text-left"
+                  onClick={() => setInstructorMenuOpen((open) => !open)}
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <AvatarPreview name={fields.instructor_name} avatarUrl={fields.instructor_avatar_url} className="size-6" />
+                    <span className="truncate">{fields.instructor_name || 'Select instructor'}</span>
+                  </span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </button>
+                {instructorMenuOpen && (
+                  <div className="absolute z-30 mt-2 max-h-72 w-full overflow-y-auto rounded-md border bg-background p-1 shadow-xl">
+                    {instructors.length === 0 ? (
+                      <p className="px-3 py-2 text-sm text-muted-foreground">No admin instructors found.</p>
+                    ) : (
+                      instructors.map((instructor) => (
+                        <button
+                          key={instructor.user_id}
+                          type="button"
+                          className="flex w-full items-center gap-3 rounded px-3 py-2 text-left text-sm hover:bg-muted"
+                          onClick={() => selectInstructor(instructor)}
+                        >
+                          <AvatarPreview
+                            name={instructor.full_name ?? instructor.email ?? 'Instructor'}
+                            avatarUrl={instructor.avatar_url}
+                            className="size-8"
+                          />
+                          <span className="min-w-0">
+                            <span className="block truncate font-medium">
+                              {instructor.full_name ?? instructor.email ?? 'Unnamed admin'}
+                            </span>
+                            {instructor.email && (
+                              <span className="block truncate text-xs text-muted-foreground">{instructor.email}</span>
+                            )}
+                          </span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
             </Field>
-            <Field label="Instructor Avatar URL">
-              <input className="input" type="url" value={fields.instructor_avatar_url} onChange={(e) => setFields((f) => ({ ...f, instructor_avatar_url: e.target.value }))} placeholder="https://…" />
+            <Field label="Instructor Avatar">
+              <div className="flex items-center gap-2 rounded-md border px-3 py-2">
+                <AvatarPreview name={fields.instructor_name} avatarUrl={fields.instructor_avatar_url} className="size-8" />
+                <div className="min-w-0 text-xs">
+                  <p className="truncate font-medium">
+                    {(selectedInstructor?.email ?? fields.instructor_avatar_url) ? 'Synced from selected profile' : 'No avatar selected'}
+                  </p>
+                  <p className="truncate text-muted-foreground">{fields.instructor_avatar_url || 'Choose an admin with an avatar'}</p>
+                </div>
+              </div>
             </Field>
-            <Field label="Thumbnail URL" className="sm:col-span-2">
-              <input className="input" type="url" value={fields.thumbnail_url} onChange={(e) => setFields((f) => ({ ...f, thumbnail_url: e.target.value }))} placeholder="https://…" />
+            <Field label="Thumbnail" className="sm:col-span-2">
+              <div className="flex flex-col gap-3 rounded-lg border border-dashed p-3 sm:flex-row sm:items-center">
+                <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted sm:w-44">
+                  {fields.thumbnail_url ? (
+                    <Image src={fields.thumbnail_url} alt={fields.title} fill className="object-cover" unoptimized />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                      <ImagePlus className="h-6 w-6" />
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <input
+                    ref={thumbnailInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={uploadThumbnail}
+                  />
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+                    disabled={uploadingThumbnail}
+                    onClick={() => thumbnailInputRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4" />
+                    {uploadingThumbnail ? 'Uploading...' : 'Upload thumbnail'}
+                  </button>
+                  <p className="mt-2 truncate text-xs text-muted-foreground">
+                    {fields.thumbnail_url || 'JPG, PNG, or WebP. This replaces the old URL field.'}
+                  </p>
+                </div>
+              </div>
             </Field>
           </div>
           <Field label="Short Description">
@@ -189,7 +340,7 @@ export default function StandaloneCourseEditor({
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-semibold">Lessons ({lessons.length})</h2>
-          <button onClick={() => setAddingLesson(true)} className="text-sm px-3 py-1.5 rounded border hover:bg-muted">
+          <button type="button" onClick={() => setAddingLesson(true)} className="text-sm px-3 py-1.5 rounded border hover:bg-muted">
             + Add Lesson
           </button>
         </div>
@@ -234,11 +385,133 @@ export default function StandaloneCourseEditor({
           </div>
         )}
       </section>
+        </div>
+
+        <CoursePreview
+          fields={fields}
+          lessonsCount={lessons.filter((lesson) => lesson.is_published).length}
+        />
+      </div>
     </div>
   );
 }
 
-function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
+function AvatarPreview({
+  name,
+  avatarUrl,
+  className,
+}: {
+  name: string;
+  avatarUrl: string | null;
+  className?: string;
+}): React.ReactElement {
+  const initials = getInitials(name);
+
+  return (
+    <span className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-xs font-bold text-primary-foreground ${className ?? ''}`}>
+      {avatarUrl ? (
+        <Image src={avatarUrl} alt={name} fill className="object-cover" unoptimized />
+      ) : (
+        initials
+      )}
+    </span>
+  );
+}
+
+function CoursePreview({
+  fields,
+  lessonsCount,
+}: {
+  fields: CourseFields;
+  lessonsCount: number;
+}): React.ReactElement {
+  const price = Number(fields.price_ngn || 0);
+  const longDescriptionLines = fields.long_description
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 4);
+
+  return (
+    <aside className="xl:sticky xl:top-6 xl:self-start">
+      <div className="mb-3 flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold">Live Preview</h2>
+          <p className="text-xs text-muted-foreground">Public bootcamp card and detail snapshot</p>
+        </div>
+        <span className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase ${fields.status === 'published' ? 'bg-green-500/10 text-green-600' : 'bg-yellow-500/10 text-yellow-600'}`}>
+          {fields.status}
+        </span>
+      </div>
+
+      <div className="overflow-hidden rounded-lg border bg-[#18191a] text-white shadow-2xl shadow-black/20">
+        <div className="relative aspect-video bg-[#101112]">
+          {fields.thumbnail_url ? (
+            <Image src={fields.thumbnail_url} alt={fields.title} fill className="object-cover" unoptimized />
+          ) : (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[#08694a] text-white/45">
+              <ImagePlus className="h-8 w-8" />
+              <span className="text-xs">Upload thumbnail</span>
+            </div>
+          )}
+          <div className="absolute left-3 top-3 rounded bg-black/55 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/80">
+            Bootcamp
+          </div>
+        </div>
+
+        <div className="space-y-4 p-5">
+          <div>
+            <h3 className="line-clamp-2 text-lg font-semibold leading-tight">{fields.title || 'Untitled bootcamp'}</h3>
+            <p className="mt-2 line-clamp-3 text-sm leading-6 text-white/55">
+              {fields.description || 'Short description will appear here.'}
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between border-t border-white/10 pt-4">
+            <div className="flex min-w-0 items-center gap-2">
+              <AvatarPreview
+                name={fields.instructor_name || 'Instructor'}
+                avatarUrl={fields.instructor_avatar_url}
+                className="size-7 bg-[#a7d252] text-[#18191a]"
+              />
+              <span className="truncate text-xs text-white/55">{fields.instructor_name || 'Instructor'}</span>
+            </div>
+            <div className="text-right">
+              <p className="text-[11px] text-white/35">{lessonsCount} lessons</p>
+              <p className="text-sm font-bold text-[#a7d252]">₦{price.toLocaleString()}</p>
+            </div>
+          </div>
+
+          <div className="rounded-md border border-white/10 bg-white/[0.03] p-3">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-white/35">Detail page copy</p>
+            {longDescriptionLines.length > 0 ? (
+              <div className="space-y-1 text-xs leading-5 text-white/55">
+                {longDescriptionLines.map((line) => (
+                  <p key={line}>{line}</p>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-white/35">Full description preview appears here.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function getInitials(name: string): string {
+  const initials = name
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
+  return initials || 'AI';
+}
+
+function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }): React.ReactElement {
   return (
     <div className={`flex flex-col gap-1 ${className ?? ''}`}>
       <label className="text-xs text-muted-foreground">{label}</label>
@@ -259,12 +532,12 @@ function LessonRow({
   saving: boolean;
   onUpdate: (patch: Partial<Lesson>) => void;
   onDelete: () => void;
-}) {
+}): React.ReactElement {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(lesson.title);
   const [youtubeUrl, setYoutubeUrl] = useState(lesson.youtube_url);
 
-  function save() {
+  function save(): void {
     onUpdate({ title, youtube_url: youtubeUrl });
     setEditing(false);
   }
@@ -282,10 +555,10 @@ function LessonRow({
             </Field>
           </div>
           <div className="flex gap-2">
-            <button onClick={save} disabled={saving} className="px-3 py-1.5 text-xs font-semibold rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+            <button type="button" onClick={save} disabled={saving} className="px-3 py-1.5 text-xs font-semibold rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
               {saving ? 'Saving…' : 'Save'}
             </button>
-            <button onClick={() => setEditing(false)} className="px-3 py-1.5 text-xs rounded border hover:bg-muted">Cancel</button>
+            <button type="button" onClick={() => setEditing(false)} className="px-3 py-1.5 text-xs rounded border hover:bg-muted">Cancel</button>
           </div>
         </div>
       ) : (
@@ -299,14 +572,15 @@ function LessonRow({
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
+              type="button"
               onClick={() => onUpdate({ is_published: !lesson.is_published })}
               disabled={saving}
               className={`text-xs px-2 py-1 rounded border ${lesson.is_published ? 'border-green-500/40 text-green-600' : 'border-yellow-500/40 text-yellow-600'}`}
             >
               {lesson.is_published ? 'Published' : 'Draft'}
             </button>
-            <button onClick={() => setEditing(true)} className="text-xs text-muted-foreground hover:text-foreground">Edit</button>
-            <button onClick={onDelete} disabled={saving} className="text-xs text-red-500 hover:text-red-600">Delete</button>
+            <button type="button" onClick={() => setEditing(true)} className="text-xs text-muted-foreground hover:text-foreground">Edit</button>
+            <button type="button" onClick={onDelete} disabled={saving} className="text-xs text-red-500 hover:text-red-600">Delete</button>
           </div>
         </div>
       )}
