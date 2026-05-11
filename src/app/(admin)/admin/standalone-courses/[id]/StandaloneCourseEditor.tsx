@@ -25,8 +25,11 @@ interface Course {
   price_ngn: number;
   instructor_name: string;
   instructor_avatar_url: string | null;
+  sale_type?: SaleType | null;
   status: 'draft' | 'published';
 }
+
+type SaleType = 'pre_sale' | 'live_class' | 'recorded_course';
 
 type Instructor = {
   user_id: string;
@@ -45,8 +48,27 @@ type CourseFields = {
   price_ngn: string;
   instructor_name: string;
   instructor_avatar_url: string;
+  sale_type: SaleType;
   status: 'draft' | 'published';
 };
+
+const saleTypeOptions: { value: SaleType; label: string; description: string }[] = [
+  {
+    value: 'pre_sale',
+    label: 'Pre-sale',
+    description: 'Sell before the class is ready. Lessons are not needed yet.',
+  },
+  {
+    value: 'live_class',
+    label: 'Live class',
+    description: 'Students join live first. Recordings can be added later.',
+  },
+  {
+    value: 'recorded_course',
+    label: 'Recorded course',
+    description: 'Self-paced course. Upload lessons before publishing.',
+  },
+];
 
 export default function StandaloneCourseEditor({
   course,
@@ -71,6 +93,7 @@ export default function StandaloneCourseEditor({
     price_ngn: String(course.price_ngn),
     instructor_name: course.instructor_name,
     instructor_avatar_url: course.instructor_avatar_url ?? '',
+    sale_type: course.sale_type ?? 'recorded_course',
     status: course.status,
   });
 
@@ -79,11 +102,8 @@ export default function StandaloneCourseEditor({
   const [newLesson, setNewLesson] = useState({ title: '', youtube_url: '' });
   const [lessonSaving, setLessonSaving] = useState<string | null>(null);
 
-  const selectedInstructor = instructors.find(
-    (instructor) =>
-      instructor.full_name === fields.instructor_name
-      && (instructor.avatar_url ?? '') === fields.instructor_avatar_url,
-  );
+  const selectedSaleType = saleTypeOptions.find((option) => option.value === fields.sale_type) ?? saleTypeOptions[2];
+  const lessonsAreExpected = fields.sale_type === 'recorded_course';
 
   async function saveCourse(e: React.FormEvent): Promise<void> {
     e.preventDefault();
@@ -276,16 +296,17 @@ export default function StandaloneCourseEditor({
                 )}
               </div>
             </Field>
-            <Field label="Instructor Avatar">
-              <div className="flex items-center gap-2 rounded-md border px-3 py-2">
-                <AvatarPreview name={fields.instructor_name} avatarUrl={fields.instructor_avatar_url} className="size-8" />
-                <div className="min-w-0 text-xs">
-                  <p className="truncate font-medium">
-                    {(selectedInstructor?.email ?? fields.instructor_avatar_url) ? 'Synced from selected profile' : 'No avatar selected'}
-                  </p>
-                  <p className="truncate text-muted-foreground">{fields.instructor_avatar_url || 'Choose an admin with an avatar'}</p>
-                </div>
-              </div>
+            <Field label="Sale Type">
+              <select
+                className="input"
+                value={fields.sale_type}
+                onChange={(e) => setFields((f) => ({ ...f, sale_type: e.target.value as SaleType }))}
+              >
+                {saleTypeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+              <p className="text-[11px] leading-4 text-muted-foreground">{selectedSaleType.description}</p>
             </Field>
             <Field label="Thumbnail" className="sm:col-span-2">
               <div className="flex flex-col gap-3 rounded-lg border border-dashed p-3 sm:flex-row sm:items-center">
@@ -340,13 +361,28 @@ export default function StandaloneCourseEditor({
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-semibold">Lessons ({lessons.length})</h2>
-          <button type="button" onClick={() => setAddingLesson(true)} className="text-sm px-3 py-1.5 rounded border hover:bg-muted">
-            + Add Lesson
-          </button>
+          {lessonsAreExpected && (
+            <button type="button" onClick={() => setAddingLesson(true)} className="text-sm px-3 py-1.5 rounded border hover:bg-muted">
+              + Add Lesson
+            </button>
+          )}
         </div>
 
+        {!lessonsAreExpected && (
+          <div className="mb-4 rounded-lg border bg-muted/20 p-4">
+            <p className="text-sm font-medium">
+              {fields.sale_type === 'pre_sale' ? 'Pre-sale bootcamp' : 'Live class bootcamp'}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {fields.sale_type === 'pre_sale'
+                ? 'You can publish and collect interest before uploading lessons.'
+                : 'Recordings will be available later, so lesson uploads can wait until after the live sessions.'}
+            </p>
+          </div>
+        )}
+
         {/* Add lesson form */}
-        {addingLesson && (
+        {addingLesson && lessonsAreExpected && (
           <form onSubmit={addLesson} className="mb-4 p-4 rounded-lg border bg-muted/20 flex flex-col gap-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Lesson Title">
@@ -390,6 +426,7 @@ export default function StandaloneCourseEditor({
         <CoursePreview
           fields={fields}
           lessonsCount={lessons.filter((lesson) => lesson.is_published).length}
+          saleTypeLabel={selectedSaleType.label}
         />
       </div>
     </div>
@@ -421,9 +458,11 @@ function AvatarPreview({
 function CoursePreview({
   fields,
   lessonsCount,
+  saleTypeLabel,
 }: {
   fields: CourseFields;
   lessonsCount: number;
+  saleTypeLabel: string;
 }): React.ReactElement {
   const price = Number(fields.price_ngn || 0);
   const longDescriptionLines = fields.long_description
@@ -455,7 +494,7 @@ function CoursePreview({
             </div>
           )}
           <div className="absolute left-3 top-3 rounded bg-black/55 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/80">
-            Bootcamp
+            {saleTypeLabel}
           </div>
         </div>
 
@@ -477,7 +516,9 @@ function CoursePreview({
               <span className="truncate text-xs text-white/55">{fields.instructor_name || 'Instructor'}</span>
             </div>
             <div className="text-right">
-              <p className="text-[11px] text-white/35">{lessonsCount} lessons</p>
+              <p className="text-[11px] text-white/35">
+                {fields.sale_type === 'recorded_course' ? `${lessonsCount} lessons` : 'Recordings later'}
+              </p>
               <p className="text-sm font-bold text-[#a7d252]">₦{price.toLocaleString()}</p>
             </div>
           </div>

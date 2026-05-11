@@ -4,6 +4,8 @@ import { requireAuth, requireRole } from '@/lib/auth';
 import { writeAuditLog } from '@/lib/admin/audit';
 
 type Params = { params: Promise<{ id: string }> };
+type SaleType = 'pre_sale' | 'live_class' | 'recorded_course';
+const saleTypes = new Set<SaleType>(['pre_sale', 'live_class', 'recorded_course']);
 
 export async function PUT(request: NextRequest, { params }: Params) {
   const { user } = await requireAuth();
@@ -11,13 +13,14 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
   const { id } = await params;
   const body = await request.json();
+  const saleType = saleTypes.has(body.sale_type) ? body.sale_type as SaleType : 'recorded_course';
 
   const adminSupabase = createAdminClient();
 
   // Fetch old value for audit diff
   const { data: existing } = await adminSupabase
     .from('standalone_courses')
-    .select('title, slug, price_ngn, status')
+    .select('title, slug, price_ngn, sale_type, status')
     .eq('id', id)
     .single();
 
@@ -32,6 +35,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
       price_ngn: Number(body.price_ngn),
       instructor_name: body.instructor_name,
       instructor_avatar_url: body.instructor_avatar_url || null,
+      sale_type: saleType,
       status: body.status,
     })
     .eq('id', id);
@@ -46,7 +50,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     entityType: 'standalone_course',
     entityId: id,
     oldValue: existing,
-    newValue: { title: body.title, slug: body.slug, price_ngn: body.price_ngn, status: body.status },
+    newValue: { title: body.title, slug: body.slug, price_ngn: body.price_ngn, sale_type: saleType, status: body.status },
     req: request,
   });
 
