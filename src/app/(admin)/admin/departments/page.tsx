@@ -39,7 +39,7 @@ export default async function AdminDepartmentsPage() {
       </div>
 
       {/* Department cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {AORTHAR_DEPARTMENTS.map((dept) => {
           const count = counts[dept] ?? 0;
           const pct = total > 0 ? (count / total) * 100 : 0;

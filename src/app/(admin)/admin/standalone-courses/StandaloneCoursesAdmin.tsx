@@ -51,15 +51,15 @@ export default function StandaloneCoursesAdmin({ courses }: { courses: Course[] 
   }
 
   return (
-    <div className="max-w-5xl">
-      <div className="flex items-center justify-between mb-8">
+    <div className="w-full max-w-5xl">
+      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Bootcamps</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage bootcamps for bootcamp.aorthar.com</p>
         </div>
         <button
           onClick={() => setCreating(true)}
-          className="px-4 py-2 text-sm font-semibold rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
+          className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 sm:w-auto"
         >
           + New Course
         </button>
@@ -109,18 +109,18 @@ export default function StandaloneCoursesAdmin({ courses }: { courses: Course[] 
               />
             </div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 text-sm font-semibold rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Creating…' : 'Create'}
             </button>
             <button
               type="button"
               onClick={() => setCreating(false)}
-              className="px-4 py-2 text-sm rounded-md border hover:bg-muted"
+              className="rounded-md border px-4 py-2 text-sm hover:bg-muted"
             >
               Cancel
             </button>
@@ -132,48 +132,50 @@ export default function StandaloneCoursesAdmin({ courses }: { courses: Course[] 
       {courses.length === 0 ? (
         <p className="text-muted-foreground text-sm py-10 text-center">No courses yet. Create one above.</p>
       ) : (
-        <div className="rounded-lg border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Title</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Slug</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Price</th>
-                <th className="text-center px-4 py-3 font-medium text-muted-foreground">Status</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Sales</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {courses.map((course) => (
-                <tr key={course.id} className="hover:bg-muted/30 transition-colors">
-                  <td className="px-4 py-3 font-medium">{course.title}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{course.slug}</td>
-                  <td className="px-4 py-3 text-right">₦{course.price_ngn.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-center">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                        course.status === 'published'
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                          : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                      }`}
-                    >
-                      {course.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right text-muted-foreground">{course.purchaseCount}</td>
-                  <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/admin/standalone-courses/${course.id}`}
-                      className="text-xs font-medium text-primary hover:underline"
-                    >
-                      Edit →
-                    </Link>
-                  </td>
+        <div className="overflow-hidden rounded-lg border">
+          <div className="overflow-x-auto">
+            <table className="min-w-[720px] w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Title</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Slug</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Price</th>
+                  <th className="text-center px-4 py-3 font-medium text-muted-foreground">Status</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Sales</th>
+                  <th className="px-4 py-3" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y">
+                {courses.map((course) => (
+                  <tr key={course.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-3 font-medium">{course.title}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{course.slug}</td>
+                    <td className="px-4 py-3 text-right">₦{course.price_ngn.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                          course.status === 'published'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                        }`}
+                      >
+                        {course.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right text-muted-foreground">{course.purchaseCount}</td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        href={`/admin/standalone-courses/${course.id}`}
+                        className="text-xs font-medium text-primary hover:underline"
+                      >
+                        Edit →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

@@ -44,7 +44,7 @@ export default function PricingConfigClient({ initialPlans }: { initialPlans: Ad
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                 <div className="rounded-md border p-3">
                   <p className="text-xs text-muted-foreground">Price</p>
                   <p className="font-semibold">{plan.currency} {plan.price.toLocaleString()}</p>

@@ -493,7 +493,7 @@ export default function AdminCourseDetailPage() {
                     onChange={(e) => setNewQ((p) => ({ ...p, question_text: e.target.value }))}
                     rows={2}
                   />
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     {newQ.options.map((opt, i) => (
                       <div key={opt.id} className="flex items-center gap-2">
                         <button
@@ -546,7 +546,7 @@ export default function AdminCourseDetailPage() {
                           value={questionDraft.question_text ?? ''}
                           onChange={(e) => setQuestionDraft((p) => ({ ...p, question_text: e.target.value }))}
                         />
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                           {(questionDraft.options ?? []).map((opt, idx) => (
                             <div key={opt.id} className="flex items-center gap-2">
                               <button
@@ -598,7 +598,7 @@ export default function AdminCourseDetailPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 space-y-1">
                           <p className="text-sm font-medium">{i + 1}. {q.question_text}</p>
-                          <div className="grid grid-cols-2 gap-1">
+                          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
                             {q.options.map((o) => (
                               <p key={o.id} className={`text-xs px-2 py-0.5 rounded ${o.is_correct ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 font-medium' : 'text-muted-foreground'}`}>
                                 {o.id.toUpperCase()}. {o.text}
@@ -632,7 +632,7 @@ export default function AdminCourseDetailPage() {
           <Card>
             <CardHeader><CardTitle className="text-sm">Course Settings</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Course Code</Label>
                   <Input
@@ -658,7 +658,7 @@ export default function AdminCourseDetailPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Credit Units</Label>
                   <Input
@@ -687,7 +687,7 @@ export default function AdminCourseDetailPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Quiz Weight (0–1)</Label>
                   <Input
@@ -712,7 +712,7 @@ export default function AdminCourseDetailPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Quiz Attempt Limit</Label>
                   <Input
@@ -743,7 +743,7 @@ export default function AdminCourseDetailPage() {
                 <Label className="text-xs">Exam Duration (minutes)</Label>
                 <Input
                   type="number"
-                  className="w-40"
+                  className="w-full sm:w-40"
                   value={settingsDraft.exam_duration_minutes ?? 60}
                   onChange={(e) => setSettingsDraft((p) => ({ ...p, exam_duration_minutes: Number(e.target.value) }))}
                 />

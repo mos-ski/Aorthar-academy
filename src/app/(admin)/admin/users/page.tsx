@@ -149,7 +149,7 @@ export default async function AdminUsersPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-semibold">{title}</h2>
           <p className="text-sm text-muted-foreground">{subtitle}</p>
@@ -158,7 +158,7 @@ export default async function AdminUsersPage({
       </div>
 
       {!isBootcamp && !isUniversity && (
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Admins</CardTitle>
@@ -187,7 +187,7 @@ export default async function AdminUsersPage({
       )}
 
       {isBootcamp && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Students</CardTitle>
@@ -225,7 +225,7 @@ export default async function AdminUsersPage({
       )}
 
       {isUniversity && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Active Subscribers</CardTitle>

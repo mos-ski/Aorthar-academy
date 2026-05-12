@@ -129,6 +129,8 @@
 @layer base {
   html {
     font-size: 90%;
+    max-width: 100%;
+    overflow-x: hidden;
   }
   * {
     @apply border-border outline-ring/50;
@@ -140,6 +142,14 @@
       radial-gradient(900px 420px at -10% -120px, rgba(8, 105, 74, 0.12), transparent 70%),
       linear-gradient(180deg, #f7f9f4 0%, #ffffff 40%);
     min-height: 100vh;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  img,
+  video,
+  canvas {
+    max-width: 100%;
   }
 
   .dark body {

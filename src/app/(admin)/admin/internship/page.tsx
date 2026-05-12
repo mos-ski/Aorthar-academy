@@ -244,7 +244,7 @@ export default function AdminInternshipPage() {
       </Card>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { label: 'Form Submitted', value: totalSubmitted, Icon: Users, color: 'text-blue-500' },
           { label: 'Exam Completed', value: totalExamDone, Icon: ClipboardList, color: 'text-yellow-500' },

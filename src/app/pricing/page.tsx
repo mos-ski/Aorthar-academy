@@ -92,7 +92,7 @@ export default async function PricingPage() {
     : ((transactions ?? []) as Transaction[]);
 
   return (
-    <div className="min-h-screen bg-background py-16 px-[15%]">
+    <div className="min-h-screen bg-background px-4 py-10 sm:px-6 sm:py-14 lg:px-[15%] lg:py-16">
       <div className="space-y-12">
 
         {/* Header */}
@@ -100,14 +100,14 @@ export default async function PricingPage() {
           {isLoggedIn && (
             <Link
               href="/dashboard"
-              className="absolute left-0 top-1 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground sm:absolute sm:left-0 sm:top-1 sm:mb-0"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Dashboard
             </Link>
           )}
           <Badge variant="outline">Pricing</Badge>
-          <h1 className="text-4xl font-bold">Unlock your full potential</h1>
+          <h1 className="text-3xl font-bold sm:text-4xl">Unlock your full potential</h1>
           <p className="text-muted-foreground max-w-xl mx-auto">
             Free for Year 100. One payment to unlock Years 200–400.
           </p>
@@ -135,8 +135,9 @@ export default async function PricingPage() {
             </div>
 
             {resolvedTransactions.length > 0 ? (
-              <div className="rounded-lg border overflow-hidden">
-                <table className="w-full text-sm">
+              <div className="overflow-hidden rounded-lg border">
+                <div className="overflow-x-auto">
+                <table className="min-w-[620px] w-full text-sm">
                   <thead className="bg-muted/50">
                     <tr>
                       <th className="text-left px-4 py-3 font-medium text-muted-foreground">Date</th>
@@ -175,6 +176,7 @@ export default async function PricingPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground py-4">No payment history yet.</p>

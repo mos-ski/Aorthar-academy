@@ -188,7 +188,7 @@ export default function QuizRunner({ attemptId, courseId, mode = 'classroom' }: 
     const passed = result.passed;
     return (
       <div className="min-h-screen bg-[#060708] px-4 py-8 text-white">
-        <div className="mx-auto w-full max-w-[55vw] min-w-[320px] rounded-2xl border border-white/10 bg-[#0f1114] p-8 shadow-[0_18px_60px_rgba(0,0,0,0.45)]">
+        <div className="mx-auto w-full max-w-3xl rounded-2xl border border-white/10 bg-[#0f1114] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.45)] sm:p-8">
           <div className="text-center">
             <div className={cn('mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full', passed ? 'bg-[#A7D252]/20' : 'bg-[#ef3163]/20')}>
               <CheckCircle2 className={cn('h-8 w-8 animate-pulse', passed ? 'text-[#A7D252]' : 'text-[#ef3163]')} />
@@ -204,7 +204,7 @@ export default function QuizRunner({ attemptId, courseId, mode = 'classroom' }: 
             <Badge variant="outline">{questions.length} Questions</Badge>
           </div>
 
-          <div className="mt-6 flex items-center justify-center gap-3">
+          <div className="mt-6 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
             <Button variant="outline" className="border-white/20 bg-white/5 text-white" onClick={() => router.push(`/classroom/${courseId}`)}>
               Back to Class
             </Button>
@@ -254,7 +254,7 @@ export default function QuizRunner({ attemptId, courseId, mode = 'classroom' }: 
 
   return (
     <div className={cn('min-h-screen bg-[#060708] px-4 py-8 text-white', mode === 'dashboard' && 'pt-4')}>
-      <div className="mx-auto w-full max-w-[55vw] min-w-[320px] rounded-2xl border border-white/10 bg-[#0f1114] p-8 shadow-[0_18px_60px_rgba(0,0,0,0.45)]">
+      <div className="mx-auto w-full max-w-3xl rounded-2xl border border-white/10 bg-[#0f1114] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.45)] sm:p-8">
         <div className="mb-6 flex items-center justify-between">
           <button
             type="button"

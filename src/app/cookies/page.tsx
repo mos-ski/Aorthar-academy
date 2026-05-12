@@ -78,7 +78,7 @@ export default function CookiesPage() {
           <S n={3} title="Cookies We Use">
             <p>The table below lists the main cookies set on the Aorthar platform:</p>
             <div className="overflow-x-auto mt-2">
-              <table className="w-full text-[13px] border-collapse">
+              <table className="min-w-[620px] w-full border-collapse text-[13px]">
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
                     <th className="text-left py-2.5 pr-4 font-semibold text-white whitespace-nowrap">Cookie name</th>

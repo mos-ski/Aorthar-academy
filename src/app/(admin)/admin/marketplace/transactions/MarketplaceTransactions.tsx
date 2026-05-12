@@ -33,7 +33,7 @@ export default function MarketplaceTransactions({
     : transactions.filter((t) => t.payment_status === statusFilter);
 
   return (
-    <div className="max-w-6xl">
+    <div className="w-full max-w-6xl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold">Marketplace Transactions</h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -58,7 +58,7 @@ export default function MarketplaceTransactions({
       </div>
 
       {/* Filter */}
-      <div className="flex items-center gap-2 mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <p className="text-sm text-muted-foreground">Status:</p>
         {['all', 'paid', 'pending', 'failed'].map((status) => (
           <button
@@ -78,8 +78,9 @@ export default function MarketplaceTransactions({
       {filtered.length === 0 ? (
         <p className="text-muted-foreground text-sm py-10 text-center">No transactions found.</p>
       ) : (
-        <div className="rounded-lg border overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="overflow-hidden rounded-lg border">
+          <div className="overflow-x-auto">
+          <table className="min-w-[760px] w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Product</th>
@@ -129,6 +130,7 @@ export default function MarketplaceTransactions({
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

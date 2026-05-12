@@ -160,50 +160,52 @@ export default function MarketplaceAdmin({ products }: { products: Product[] }) 
       {products.length === 0 ? (
         <p className="text-muted-foreground text-sm py-10 text-center">No products yet. Create one above.</p>
       ) : (
-        <div className="rounded-lg border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Name</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Category</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Price</th>
-                <th className="text-center px-4 py-3 font-medium text-muted-foreground">Status</th>
-                <th className="text-right px-4 py-3 font-medium text-muted-foreground">Sales</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {products.map((product) => (
-                <tr key={product.id} className="hover:bg-muted/30 transition-colors">
-                  <td className="px-4 py-3 font-medium">{product.name}</td>
-                  <td className="px-4 py-3 text-muted-foreground capitalize">{product.category}</td>
-                  <td className="px-4 py-3 text-right">₦{product.price_ngn.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-center">
-                    <button
-                      onClick={() => handleToggleActive(product)}
-                      disabled={togglingId === product.id}
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-                        product.is_active
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200'
-                          : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 hover:bg-yellow-200'
-                      } disabled:opacity-50`}
-                    >
-                      {product.is_active ? 'Active' : 'Draft'}
-                    </button>
-                  </td>
-                  <td className="px-4 py-3 text-right text-muted-foreground">{product.purchaseCount}</td>
-                  <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/admin/marketplace/${product.id}`}
-                      className="text-xs font-medium text-primary hover:underline"
-                    >
-                      Edit →
-                    </Link>
-                  </td>
+        <div className="overflow-hidden rounded-lg border">
+          <div className="overflow-x-auto">
+            <table className="min-w-[720px] w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Name</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Category</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Price</th>
+                  <th className="text-center px-4 py-3 font-medium text-muted-foreground">Status</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Sales</th>
+                  <th className="px-4 py-3" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y">
+                {products.map((product) => (
+                  <tr key={product.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-3 font-medium">{product.name}</td>
+                    <td className="px-4 py-3 text-muted-foreground capitalize">{product.category}</td>
+                    <td className="px-4 py-3 text-right">₦{product.price_ngn.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => handleToggleActive(product)}
+                        disabled={togglingId === product.id}
+                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+                          product.is_active
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200'
+                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 hover:bg-yellow-200'
+                        } disabled:opacity-50`}
+                      >
+                        {product.is_active ? 'Active' : 'Draft'}
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 text-right text-muted-foreground">{product.purchaseCount}</td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        href={`/admin/marketplace/${product.id}`}
+                        className="text-xs font-medium text-primary hover:underline"
+                      >
+                        Edit →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

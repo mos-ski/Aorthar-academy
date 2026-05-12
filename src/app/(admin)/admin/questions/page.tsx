@@ -73,7 +73,7 @@ export default async function AdminExamSystemPage() {
         <p className="text-sm text-muted-foreground">Semester exam attempts and results</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Attempts</CardTitle>

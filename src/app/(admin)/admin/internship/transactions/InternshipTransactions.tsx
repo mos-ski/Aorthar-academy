@@ -64,7 +64,7 @@ export default function InternshipTransactions({
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { label: 'Total Paid', value: totalPaid, Icon: CreditCard, color: 'text-blue-500' },
           { label: 'Total Revenue', value: formatNgn(totalRevenue), Icon: CreditCard, color: 'text-green-500' },

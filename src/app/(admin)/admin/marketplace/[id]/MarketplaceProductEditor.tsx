@@ -251,15 +251,16 @@ export default function MarketplaceProductEditor({
       </form>
 
       {/* Recent purchases */}
-      <div className="mt-10 p-6 rounded-lg border bg-card">
+        <div className="mt-10 rounded-lg border bg-card p-4 sm:p-6">
         <h2 className="font-semibold text-base mb-4">
           Purchases <span className="text-muted-foreground font-normal">({purchaseCount} total)</span>
         </h2>
         {recentPurchases.length === 0 ? (
           <p className="text-sm text-muted-foreground">No purchases yet.</p>
         ) : (
-          <div className="rounded-lg border overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="overflow-hidden rounded-lg border">
+            <div className="overflow-x-auto">
+            <table className="min-w-[640px] w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">Email</th>
@@ -283,6 +284,7 @@ export default function MarketplaceProductEditor({
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>
