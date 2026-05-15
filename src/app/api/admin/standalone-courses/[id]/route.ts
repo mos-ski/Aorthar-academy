@@ -112,6 +112,38 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     .eq('id', id)
     .single();
 
+  if (!existing) {
+    return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+  }
+
+  const { count } = await adminSupabase
+    .from('standalone_purchases')
+    .select('id', { count: 'exact', head: true })
+    .eq('course_id', id);
+
+  if ((count ?? 0) > 0) {
+    const { error } = await adminSupabase
+      .from('standalone_courses')
+      .update({ status: 'unpublished' })
+      .eq('id', id);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    await writeAuditLog({
+      action: 'standalone_course.soft_delete',
+      performedBy: user.id,
+      entityType: 'standalone_course',
+      entityId: id,
+      oldValue: existing,
+      newValue: { status: 'unpublished' },
+      req: request,
+    });
+
+    return NextResponse.json({ ok: true, soft_deleted: true });
+  }
+
   const { error } = await adminSupabase.from('standalone_courses').delete().eq('id', id);
 
   if (error) {
@@ -127,5 +159,5 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     req: request,
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, soft_deleted: false });
 }

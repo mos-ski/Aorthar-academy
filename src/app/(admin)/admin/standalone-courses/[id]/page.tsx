@@ -27,7 +27,7 @@ export default async function StandaloneCourseEditPage({ params }: Props) {
 
   if (!course) notFound();
 
-  const [{ data: lessons }, instructorsResponse] = await Promise.all([
+  const [{ data: lessons }, instructorsResponse, purchaseCountResult] = await Promise.all([
     supabase
       .from('standalone_lessons')
       .select('*')
@@ -38,7 +38,13 @@ export default async function StandaloneCourseEditPage({ params }: Props) {
       .select('id, full_name, email, avatar_url')
       .eq('is_active', true)
       .order('full_name', { ascending: true }),
+    supabase
+      .from('standalone_purchases')
+      .select('id', { count: 'exact', head: true })
+      .eq('course_id', id),
   ]);
+
+  const purchaseCount = purchaseCountResult.count ?? 0;
 
   let instructors = instructorsResponse.data as Instructor[] | null;
   if (instructorsResponse.error) {
@@ -61,6 +67,7 @@ export default async function StandaloneCourseEditPage({ params }: Props) {
       course={course}
       instructors={instructors ?? []}
       lessons={lessons ?? []}
+      purchaseCount={purchaseCount}
     />
   );
 }

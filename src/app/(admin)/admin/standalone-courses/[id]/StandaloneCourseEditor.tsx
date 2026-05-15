@@ -73,10 +73,12 @@ export default function StandaloneCourseEditor({
   course,
   instructors,
   lessons: initialLessons,
+  purchaseCount,
 }: {
   course: Course;
   instructors: Instructor[];
   lessons: Lesson[];
+  purchaseCount: number;
 }) {
   const router = useRouter();
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
@@ -100,6 +102,7 @@ export default function StandaloneCourseEditor({
   const [addingLesson, setAddingLesson] = useState(false);
   const [newLesson, setNewLesson] = useState({ title: '', youtube_url: '' });
   const [lessonSaving, setLessonSaving] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const selectedSaleType = saleTypeOptions.find((option) => option.value === fields.sale_type) ?? saleTypeOptions[2];
   const lessonsAreExpected = fields.sale_type === 'recorded_course';
@@ -220,6 +223,30 @@ export default function StandaloneCourseEditor({
       toast.success('Lesson deleted');
     } finally {
       setLessonSaving(null);
+    }
+  }
+
+  async function deleteCourse(): Promise<void> {
+    const action = purchaseCount > 0 ? 'unpublish' : 'permanently delete';
+    if (!confirm(`Are you sure you want to ${action} "${course.title}"?${purchaseCount > 0 ? ' This bootcamp has purchases, so it will be unpublished instead of deleted.' : ' This action cannot be undone.'}`)) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/standalone-courses/${course.id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const d = await res.json();
+        toast.error(d.error ?? 'Failed to delete bootcamp');
+        return;
+      }
+      const data = await res.json() as { soft_deleted?: boolean };
+      if (data.soft_deleted) {
+        toast.success('Bootcamp unpublished (has existing purchases)');
+        router.refresh();
+      } else {
+        toast.success('Bootcamp deleted');
+        router.push('/admin/standalone-courses');
+      }
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -424,6 +451,24 @@ export default function StandaloneCourseEditor({
             ))}
           </div>
         )}
+      </section>
+
+      {/* Danger Zone */}
+      <section className="mt-10 rounded-lg border border-destructive/30 bg-card p-6">
+        <h2 className="font-semibold text-base text-destructive mb-2">Danger Zone</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          {purchaseCount > 0
+            ? `This bootcamp has ${purchaseCount} purchase${purchaseCount !== 1 ? 's' : ''}. Deleting will unpublish it instead of permanently removing it, so existing students keep access.`
+            : 'No purchases exist. This bootcamp can be permanently deleted.'}
+        </p>
+        <button
+          type="button"
+          onClick={deleteCourse}
+          disabled={deleting}
+          className="px-4 py-2 text-sm font-semibold rounded-md border border-destructive/50 text-destructive hover:bg-destructive/10 disabled:opacity-50"
+        >
+          {deleting ? 'Processing…' : purchaseCount > 0 ? 'Unpublish Bootcamp' : 'Delete Bootcamp'}
+        </button>
       </section>
         </div>
 
