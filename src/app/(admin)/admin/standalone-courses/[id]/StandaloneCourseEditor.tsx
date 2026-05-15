@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import RichTextEditor from '@/components/ui/RichTextEditor';
 
 interface Lesson {
   id: string;
@@ -426,7 +427,12 @@ export default function StandaloneCourseEditor({
               </Field>
             </div>
             <Field label="Notes / Summary">
-              <textarea className="input min-h-[80px] resize-y" value={newLesson.content} onChange={(e) => setNewLesson((n) => ({ ...n, content: e.target.value }))} placeholder="Lesson notes, summary, or key takeaways..." />
+              <RichTextEditor
+                content={newLesson.content}
+                onChange={(html) => setNewLesson((n) => ({ ...n, content: html }))}
+                placeholder="Lesson notes, summary, or key takeaways..."
+                minHeight="80px"
+              />
             </Field>
             <div className="flex gap-2">
               <button type="submit" disabled={lessonSaving === 'new'} className="px-4 py-1.5 text-sm font-semibold rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
@@ -651,7 +657,12 @@ function LessonRow({
             </Field>
           </div>
           <Field label="Notes / Summary">
-            <textarea className="input min-h-[80px] resize-y" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Lesson notes, summary, or key takeaways..." />
+            <RichTextEditor
+              content={content}
+              onChange={setContent}
+              placeholder="Lesson notes, summary, or key takeaways..."
+              minHeight="100px"
+            />
           </Field>
           <div className="flex gap-2">
             <button type="button" onClick={save} disabled={saving} className="px-3 py-1.5 text-xs font-semibold rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
@@ -669,7 +680,7 @@ function LessonRow({
               <p className="text-xs text-muted-foreground truncate font-mono">{lesson.youtube_url}</p>
             )}
             {lesson.content && (
-              <p className="text-xs text-muted-foreground truncate mt-0.5">{lesson.content.slice(0, 100)}{lesson.content.length > 100 ? '…' : ''}</p>
+              <p className="text-xs text-muted-foreground truncate mt-0.5">{lesson.content.replace(/<[^>]*>/g, '').slice(0, 100)}{lesson.content.replace(/<[^>]*>/g, '').length > 100 ? '…' : ''}</p>
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
