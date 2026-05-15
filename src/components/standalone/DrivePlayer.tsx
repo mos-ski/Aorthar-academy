@@ -44,11 +44,11 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileId]);
 
-  const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+  const embedUrl = `https://drive.google.com/file/d/${fileId}/preview?rm=minimal`;
 
   return (
     <div className={`relative w-full aspect-video bg-black overflow-hidden ${className ?? ''}`}>
-      {/* Shift iframe up to hide Drive top bar, compensate height */}
+      {/* Shift iframe up to hide any remaining Drive chrome */}
       <iframe
         src={embedUrl}
         allow="autoplay"
@@ -57,10 +57,10 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
         style={{
           border: 'none',
           position: 'absolute',
-          top: '-45px',
+          top: 0,
           left: 0,
           width: '100%',
-          height: 'calc(100% + 45px)',
+          height: '100%',
         }}
       />
 
