@@ -22,7 +22,7 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
   const [previewExpired, setPreviewExpired] = useState(false);
   const [showEndOverlay, setShowEndOverlay] = useState(false);
 
-  const directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+  const directUrl = `/api/standalone/stream?id=${fileId}`;
 
   useEffect(() => {
     if (!videoRef.current) return;
