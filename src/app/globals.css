@@ -166,22 +166,6 @@
 }
 
 @layer components {
-  /* Plyr player — brand green theme */
-  .plyr {
-    --plyr-color-main: #a7d252;
-    --plyr-video-background: #000;
-    --plyr-menu-background: #18191a;
-    --plyr-menu-color: #f5f8ef;
-    --plyr-menu-border-color: rgba(255,255,255,0.08);
-    --plyr-badge-background: #a7d252;
-    --plyr-badge-text-color: #1c1c1c;
-    --plyr-control-radius: 4px;
-    --plyr-range-thumb-height: 10px;
-    --plyr-range-track-height: 4px;
-    --plyr-font-size-base: 13px;
-    --plyr-font-family: inherit;
-  }
-
   /* Reusable form input style used in admin editors */
   .input {
     @apply w-full rounded border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;

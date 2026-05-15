@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Plyr from 'plyr';
-import 'plyr/dist/plyr.css';
 
 type NextLesson = { title: string; href: string };
 
@@ -16,64 +14,59 @@ interface Props {
 }
 
 export default function DrivePlayer({ fileId, onEnded, nextLesson, className, previewSeconds, onPreviewExpired }: Props) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const playerRef = useRef<Plyr | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>( null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const elapsedRef = useRef(0);
   const [previewExpired, setPreviewExpired] = useState(false);
   const [showEndOverlay, setShowEndOverlay] = useState(false);
 
-  const directUrl = `/api/standalone/stream?id=${fileId}`;
-
   useEffect(() => {
-    if (!videoRef.current) return;
+    elapsedRef.current = 0;
+    setPreviewExpired(false);
+    setShowEndOverlay(false);
 
-    const player = new Plyr(videoRef.current, {
-      controls: [
-        'play-large', 'play', 'progress', 'current-time', 'duration',
-        'mute', 'volume', 'settings', 'fullscreen',
-      ],
-      settings: ['quality', 'speed'],
-      ratio: '16:9',
-    });
+    if (!previewSeconds) return;
 
-    playerRef.current = player;
-
-    player.on('ended', () => {
-      setShowEndOverlay(true);
-      onEnded?.();
-    });
-
-    if (previewSeconds) {
-      pollRef.current = setInterval(() => {
-        try {
-          const t = player.currentTime ?? 0;
-          if (t >= previewSeconds) {
-            player.pause();
-            setPreviewExpired(true);
-            onPreviewExpired?.();
-            if (pollRef.current) clearInterval(pollRef.current);
-          }
-        } catch { /* ignore */ }
-      }, 500);
-    }
+    pollRef.current = setInterval(() => {
+      elapsedRef.current += 1;
+      if (elapsedRef.current >= previewSeconds) {
+        clearInterval(pollRef.current!);
+        setPreviewExpired(true);
+        onPreviewExpired?.();
+      }
+    }, 1000);
 
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
-      player.destroy();
-      playerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileId]);
 
+  const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+
   return (
     <div className={`relative bg-black overflow-hidden ${className ?? ''}`}>
-      <div className="relative w-full aspect-video">
-        <video ref={videoRef} playsInline>
-          <source src={directUrl} type="video/mp4" />
-        </video>
+      <div className="relative w-full aspect-video overflow-hidden">
+        {/* Bar at top masks Drive toolbar */}
+        <div className="absolute top-0 left-0 right-0 z-10" style={{ height: '40px', backgroundColor: '#000' }} />
+        {/* Bar at bottom masks Drive bottom controls */}
+        <div className="absolute bottom-0 left-0 right-0 z-10" style={{ height: '36px', backgroundColor: '#000' }} />
+        <iframe
+          src={embedUrl}
+          allow="autoplay"
+          allowFullScreen
+          title="Course lesson"
+          style={{
+            border: 'none',
+            position: 'absolute',
+            top: '-40px',
+            left: 0,
+            width: '100%',
+            height: 'calc(100% + 76px)',
+          }}
+        />
       </div>
 
-      {/* Preview expired — paywall overlay */}
+      {/* Preview expired — fullscreen paywall overlay */}
       {previewExpired && (
         <div
           className="absolute inset-0 z-20 flex items-center justify-center"
@@ -95,7 +88,7 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
         </div>
       )}
 
-      {/* Custom end overlay */}
+      {/* Custom end overlay (shown after video finishes naturally) */}
       {showEndOverlay && !previewExpired && (
         <div
           className="absolute inset-0 flex flex-col items-center justify-center gap-6 z-20"

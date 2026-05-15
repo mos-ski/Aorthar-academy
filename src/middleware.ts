@@ -31,7 +31,6 @@ const PUBLIC_ROUTES = [
   '/api/auth/send-welcome',
   '/api/auth/callback',
   '/api/standalone/coupon',
-  '/api/standalone/stream',
   // courses-app / bootcamp public routes
   '/courses-app',
   // internship public API routes (no Supabase auth — external applicants)
