@@ -41,12 +41,11 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileId]);
 
-  const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+  const embedUrl = `https://drive.google.com/file/d/${fileId}/preview?usp=sharing`;
 
   return (
     <div className={`relative bg-black overflow-hidden ${className ?? ''}`}>
-      {/* Container: video at 16:9 + ~36px for bottom controls */}
-      <div className="relative w-full" style={{ paddingBottom: 'calc(56.25% + 36px)' }}>
+      <div className="relative w-full aspect-video overflow-hidden">
         {/* Top mask hides Drive toolbar (logo + link) */}
         <div className="absolute top-0 left-0 right-0 z-10" style={{ height: '40px', backgroundColor: '#0f1011' }} />
         <iframe

@@ -84,6 +84,9 @@ export default function LessonClassroom({ course, lessons, currentLessonId, user
 
   function handleVideoEnded() {
     if (currentLesson) markComplete(currentLesson.id);
+    if (nextLesson) {
+      setTimeout(() => navigateToLesson(nextLesson.id), 1500);
+    }
   }
 
   function navigateToLesson(lessonId: string) {
