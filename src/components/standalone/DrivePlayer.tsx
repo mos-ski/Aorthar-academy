@@ -45,11 +45,10 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
 
   return (
     <div className={`relative bg-black overflow-hidden ${className ?? ''}`}>
-      <div className="relative w-full aspect-video overflow-hidden">
-        {/* Bar at top masks Drive toolbar */}
-        <div className="absolute top-0 left-0 right-0 z-10" style={{ height: '40px', backgroundColor: '#000' }} />
-        {/* Bar at bottom masks Drive bottom controls */}
-        <div className="absolute bottom-0 left-0 right-0 z-10" style={{ height: '36px', backgroundColor: '#000' }} />
+      {/* Container: video at 16:9 + ~36px for bottom controls */}
+      <div className="relative w-full" style={{ paddingBottom: 'calc(56.25% + 36px)' }}>
+        {/* Top mask hides Drive toolbar (logo + link) */}
+        <div className="absolute top-0 left-0 right-0 z-10" style={{ height: '40px', backgroundColor: '#0f1011' }} />
         <iframe
           src={embedUrl}
           allow="autoplay"
@@ -61,7 +60,7 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
             top: '-40px',
             left: 0,
             width: '100%',
-            height: 'calc(100% + 76px)',
+            height: 'calc(100% + 40px)',
           }}
         />
       </div>
