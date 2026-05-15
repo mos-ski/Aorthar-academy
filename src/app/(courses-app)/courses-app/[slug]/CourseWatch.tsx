@@ -39,8 +39,15 @@ function extractYouTubeId(url: string): string | null {
 
 function extractDriveId(url: string): string | null {
   if (!url) return null;
-  const m = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([A-Za-z0-9_-]+)/);
-  return m ? m[1] : null;
+  let m = url.match(/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/);
+  if (m) return m[1];
+  m = url.match(/drive\.google\.com\/open\?id=([A-Za-z0-9_-]+)/);
+  if (m) return m[1];
+  m = url.match(/drive\.google\.com\/uc.*[?&]id=([A-Za-z0-9_-]+)/);
+  if (m) return m[1];
+  m = url.match(/([A-Za-z0-9_-]{20,})/);
+  if (m && url.includes('drive.google')) return m[1];
+  return null;
 }
 
 type VideoSource =

@@ -13,10 +13,17 @@ function extractYouTubeId(url: string): string | null {
 }
 
 function extractDriveId(url: string): string | null {
-  const fileMatch = url.match(/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/);
-  if (fileMatch) return fileMatch[1];
-  const openMatch = url.match(/drive\.google\.com\/open\?id=([A-Za-z0-9_-]+)/);
-  return openMatch?.[1] ?? null;
+  if (!url) return null;
+  let m = url.match(/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/);
+  if (m) return m[1];
+  m = url.match(/drive\.google\.com\/open\?id=([A-Za-z0-9_-]+)/);
+  if (m) return m[1];
+  m = url.match(/drive\.google\.com\/uc.*[?&]id=([A-Za-z0-9_-]+)/);
+  if (m) return m[1];
+  // Last resort: extract any long ID-like string from a drive URL
+  m = url.match(/([A-Za-z0-9_-]{20,})/);
+  if (m && url.includes('drive.google')) return m[1];
+  return null;
 }
 
 interface Lesson {

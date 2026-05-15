@@ -9,39 +9,33 @@ export async function GET(request: NextRequest) {
     return new Response('Missing id parameter', { status: 400 });
   }
 
-  const driveUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+  // confirm=1 bypasses the virus scan warning for large files
+  const driveUrl = `https://drive.google.com/uc?export=download&confirm=1&id=${fileId}`;
+  const range = request.headers.get('range');
 
   try {
-    const headRes = await fetch(driveUrl, { method: 'HEAD', redirect: 'follow' });
-
-    const contentType = headRes.headers.get('content-type') ?? 'video/mp4';
-    const contentLength = headRes.headers.get('content-length');
-
-    const range = request.headers.get('range');
-
     if (range) {
-      const total = contentLength ? parseInt(contentLength, 10) : 0;
-      const match = /bytes=(\d+)-(\d*)/.exec(range);
-      if (!match) {
-        return new Response('Invalid range', { status: 416 });
-      }
-      const start = parseInt(match[1], 10);
-      const end = match[2] ? parseInt(match[2], 10) : total - 1;
-
       const res = await fetch(driveUrl, {
-        headers: { Range: `bytes=${start}-${end}` },
+        headers: { Range: range },
         redirect: 'follow',
       });
 
+      const responseHeaders: Record<string, string> = {
+        'Content-Type': 'video/mp4',
+        'Accept-Ranges': 'bytes',
+        'Cache-Control': 'public, max-age=3600',
+      };
+
+      if (res.headers.get('content-range')) {
+        responseHeaders['Content-Range'] = res.headers.get('content-range')!;
+      }
+      if (res.headers.get('content-length')) {
+        responseHeaders['Content-Length'] = res.headers.get('content-length')!;
+      }
+
       return new Response(res.body, {
-        status: 206,
-        headers: {
-          'Content-Type': contentType,
-          'Content-Range': `bytes ${start}-${end}/${total}`,
-          'Content-Length': (end - start + 1).toString(),
-          'Accept-Ranges': 'bytes',
-          'Cache-Control': 'public, max-age=3600',
-        },
+        status: res.status,
+        headers: responseHeaders,
       });
     }
 
@@ -51,19 +45,19 @@ export async function GET(request: NextRequest) {
       return new Response('Failed to fetch video', { status: res.status });
     }
 
-    const headers: Record<string, string> = {
-      'Content-Type': contentType,
+    const responseHeaders: Record<string, string> = {
+      'Content-Type': 'video/mp4',
       'Accept-Ranges': 'bytes',
       'Cache-Control': 'public, max-age=3600',
     };
 
-    if (contentLength) {
-      headers['Content-Length'] = contentLength;
+    if (res.headers.get('content-length')) {
+      responseHeaders['Content-Length'] = res.headers.get('content-length')!;
     }
 
     return new Response(res.body, {
       status: 200,
-      headers,
+      headers: responseHeaders,
     });
   } catch (err) {
     console.error('[stream] Error fetching video:', err);
