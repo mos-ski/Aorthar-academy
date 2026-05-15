@@ -278,7 +278,8 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
               {!appliedCoupon && (
                 <button
                   onClick={() => { setShowCouponInput(!showCouponInput); setCouponError(''); }}
-                  className="text-xs text-white/30 hover:text-white/50 transition-colors text-left"
+                  className="text-xs transition-colors text-left"
+                  style={{ color: showCouponInput ? 'rgba(167,210,82,0.7)' : '#a7d252' }}
                 >
                   {showCouponInput ? 'Close' : 'Do you have a coupon?'}
                 </button>
@@ -300,22 +301,13 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
                       onClick={applyCoupon}
                       disabled={couponLoading || !couponInput.trim()}
                       className="px-3 py-1.5 text-xs font-medium rounded border transition-colors disabled:opacity-40"
-                      style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)' }}
+                      style={{ borderColor: '#a7d252', color: '#a7d252' }}
                     >
                       {couponLoading ? '...' : 'Apply'}
                     </button>
                   </div>
                   {couponError && <p className="text-xs text-red-400">{couponError}</p>}
                 </div>
-              )}
-
-              {!isLoggedIn && (
-                <Link
-                  href={`/login?next=/courses-app/checkout/${course.slug}`}
-                  className="block text-xs text-center text-white/30 hover:text-white/60 transition-colors"
-                >
-                  Already have an account? Sign in
-                </Link>
               )}
             </div>
           )}
@@ -562,7 +554,8 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
               {!appliedCoupon && (
                 <button
                   onClick={() => { setShowCouponInput(!showCouponInput); setCouponError(''); }}
-                  className="text-xs text-white/30 hover:text-white/50 transition-colors text-left"
+                  className="text-xs transition-colors text-left"
+                  style={{ color: showCouponInput ? 'rgba(167,210,82,0.7)' : '#a7d252' }}
                 >
                   {showCouponInput ? 'Close' : 'Do you have a coupon?'}
                 </button>
@@ -584,22 +577,13 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
                       onClick={applyCoupon}
                       disabled={couponLoading || !couponInput.trim()}
                       className="px-3 py-1.5 text-xs font-medium rounded border transition-colors disabled:opacity-40"
-                      style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)' }}
+                      style={{ borderColor: '#a7d252', color: '#a7d252' }}
                     >
                       {couponLoading ? '...' : 'Apply'}
                     </button>
                   </div>
                   {couponError && <p className="text-xs text-red-400">{couponError}</p>}
                 </div>
-              )}
-
-              {!isLoggedIn && (
-                <Link
-                  href={`/login?next=/courses-app/checkout/${course.slug}`}
-                  className="block text-xs text-center text-white/30 hover:text-white/60 transition-colors"
-                >
-                  Already have an account? Sign in
-                </Link>
               )}
             </div>
           </div>
