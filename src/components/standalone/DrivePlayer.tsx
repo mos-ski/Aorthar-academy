@@ -48,7 +48,7 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
 
   return (
     <div className={`relative w-full aspect-video bg-black overflow-hidden ${className ?? ''}`}>
-      {/* Shift iframe up to hide any remaining Drive chrome */}
+      {/* Shift iframe up to hide Drive minimal toolbar, compensate height */}
       <iframe
         src={embedUrl}
         allow="autoplay"
@@ -57,10 +57,10 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
         style={{
           border: 'none',
           position: 'absolute',
-          top: 0,
+          top: '-38px',
           left: 0,
           width: '100%',
-          height: '100%',
+          height: 'calc(100% + 38px)',
         }}
       />
 
