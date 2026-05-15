@@ -45,16 +45,34 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
 
   return (
     <div className={`relative ${className ?? ''}`}>
-      <div className="relative w-full overflow-hidden rounded-xl" style={{ paddingTop: '56.25%' }}>
+      {/* Container clips the Drive toolbar above and extra chrome below */}
+      <div className="relative w-full overflow-hidden rounded-xl" style={{ paddingTop: 'calc(56.25% - 8px)' }}>
+        {/* 
+          Drive toolbar is ~44px at top, bottom bar ~40px.
+          Shift iframe up 44px to push toolbar out of view.
+          Add 44px top + 40px bottom = 84px total extra height.
+          Net visible height matches the container.
+        */}
         <iframe
           src={embedUrl}
           allow="autoplay"
           allowFullScreen
           title="Course lesson"
-          className="absolute inset-0 w-full h-full"
-          style={{ border: 'none' }}
+          className="absolute left-0 w-full"
+          style={{
+            border: 'none',
+            top: '-44px',
+            height: 'calc(100% + 84px)',
+          }}
         />
       </div>
+
+      {/* Invisible blocker over the top 44px — prevents any click on Drive toolbar area */}
+      <div
+        className="absolute left-0 right-0 z-10 rounded-t-xl"
+        style={{ top: 0, height: '44px' }}
+        onClick={(e) => e.preventDefault()}
+      />
 
       {previewExpired && (
         <div
