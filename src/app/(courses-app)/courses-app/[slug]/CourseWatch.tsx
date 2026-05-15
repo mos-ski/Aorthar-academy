@@ -77,7 +77,7 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
   const discountedPrice = appliedCoupon
     ? appliedCoupon.discount_type === 'percentage'
       ? Math.max(0, Math.round(course.price_ngn * (1 - appliedCoupon.discount_value / 100)))
-      : Math.max(0, course.price_ngn - appliedCoupon.discount_value)
+      : Math.max(0, appliedCoupon.discount_value)
     : course.price_ngn;
 
   async function applyCoupon() {

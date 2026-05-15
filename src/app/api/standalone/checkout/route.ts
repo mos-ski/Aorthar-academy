@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     if (coupon.discount_type === 'percentage') {
       finalPrice = Math.max(0, Math.round(finalPrice * (1 - coupon.discount_value / 100)));
     } else {
-      finalPrice = Math.max(0, finalPrice - coupon.discount_value);
+      finalPrice = Math.max(0, coupon.discount_value);
     }
 
     appliedCoupon = { id: coupon.id, code: coupon.code, discount_type: coupon.discount_type, discount_value: coupon.discount_value };

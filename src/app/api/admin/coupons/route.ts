@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Percentage discount must be between 1 and 100' }, { status: 400 });
   }
 
-  if (discount_type === 'fixed' && discount_value < 1) {
-    return NextResponse.json({ error: 'Fixed discount must be at least 1' }, { status: 400 });
+  if (discount_type === 'fixed' && discount_value < 0) {
+    return NextResponse.json({ error: 'Fixed price cannot be negative' }, { status: 400 });
   }
 
   if (!['all', 'specific'].includes(scope)) {

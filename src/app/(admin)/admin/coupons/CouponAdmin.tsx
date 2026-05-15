@@ -161,11 +161,11 @@ export default function CouponAdmin({ coupons: initialCoupons, courses }: { coup
                 onChange={(e) => setForm((f) => ({ ...f, discount_type: e.target.value as 'percentage' | 'fixed' }))}
               >
                 <option value="percentage">Percentage (%)</option>
-                <option value="fixed">Fixed Amount (₦)</option>
+                <option value="fixed">Fixed Price (₦)</option>
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted-foreground">Discount Value {form.discount_type === 'percentage' ? '(%)' : '(₦)'}</label>
+              <label className="text-xs text-muted-foreground">Discount Value {form.discount_type === 'percentage' ? '(%)' : '— final price (₦)'}</label>
               <input
                 className="border rounded px-3 py-2 text-sm bg-background"
                 type="number"
