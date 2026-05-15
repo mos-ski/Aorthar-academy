@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { ChevronDown, ImagePlus, Upload } from 'lucide-react';
+import { ChevronDown, ImagePlus, Upload, MoreVertical } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -105,6 +105,7 @@ export default function StandaloneCourseEditor({
   const [newLesson, setNewLesson] = useState({ title: '', youtube_url: '', content: '' });
   const [lessonSaving, setLessonSaving] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const selectedSaleType = saleTypeOptions.find((option) => option.value === fields.sale_type) ?? saleTypeOptions[2];
   const lessonsAreExpected = fields.sale_type === 'recorded_course';
@@ -261,6 +262,43 @@ export default function StandaloneCourseEditor({
         </Link>
         <span className="text-muted-foreground">/</span>
         <h1 className="truncate text-xl font-bold">{course.title}</h1>
+        <div className="ml-auto relative">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </button>
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+              <div className="absolute right-0 z-50 mt-1 w-56 rounded-md border bg-background shadow-lg">
+                {purchaseCount > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => { setMenuOpen(false); deleteCourse(); }}
+                    disabled={deleting}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted disabled:opacity-50"
+                  >
+                    {deleting ? 'Unpublishing…' : 'Unpublish Bootcamp'}
+                    <p className="text-xs text-muted-foreground mt-0.5">{purchaseCount} purchase{purchaseCount !== 1 ? 's' : ''} — will unpublish instead of deleting</p>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => { setMenuOpen(false); deleteCourse(); }}
+                    disabled={deleting}
+                    className="w-full text-left px-3 py-2 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                  >
+                    {deleting ? 'Deleting…' : 'Delete Bootcamp'}
+                    <p className="text-xs text-muted-foreground mt-0.5">No purchases — permanently removes this bootcamp</p>
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -462,24 +500,6 @@ export default function StandaloneCourseEditor({
             ))}
           </div>
         )}
-      </section>
-
-      {/* Danger Zone */}
-      <section className="mt-10 rounded-lg border border-destructive/30 bg-card p-6">
-        <h2 className="font-semibold text-base text-destructive mb-2">Danger Zone</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          {purchaseCount > 0
-            ? `This bootcamp has ${purchaseCount} purchase${purchaseCount !== 1 ? 's' : ''}. Deleting will unpublish it instead of permanently removing it, so existing students keep access.`
-            : 'No purchases exist. This bootcamp can be permanently deleted.'}
-        </p>
-        <button
-          type="button"
-          onClick={deleteCourse}
-          disabled={deleting}
-          className="px-4 py-2 text-sm font-semibold rounded-md border border-destructive/50 text-destructive hover:bg-destructive/10 disabled:opacity-50"
-        >
-          {deleting ? 'Processing…' : purchaseCount > 0 ? 'Unpublish Bootcamp' : 'Delete Bootcamp'}
-        </button>
       </section>
         </div>
 
