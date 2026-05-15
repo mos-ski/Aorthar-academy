@@ -47,12 +47,12 @@ export default async function CourseDetailPage({ params }: Props) {
 
   const { data: lessons } = await supabase
     .from('standalone_lessons')
-    .select('id, title, sort_order, youtube_url')
+    .select('id, title, sort_order, youtube_url, content')
     .eq('course_id', course.id)
     .eq('is_published', true)
     .order('sort_order', { ascending: true });
 
-  const allLessons = (lessons ?? []) as { id: string; title: string; sort_order: number; youtube_url: string }[];
+  const allLessons = (lessons ?? []) as { id: string; title: string; sort_order: number; youtube_url: string; content: string | null }[];
   const firstLesson = allLessons[0] ?? null;
 
   const { data: { user } } = await supabase.auth.getUser();

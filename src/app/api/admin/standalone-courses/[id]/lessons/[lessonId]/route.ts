@@ -16,6 +16,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     .update({
       ...(body.title !== undefined && { title: body.title }),
       ...(body.youtube_url !== undefined && { youtube_url: body.youtube_url }),
+      ...(body.content !== undefined && { content: body.content }),
       ...(body.sort_order !== undefined && { sort_order: body.sort_order }),
       ...(body.is_published !== undefined && { is_published: body.is_published }),
     })

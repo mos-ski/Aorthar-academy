@@ -36,7 +36,7 @@ export default async function LessonPage({ params }: Props) {
   // Load all published lessons
   const { data: lessons } = await supabase
     .from('standalone_lessons')
-    .select('id, title, sort_order, youtube_url')
+    .select('id, title, sort_order, youtube_url, content')
     .eq('course_id', course.id)
     .eq('is_published', true)
     .order('sort_order', { ascending: true });
@@ -62,6 +62,7 @@ export default async function LessonPage({ params }: Props) {
         title: l.title,
         sortOrder: l.sort_order,
         youtubeUrl: l.youtube_url,
+        content: l.content,
         completed: completedIds.has(l.id),
       }))}
       currentLessonId={lessonId}

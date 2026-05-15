@@ -23,6 +23,7 @@ interface Lesson {
   title: string;
   sortOrder: number;
   youtubeUrl: string;
+  content: string | null;
   completed: boolean;
 }
 
@@ -256,6 +257,13 @@ export default function LessonClassroom({ course, lessons, currentLessonId, user
               </div>
             )}
           </div>
+        {/* Lesson notes */}
+          {currentLesson?.content && (
+            <div className="pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-3">Lesson Notes</h3>
+              <p className="text-sm text-white/55 leading-relaxed whitespace-pre-wrap">{currentLesson.content}</p>
+            </div>
+          )}
         </div>
       </div>
 

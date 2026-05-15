@@ -11,6 +11,7 @@ interface Lesson {
   id: string;
   title: string;
   youtube_url: string;
+  content: string | null;
   sort_order: number;
   is_published: boolean;
 }
@@ -100,7 +101,7 @@ export default function StandaloneCourseEditor({
 
   const [lessons, setLessons] = useState<Lesson[]>(initialLessons);
   const [addingLesson, setAddingLesson] = useState(false);
-  const [newLesson, setNewLesson] = useState({ title: '', youtube_url: '' });
+  const [newLesson, setNewLesson] = useState({ title: '', youtube_url: '', content: '' });
   const [lessonSaving, setLessonSaving] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -178,6 +179,7 @@ export default function StandaloneCourseEditor({
         body: JSON.stringify({
           title: newLesson.title,
           youtube_url: newLesson.youtube_url,
+          content: newLesson.content || null,
           sort_order: lessons.length + 1,
         }),
       });
@@ -188,7 +190,7 @@ export default function StandaloneCourseEditor({
       }
       const created: Lesson = await res.json();
       setLessons((prev) => [...prev, created]);
-      setNewLesson({ title: '', youtube_url: '' });
+      setNewLesson({ title: '', youtube_url: '', content: '' });
       setAddingLesson(false);
       toast.success('Lesson added');
     } finally {
@@ -423,6 +425,9 @@ export default function StandaloneCourseEditor({
                 <input className="input" value={newLesson.youtube_url} onChange={(e) => setNewLesson((n) => ({ ...n, youtube_url: e.target.value }))} placeholder="https://youtu.be/…" />
               </Field>
             </div>
+            <Field label="Notes / Summary">
+              <textarea className="input min-h-[80px] resize-y" value={newLesson.content} onChange={(e) => setNewLesson((n) => ({ ...n, content: e.target.value }))} placeholder="Lesson notes, summary, or key takeaways..." />
+            </Field>
             <div className="flex gap-2">
               <button type="submit" disabled={lessonSaving === 'new'} className="px-4 py-1.5 text-sm font-semibold rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
                 {lessonSaving === 'new' ? 'Adding…' : 'Add'}
@@ -626,9 +631,10 @@ function LessonRow({
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(lesson.title);
   const [youtubeUrl, setYoutubeUrl] = useState(lesson.youtube_url);
+  const [content, setContent] = useState(lesson.content ?? '');
 
   function save(): void {
-    onUpdate({ title, youtube_url: youtubeUrl });
+    onUpdate({ title, youtube_url: youtubeUrl, content: content || null });
     setEditing(false);
   }
 
@@ -644,6 +650,9 @@ function LessonRow({
               <input className="input" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} placeholder="https://youtu.be/…" />
             </Field>
           </div>
+          <Field label="Notes / Summary">
+            <textarea className="input min-h-[80px] resize-y" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Lesson notes, summary, or key takeaways..." />
+          </Field>
           <div className="flex gap-2">
             <button type="button" onClick={save} disabled={saving} className="px-3 py-1.5 text-xs font-semibold rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
               {saving ? 'Saving…' : 'Save'}
@@ -658,6 +667,9 @@ function LessonRow({
             <p className="text-sm font-medium truncate">{lesson.title}</p>
             {lesson.youtube_url && (
               <p className="text-xs text-muted-foreground truncate font-mono">{lesson.youtube_url}</p>
+            )}
+            {lesson.content && (
+              <p className="text-xs text-muted-foreground truncate mt-0.5">{lesson.content.slice(0, 100)}{lesson.content.length > 100 ? '…' : ''}</p>
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
