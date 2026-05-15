@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
   const courseId = request.nextUrl.searchParams.get('course_id');
@@ -9,8 +11,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'code parameter is required' }, { status: 400 });
   }
 
+  let adminSupabase;
   try {
-    const adminSupabase = createAdminClient();
+    adminSupabase = createAdminClient();
+  } catch (err) {
+    console.error('[standalone/coupon] Failed to create admin client:', err);
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+  }
+
+  try {
     const { data: coupon, error } = await adminSupabase
       .from('coupon_codes')
       .select('id, code, discount_type, discount_value, scope, course_id, max_uses, used_count, is_active, expires_at')
@@ -18,7 +27,12 @@ export async function GET(request: NextRequest) {
       .eq('is_active', true)
       .single();
 
-    if (error || !coupon) {
+    if (error) {
+      console.error('[standalone/coupon] Supabase query error:', error.message);
+      return NextResponse.json({ error: 'Invalid coupon code' }, { status: 404 });
+    }
+
+    if (!coupon) {
       return NextResponse.json({ error: 'Invalid coupon code' }, { status: 404 });
     }
 
@@ -43,7 +57,7 @@ export async function GET(request: NextRequest) {
       course_id: coupon.course_id,
     });
   } catch (err) {
-    console.error('[standalone/coupon] Error:', err);
+    console.error('[standalone/coupon] Unexpected error:', err);
     return NextResponse.json({ error: 'Failed to validate coupon' }, { status: 500 });
   }
 }
