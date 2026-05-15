@@ -1,9 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import videojs from 'video.js';
-import type Player from 'video.js/dist/types/player';
-import 'video.js/dist/video-js.css';
 
 type NextLesson = { title: string; href: string };
 
@@ -17,67 +14,51 @@ interface Props {
 }
 
 export default function DrivePlayer({ fileId, onEnded, nextLesson, className, previewSeconds, onPreviewExpired }: Props) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const playerRef = useRef<Player | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const elapsedRef = useRef(0);
   const [previewExpired, setPreviewExpired] = useState(false);
   const [showEndOverlay, setShowEndOverlay] = useState(false);
 
   useEffect(() => {
-    if (!videoRef.current) return;
+    elapsedRef.current = 0;
+    setPreviewExpired(false);
+    setShowEndOverlay(false);
 
-    const player = videojs(videoRef.current, {
-      controls: true,
-      responsive: true,
-      fluid: true,
-      preload: 'auto',
-      controlBar: {
-        volumePanel: { inline: true },
-        fullscreenToggle: true,
-        pictureInPictureToggle: false,
-      },
-      sources: [{
-        src: `/api/standalone/stream?id=${fileId}`,
-        type: 'video/mp4',
-      }],
-    });
+    if (!previewSeconds) return;
 
-    playerRef.current = player;
-
-    player.on('ended', () => {
-      setShowEndOverlay(true);
-      onEnded?.();
-    });
-
-    if (previewSeconds) {
-      player.on('timeupdate', () => {
-        const t = player.currentTime() ?? 0;
-        if (t >= previewSeconds) {
-          player.pause();
-          setPreviewExpired(true);
-          onPreviewExpired?.();
-        }
-      });
-    }
+    pollRef.current = setInterval(() => {
+      elapsedRef.current += 1;
+      if (elapsedRef.current >= previewSeconds) {
+        clearInterval(pollRef.current!);
+        setPreviewExpired(true);
+        onPreviewExpired?.();
+      }
+    }, 1000);
 
     return () => {
-      player.dispose();
-      playerRef.current = null;
+      if (pollRef.current) clearInterval(pollRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileId]);
+
+  const embedUrl = `https://drive.google.com/file/d/${fileId}/preview?usp=sharing`;
 
   return (
     <div className={`relative ${className ?? ''}`}>
-      <div data-vjs-player>
-        <video
-          ref={videoRef}
-          playsInline
-          className="video-js vjs-big-play-centered vjs-styles-daily"
+      <div className="relative w-full overflow-hidden rounded-xl" style={{ paddingTop: '56.25%' }}>
+        <iframe
+          src={embedUrl}
+          allow="autoplay"
+          allowFullScreen
+          title="Course lesson"
+          className="absolute inset-0 w-full h-full"
+          style={{ border: 'none' }}
         />
       </div>
 
       {previewExpired && (
         <div
-          className="absolute inset-0 z-20 flex items-center justify-center"
+          className="absolute inset-0 z-20 flex items-center justify-center rounded-xl"
           style={{ backgroundColor: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(10px)' }}
         >
           <div className="text-center px-6">
@@ -98,7 +79,7 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
 
       {showEndOverlay && !previewExpired && (
         <div
-          className="absolute inset-0 flex flex-col items-center justify-center gap-6 z-20"
+          className="absolute inset-0 flex flex-col items-center justify-center gap-6 z-20 rounded-xl"
           style={{ backgroundColor: 'rgba(6,7,8,0.96)' }}
         >
           <div className="text-center">
@@ -118,7 +99,7 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
               </a>
             )}
             <button
-              onClick={() => { setShowEndOverlay(false); playerRef.current?.currentTime(0); playerRef.current?.play(); }}
+              onClick={() => setShowEndOverlay(false)}
               className="text-sm text-white/50 hover:text-white transition-colors underline"
             >
               Replay

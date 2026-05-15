@@ -166,17 +166,6 @@
 }
 
 @layer components {
-  /* Video.js — brand green theme */
-  .vjs-styles-daily .vjs-control-bar { background: rgba(0,0,0,0.7); }
-  .vjs-styles-daily .vjs-big-play-button { background-color: #a7d252; border: none; border-radius: 50%; width: 1.8em; height: 1.8em; line-height: 1.8em; }
-  .vjs-styles-daily .vjs-big-play-button .vjs-icon-placeholder::before { color: #000; }
-  .vjs-styles-daily .vjs-play-progress { background-color: #a7d252; }
-  .vjs-styles-daily .vjs-volume-level { background-color: #a7d252; }
-  .vjs-styles-daily .vjs-slider:focus { box-shadow: 0 0 1em rgba(167,210,82,0.5); }
-  .vjs-styles-daily .vjs-load-progress { background: rgba(255,255,255,0.15); }
-  .vjs-styles-daily .vjs-load-progress div { background: rgba(255,255,255,0.1); }
-  .vjs-styles-daily:hover .vjs-big-play-button { background-color: #b8e06a; }
-
   /* Reusable form input style used in admin editors */
   .input {
     @apply w-full rounded border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
