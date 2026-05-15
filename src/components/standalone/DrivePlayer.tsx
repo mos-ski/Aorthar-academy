@@ -48,7 +48,7 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
 
   return (
     <div className={`relative w-full aspect-video bg-black overflow-hidden ${className ?? ''}`}>
-      {/* Shift iframe up to fully hide Drive top bar, compensate height */}
+      {/* Shift iframe up to hide Drive top bar, compensate height */}
       <iframe
         src={embedUrl}
         allow="autoplay"
@@ -57,14 +57,12 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
         style={{
           border: 'none',
           position: 'absolute',
-          top: '-70px',
+          top: '-45px',
           left: 0,
           width: '100%',
-          height: 'calc(100% + 70px)',
+          height: 'calc(100% + 45px)',
         }}
       />
-      {/* Mask bar covers any remaining Drive chrome at the top */}
-      <div className="absolute top-0 left-0 right-0 h-[26px] z-[5]" style={{ backgroundColor: '#000' }} />
 
       {/* Preview expired — fullscreen paywall overlay */}
       {previewExpired && (
