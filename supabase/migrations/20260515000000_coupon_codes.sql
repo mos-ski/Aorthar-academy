@@ -21,7 +21,7 @@ CREATE INDEX idx_coupon_codes_is_active ON coupon_codes(is_active);
 
 -- scope='specific' must have a course_id
 ALTER TABLE coupon_codes ADD CONSTRAINT coupon_specific_requires_course
-  CHECK NOT (scope = 'specific' AND course_id IS NULL);
+  CHECK (NOT (scope = 'specific' AND course_id IS NULL));
 
 -- RLS policies
 ALTER TABLE coupon_codes ENABLE ROW LEVEL SECURITY;

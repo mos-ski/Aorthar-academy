@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
@@ -9,8 +9,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'code parameter is required' }, { status: 400 });
   }
 
-  const supabase = await createClient();
-  const { data: coupon, error } = await supabase
+  const adminSupabase = createAdminClient();
+  const { data: coupon, error } = await adminSupabase
     .from('coupon_codes')
     .select('id, code, discount_type, discount_value, scope, course_id, max_uses, used_count, is_active, expires_at')
     .eq('code', code.toUpperCase().trim())
