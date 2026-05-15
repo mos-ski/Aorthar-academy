@@ -73,6 +73,7 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount_type: string; discount_value: number } | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState('');
+  const [showCouponInput, setShowCouponInput] = useState(false);
 
   const discountedPrice = appliedCoupon
     ? appliedCoupon.discount_type === 'percentage'
@@ -241,75 +242,80 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
               className="rounded-xl border p-5 flex flex-col gap-3"
               style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: '#18191a' }}
             >
-              <div>
-                <p className="text-xs text-white/40 mb-0.5">Lifetime access · {lessons.length} lessons</p>
-                {appliedCoupon ? (
-                  <div className="flex items-baseline gap-2">
-                    <p className="text-2xl font-bold" style={{ color: '#a7d252' }}>₦{discountedPrice.toLocaleString()}</p>
-                    <p className="text-sm line-through text-white/30">₦{course.price_ngn.toLocaleString()}</p>
-                    <span className="text-xs font-medium px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(167,210,82,0.15)', color: '#a7d252' }}>
-                      -{appliedCoupon.discount_type === 'percentage' ? `${appliedCoupon.discount_value}%` : `₦${appliedCoupon.discount_value.toLocaleString()}`}
-                    </span>
-                  </div>
-                ) : (
-                  <p className="text-2xl font-bold" style={{ color: '#a7d252' }}>₦{course.price_ngn.toLocaleString()}</p>
-                )}
-              </div>
-
-              {/* Coupon input */}
-              {!appliedCoupon && (
-                <div className="flex gap-1.5">
-                  <input
-                    type="text"
-                    value={couponInput}
-                    onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponError(''); }}
-                    onKeyDown={(e) => { if (e.key === 'Enter') applyCoupon(); }}
-                    placeholder="Coupon code"
-                    className="flex-1 px-3 py-1.5 text-sm bg-white/5 border rounded text-white placeholder-white/25"
-                    style={{ borderColor: 'rgba(255,255,255,0.1)' }}
-                  />
-                  <button
-                    onClick={applyCoupon}
-                    disabled={couponLoading || !couponInput.trim()}
-                    className="px-3 py-1.5 text-xs font-medium rounded border transition-colors disabled:opacity-40"
-                    style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)' }}
-                  >
-                    {couponLoading ? '...' : 'Apply'}
-                  </button>
-                </div>
-              )}
-              {appliedCoupon && (
-                <div className="flex items-center justify-between text-xs" style={{ color: '#a7d252' }}>
-                  <span>Code: <span className="font-mono font-bold">{appliedCoupon.code}</span> applied</span>
-                  <button onClick={removeCoupon} className="text-white/40 hover:text-white/60 transition-colors">Remove</button>
-                </div>
-              )}
-              {couponError && <p className="text-xs text-red-400">{couponError}</p>}
+              <p className="text-xs text-white/40">Lifetime access · {lessons.length} lessons</p>
 
               {isLoggedIn ? (
                 <BuyButton
                   slug={course.slug}
-                  label={appliedCoupon ? `Buy now — ₦${discountedPrice.toLocaleString()}` : 'Buy this course →'}
+                  label={appliedCoupon ? `Buy now — ₦${discountedPrice.toLocaleString()}` : `Buy this course — ₦${course.price_ngn.toLocaleString()}`}
                   className="w-full py-2.5 font-bold text-black text-sm transition-opacity hover:opacity-90"
                   style={{ backgroundColor: '#a7d252' }}
                   couponCode={appliedCoupon?.code}
                 />
               ) : (
-                <>
-                  <Link
-                    href={`/register?next=/courses-app/checkout/${course.slug}`}
-                    className="block w-full py-2.5 font-bold text-black text-sm text-center transition-opacity hover:opacity-90"
-                    style={{ backgroundColor: '#a7d252' }}
-                  >
-                    {appliedCoupon ? `Sign up & enroll — ₦${discountedPrice.toLocaleString()}` : 'Sign up & enroll →'}
-                  </Link>
-                  <Link
-                    href={`/login?next=/courses-app/checkout/${course.slug}`}
-                    className="block text-xs text-center text-white/30 hover:text-white/60 transition-colors"
-                  >
-                    Already have an account? Sign in
-                  </Link>
-                </>
+                <Link
+                  href={`/register?next=/courses-app/checkout/${course.slug}`}
+                  className="block w-full py-2.5 font-bold text-black text-sm text-center transition-opacity hover:opacity-90 rounded-none"
+                  style={{ backgroundColor: '#a7d252' }}
+                >
+                  {appliedCoupon ? `Sign up & enroll — ₦${discountedPrice.toLocaleString()}` : `Sign up & enroll — ₦${course.price_ngn.toLocaleString()}`}
+                </Link>
+              )}
+
+              {appliedCoupon && (
+                <div className="flex items-center justify-between text-xs" style={{ color: '#a7d252' }}>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-mono font-bold">{appliedCoupon.code}</span>
+                    <span>applied</span>
+                    <span className="px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(167,210,82,0.15)' }}>
+                      -{appliedCoupon.discount_type === 'percentage' ? `${appliedCoupon.discount_value}%` : `₦${appliedCoupon.discount_value.toLocaleString()}`}
+                    </span>
+                  </div>
+                  <button onClick={removeCoupon} className="text-white/40 hover:text-white/60 transition-colors">Remove</button>
+                </div>
+              )}
+
+              {!appliedCoupon && (
+                <button
+                  onClick={() => { setShowCouponInput(!showCouponInput); setCouponError(''); }}
+                  className="text-xs text-white/30 hover:text-white/50 transition-colors text-left"
+                >
+                  {showCouponInput ? 'Close' : 'Do you have a coupon?'}
+                </button>
+              )}
+
+              {showCouponInput && !appliedCoupon && (
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex gap-1.5">
+                    <input
+                      type="text"
+                      value={couponInput}
+                      onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponError(''); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') applyCoupon(); }}
+                      placeholder="Enter coupon code"
+                      className="flex-1 px-3 py-1.5 text-sm bg-white/5 border rounded text-white placeholder-white/25"
+                      style={{ borderColor: 'rgba(255,255,255,0.1)' }}
+                    />
+                    <button
+                      onClick={applyCoupon}
+                      disabled={couponLoading || !couponInput.trim()}
+                      className="px-3 py-1.5 text-xs font-medium rounded border transition-colors disabled:opacity-40"
+                      style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)' }}
+                    >
+                      {couponLoading ? '...' : 'Apply'}
+                    </button>
+                  </div>
+                  {couponError && <p className="text-xs text-red-400">{couponError}</p>}
+                </div>
+              )}
+
+              {!isLoggedIn && (
+                <Link
+                  href={`/login?next=/courses-app/checkout/${course.slug}`}
+                  className="block text-xs text-center text-white/30 hover:text-white/60 transition-colors"
+                >
+                  Already have an account? Sign in
+                </Link>
               )}
             </div>
           )}
@@ -522,71 +528,78 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
               className="rounded-xl border p-4 flex flex-col gap-2.5"
               style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: '#18191a' }}
             >
-              {appliedCoupon ? (
-                <div className="flex items-baseline gap-2 flex-wrap">
-                  <p className="text-xl font-bold" style={{ color: '#a7d252' }}>₦{discountedPrice.toLocaleString()}</p>
-                  <p className="text-sm line-through text-white/30">₦{course.price_ngn.toLocaleString()}</p>
-                  <span className="text-xs font-medium px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(167,210,82,0.15)', color: '#a7d252' }}>
-                    -{appliedCoupon.discount_type === 'percentage' ? `${appliedCoupon.discount_value}%` : `₦${appliedCoupon.discount_value.toLocaleString()}`}
-                  </span>
-                </div>
-              ) : (
-                <p className="text-xl font-bold" style={{ color: '#a7d252' }}>₦{course.price_ngn.toLocaleString()}</p>
-              )}
-
-              {!appliedCoupon && (
-                <div className="flex gap-1.5">
-                  <input
-                    type="text"
-                    value={couponInput}
-                    onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponError(''); }}
-                    onKeyDown={(e) => { if (e.key === 'Enter') applyCoupon(); }}
-                    placeholder="Coupon code"
-                    className="flex-1 px-3 py-1.5 text-sm bg-white/5 border rounded text-white placeholder-white/25"
-                    style={{ borderColor: 'rgba(255,255,255,0.1)' }}
-                  />
-                  <button
-                    onClick={applyCoupon}
-                    disabled={couponLoading || !couponInput.trim()}
-                    className="px-3 py-1.5 text-xs font-medium rounded border transition-colors disabled:opacity-40"
-                    style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)' }}
-                  >
-                    {couponLoading ? '...' : 'Apply'}
-                  </button>
-                </div>
-              )}
-              {appliedCoupon && (
-                <div className="flex items-center justify-between text-xs" style={{ color: '#a7d252' }}>
-                  <span>Code: <span className="font-mono font-bold">{appliedCoupon.code}</span> applied</span>
-                  <button onClick={removeCoupon} className="text-white/40 hover:text-white/60 transition-colors">Remove</button>
-                </div>
-              )}
-              {couponError && <p className="text-xs text-red-400">{couponError}</p>}
-
               {isLoggedIn ? (
                 <BuyButton
                   slug={course.slug}
-                  label={appliedCoupon ? `Buy now — ₦${discountedPrice.toLocaleString()}` : 'Buy this course →'}
+                  label={appliedCoupon ? `Buy now — ₦${discountedPrice.toLocaleString()}` : `Buy this course — ₦${course.price_ngn.toLocaleString()}`}
                   className="w-full py-2.5 font-bold text-black text-sm transition-opacity hover:opacity-90"
                   style={{ backgroundColor: '#a7d252' }}
                   couponCode={appliedCoupon?.code}
                 />
               ) : (
-                <div className="flex flex-col gap-1.5">
-                  <Link
-                    href={`/register?next=/courses-app/checkout/${course.slug}`}
-                    className="block w-full py-2.5 font-bold text-black text-sm text-center transition-opacity hover:opacity-90"
-                    style={{ backgroundColor: '#a7d252' }}
-                  >
-                    {appliedCoupon ? `Sign up & enroll — ₦${discountedPrice.toLocaleString()}` : 'Sign up & enroll →'}
-                  </Link>
-                  <Link
-                    href={`/login?next=/courses-app/checkout/${course.slug}`}
-                    className="block text-xs text-center text-white/30 hover:text-white/60 transition-colors"
-                  >
-                    Already have an account? Sign in
-                  </Link>
+                <Link
+                  href={`/register?next=/courses-app/checkout/${course.slug}`}
+                  className="block w-full py-2.5 font-bold text-black text-sm text-center transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: '#a7d252' }}
+                >
+                  {appliedCoupon ? `Sign up & enroll — ₦${discountedPrice.toLocaleString()}` : `Sign up & enroll — ₦${course.price_ngn.toLocaleString()}`}
+                </Link>
+              )}
+
+              {appliedCoupon && (
+                <div className="flex items-center justify-between text-xs" style={{ color: '#a7d252' }}>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-mono font-bold">{appliedCoupon.code}</span>
+                    <span>applied</span>
+                    <span className="px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(167,210,82,0.15)' }}>
+                      -{appliedCoupon.discount_type === 'percentage' ? `${appliedCoupon.discount_value}%` : `₦${appliedCoupon.discount_value.toLocaleString()}`}
+                    </span>
+                  </div>
+                  <button onClick={removeCoupon} className="text-white/40 hover:text-white/60 transition-colors">Remove</button>
                 </div>
+              )}
+
+              {!appliedCoupon && (
+                <button
+                  onClick={() => { setShowCouponInput(!showCouponInput); setCouponError(''); }}
+                  className="text-xs text-white/30 hover:text-white/50 transition-colors text-left"
+                >
+                  {showCouponInput ? 'Close' : 'Do you have a coupon?'}
+                </button>
+              )}
+
+              {showCouponInput && !appliedCoupon && (
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex gap-1.5">
+                    <input
+                      type="text"
+                      value={couponInput}
+                      onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponError(''); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') applyCoupon(); }}
+                      placeholder="Enter coupon code"
+                      className="flex-1 px-3 py-1.5 text-sm bg-white/5 border rounded text-white placeholder-white/25"
+                      style={{ borderColor: 'rgba(255,255,255,0.1)' }}
+                    />
+                    <button
+                      onClick={applyCoupon}
+                      disabled={couponLoading || !couponInput.trim()}
+                      className="px-3 py-1.5 text-xs font-medium rounded border transition-colors disabled:opacity-40"
+                      style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)' }}
+                    >
+                      {couponLoading ? '...' : 'Apply'}
+                    </button>
+                  </div>
+                  {couponError && <p className="text-xs text-red-400">{couponError}</p>}
+                </div>
+              )}
+
+              {!isLoggedIn && (
+                <Link
+                  href={`/login?next=/courses-app/checkout/${course.slug}`}
+                  className="block text-xs text-center text-white/30 hover:text-white/60 transition-colors"
+                >
+                  Already have an account? Sign in
+                </Link>
               )}
             </div>
           </div>
