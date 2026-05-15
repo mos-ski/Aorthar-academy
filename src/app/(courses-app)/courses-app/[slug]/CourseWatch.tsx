@@ -94,8 +94,9 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
       }
       setAppliedCoupon({ code: data.code, discount_type: data.discount_type, discount_value: data.discount_value });
       setCouponError('');
-    } catch {
-      setCouponError('Failed to validate coupon');
+    } catch (err) {
+      console.error('[CourseWatch] Coupon validation error:', err);
+      setCouponError('Could not validate coupon. Please try again.');
       setAppliedCoupon(null);
     } finally {
       setCouponLoading(false);
