@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import YouTubePlayer from '@/components/standalone/YouTubePlayer';
+import DrivePlayer from '@/components/standalone/DrivePlayer';
 import UserAvatar from '@/components/standalone/UserAvatar';
 
 function extractYouTubeId(url: string): string | null {
@@ -188,22 +189,15 @@ export default function LessonClassroom({ course, lessons, currentLessonId, user
                 className="w-full"
               />
             ) : driveId ? (
-              <div className="aspect-video w-full overflow-hidden bg-black">
-                <iframe
-                  src={`https://drive.google.com/file/d/${driveId}/preview`}
-                  allow="autoplay"
-                  allowFullScreen
-                  title={currentLesson.title}
-                  style={{
-                    border: 'none',
-                    position: 'absolute',
-                    top: '-30px',
-                    left: 0,
-                    width: '100%',
-                    height: 'calc(100% + 30px)',
-                  }}
-                />
-              </div>
+              <DrivePlayer
+                fileId={driveId}
+                onEnded={handleVideoEnded}
+                nextLesson={nextLesson ? {
+                  title: nextLesson.title,
+                  href: `/courses-app/learn/${course.slug}/${nextLesson.id}`,
+                } : undefined}
+                className="w-full"
+              />
             ) : (
               <div className="aspect-video flex items-center justify-center" style={{ backgroundColor: '#0d0e10' }}>
                 <p className="text-sm text-white/25">No video available for this lesson.</p>
