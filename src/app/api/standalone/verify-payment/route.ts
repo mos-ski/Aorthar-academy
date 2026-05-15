@@ -68,6 +68,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Course not found' }, { status: 404 });
   }
 
+  // Determine the actual paid amount — use discounted price if a coupon was applied
+  const discountedPriceNgn = meta.discounted_price_ngn
+    ? Number(meta.discounted_price_ngn)
+    : course.price_ngn;
+
   // Idempotent upsert — safe to call multiple times for the same reference
   const { error: dbError } = await adminSupabase
     .from('standalone_purchases')
@@ -76,7 +81,7 @@ export async function GET(request: NextRequest) {
         user_id,
         course_id,
         paystack_reference: reference,
-        amount_paid_ngn: course.price_ngn,
+        amount_paid_ngn: discountedPriceNgn,
       },
       { onConflict: 'paystack_reference' },
     );
@@ -84,6 +89,12 @@ export async function GET(request: NextRequest) {
   if (dbError) {
     console.error('[verify-payment] upsert error:', dbError);
     return NextResponse.json({ error: 'Failed to record purchase' }, { status: 500 });
+  }
+
+  // Increment coupon usage if applicable
+  if (meta.coupon_id) {
+    Promise.resolve(adminSupabase.rpc('increment_coupon_usage', { coupon_id_input: meta.coupon_id }))
+      .catch((err: unknown) => { console.error('[verify-payment] coupon usage increment failed:', err); });
   }
 
   // Send purchase confirmation email (fire-and-forget)
@@ -108,7 +119,7 @@ export async function GET(request: NextRequest) {
             firstName,
             purchaseType: 'course',
             itemName: course.title,
-            amountNgn: course.price_ngn,
+            amountNgn: discountedPriceNgn,
             dashboardUrl: 'https://bootcamp.aorthar.com',
           }),
         });

@@ -7,9 +7,10 @@ interface Props {
   label: string;
   className?: string;
   style?: React.CSSProperties;
+  couponCode?: string;
 }
 
-export default function BuyButton({ slug, label, className, style }: Props) {
+export default function BuyButton({ slug, label, className, style, couponCode }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,10 +18,15 @@ export default function BuyButton({ slug, label, className, style }: Props) {
     setLoading(true);
     setError(null);
     try {
+      const body: Record<string, string> = { slug };
+      if (couponCode) {
+        body.coupon_code = couponCode;
+      }
+
       const res = await fetch('/api/standalone/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug }),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();

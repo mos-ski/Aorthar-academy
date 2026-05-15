@@ -55,6 +55,11 @@ export async function POST(req: NextRequest) {
       .eq('id', course_id)
       .single();
 
+    // Determine the actual paid amount — use discounted price if a coupon was applied
+    const discountedPriceNgn = metadata?.discounted_price_ngn
+      ? Number(metadata.discounted_price_ngn)
+      : (course?.price_ngn ?? 0);
+
     // Idempotent upsert — if reference already exists, skip
     const { error } = await adminSupabase
       .from('standalone_purchases')
@@ -63,7 +68,7 @@ export async function POST(req: NextRequest) {
           user_id,
           course_id,
           paystack_reference: reference,
-          amount_paid_ngn: course?.price_ngn ?? 0,
+          amount_paid_ngn: discountedPriceNgn,
         },
         { onConflict: 'paystack_reference' },
       );
@@ -71,6 +76,12 @@ export async function POST(req: NextRequest) {
     if (error) {
       console.error('[webhook/paystack] standalone_purchases upsert error:', error);
       return NextResponse.json({ error: 'DB insert failed' }, { status: 500 });
+    }
+
+    // Increment coupon usage if applicable
+    if (metadata?.coupon_id) {
+      Promise.resolve(adminSupabase.rpc('increment_coupon_usage', { coupon_id_input: metadata.coupon_id }))
+        .catch((err: unknown) => { console.error('[webhook/paystack] coupon usage increment failed:', err); });
     }
 
     // Send purchase confirmation email (fire-and-forget, don't block response)
@@ -90,13 +101,13 @@ export async function POST(req: NextRequest) {
           await sendEmail({
             to: userEmail,
             subject: purchaseConfirmationSubject('course', courseName),
-            html: purchaseConfirmationHtml({
-              firstName,
-              purchaseType: 'course',
-              itemName: courseName,
-              amountNgn: course?.price_ngn ?? 0,
-              dashboardUrl: 'https://bootcamp.aorthar.com',
-            }),
+html: purchaseConfirmationHtml({
+            firstName,
+            purchaseType: 'course',
+            itemName: courseName,
+            amountNgn: discountedPriceNgn,
+            dashboardUrl: 'https://bootcamp.aorthar.com',
+          }),
           });
         }
       } catch (emailErr) {

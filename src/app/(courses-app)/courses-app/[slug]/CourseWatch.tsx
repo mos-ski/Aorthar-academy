@@ -69,6 +69,44 @@ function getCompletedIds(lessons: Lesson[], activeId: string | undefined): Set<s
 export default function CourseWatch({ course, lessons, firstLesson, hasPurchased, isLoggedIn, userEmail, userFullName, userAvatarUrl }: Props) {
   const [paywallVisible, setPaywallVisible] = useState(false);
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(firstLesson);
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount_type: string; discount_value: number } | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState('');
+
+  const discountedPrice = appliedCoupon
+    ? appliedCoupon.discount_type === 'percentage'
+      ? Math.max(0, Math.round(course.price_ngn * (1 - appliedCoupon.discount_value / 100)))
+      : Math.max(0, course.price_ngn - appliedCoupon.discount_value)
+    : course.price_ngn;
+
+  async function applyCoupon() {
+    if (!couponInput.trim()) return;
+    setCouponLoading(true);
+    setCouponError('');
+    try {
+      const res = await fetch(`/api/standalone/coupon?code=${encodeURIComponent(couponInput.trim())}&course_id=${course.id}`);
+      const data = await res.json();
+      if (!res.ok) {
+        setCouponError(data.error ?? 'Invalid coupon code');
+        setAppliedCoupon(null);
+        return;
+      }
+      setAppliedCoupon({ code: data.code, discount_type: data.discount_type, discount_value: data.discount_value });
+      setCouponError('');
+    } catch {
+      setCouponError('Failed to validate coupon');
+      setAppliedCoupon(null);
+    } finally {
+      setCouponLoading(false);
+    }
+  }
+
+  function removeCoupon() {
+    setAppliedCoupon(null);
+    setCouponInput('');
+    setCouponError('');
+  }
 
   const videoSource = activeLesson ? detectVideo(activeLesson.youtube_url) : null;
   const previewSeconds = !hasPurchased && videoSource ? 60 : undefined;
@@ -204,14 +242,56 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
             >
               <div>
                 <p className="text-xs text-white/40 mb-0.5">Lifetime access · {lessons.length} lessons</p>
-                <p className="text-2xl font-bold" style={{ color: '#a7d252' }}>₦{course.price_ngn.toLocaleString()}</p>
+                {appliedCoupon ? (
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-2xl font-bold" style={{ color: '#a7d252' }}>₦{discountedPrice.toLocaleString()}</p>
+                    <p className="text-sm line-through text-white/30">₦{course.price_ngn.toLocaleString()}</p>
+                    <span className="text-xs font-medium px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(167,210,82,0.15)', color: '#a7d252' }}>
+                      -{appliedCoupon.discount_type === 'percentage' ? `${appliedCoupon.discount_value}%` : `₦${appliedCoupon.discount_value.toLocaleString()}`}
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-2xl font-bold" style={{ color: '#a7d252' }}>₦{course.price_ngn.toLocaleString()}</p>
+                )}
               </div>
+
+              {/* Coupon input */}
+              {!appliedCoupon && (
+                <div className="flex gap-1.5">
+                  <input
+                    type="text"
+                    value={couponInput}
+                    onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponError(''); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') applyCoupon(); }}
+                    placeholder="Coupon code"
+                    className="flex-1 px-3 py-1.5 text-sm bg-white/5 border rounded text-white placeholder-white/25"
+                    style={{ borderColor: 'rgba(255,255,255,0.1)' }}
+                  />
+                  <button
+                    onClick={applyCoupon}
+                    disabled={couponLoading || !couponInput.trim()}
+                    className="px-3 py-1.5 text-xs font-medium rounded border transition-colors disabled:opacity-40"
+                    style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)' }}
+                  >
+                    {couponLoading ? '...' : 'Apply'}
+                  </button>
+                </div>
+              )}
+              {appliedCoupon && (
+                <div className="flex items-center justify-between text-xs" style={{ color: '#a7d252' }}>
+                  <span>Code: <span className="font-mono font-bold">{appliedCoupon.code}</span> applied</span>
+                  <button onClick={removeCoupon} className="text-white/40 hover:text-white/60 transition-colors">Remove</button>
+                </div>
+              )}
+              {couponError && <p className="text-xs text-red-400">{couponError}</p>}
+
               {isLoggedIn ? (
                 <BuyButton
                   slug={course.slug}
-                  label="Buy this course →"
+                  label={appliedCoupon ? `Buy now — ₦${discountedPrice.toLocaleString()}` : 'Buy this course →'}
                   className="w-full py-2.5 font-bold text-black text-sm transition-opacity hover:opacity-90"
                   style={{ backgroundColor: '#a7d252' }}
+                  couponCode={appliedCoupon?.code}
                 />
               ) : (
                 <>
@@ -220,7 +300,7 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
                     className="block w-full py-2.5 font-bold text-black text-sm text-center transition-opacity hover:opacity-90"
                     style={{ backgroundColor: '#a7d252' }}
                   >
-                    Sign up & enroll →
+                    {appliedCoupon ? `Sign up & enroll — ₦${discountedPrice.toLocaleString()}` : 'Sign up & enroll →'}
                   </Link>
                   <Link
                     href={`/login?next=/courses-app/checkout/${course.slug}`}
@@ -292,9 +372,10 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
                         {isLoggedIn ? (
                           <BuyButton
                             slug={course.slug}
-                            label={`Buy now — ₦${course.price_ngn.toLocaleString()}`}
+                            label={appliedCoupon ? `Buy now — ₦${discountedPrice.toLocaleString()}` : `Buy now — ₦${course.price_ngn.toLocaleString()}`}
                             className="w-full py-2.5 px-6 font-bold text-black text-sm transition-opacity hover:opacity-90"
                             style={{ backgroundColor: '#a7d252' }}
+                            couponCode={appliedCoupon?.code}
                           />
                         ) : (
                           <>
