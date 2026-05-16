@@ -74,6 +74,13 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
         onClick={(e) => e.preventDefault()}
       />
 
+      {/* Invisible blocker over bottom-right corner — hides the pop-out/open-in-new-window icon */}
+      <div
+        className="absolute bottom-0 right-0 z-10"
+        style={{ width: '48px', height: '36px' }}
+        onClick={(e) => e.preventDefault()}
+      />
+
       {previewExpired && (
         <div
           className="absolute inset-0 z-20 flex items-center justify-center rounded-xl"
