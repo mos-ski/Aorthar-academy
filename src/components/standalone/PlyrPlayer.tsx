@@ -148,14 +148,14 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
   }
 
   return (
-    <div className={`relative w-full aspect-video overflow-hidden rounded-xl bg-black ${className ?? ''}`}>
+    <div className={`relative w-full aspect-video bg-black rounded-xl ${className ?? ''}`}>
       {/* Video or YouTube container */}
       {youtubeId ? (
-        <div ref={containerRef} data-plyr-provider="youtube" data-plyr-embed-id={youtubeId} />
+        <div ref={containerRef} data-plyr-provider="youtube" data-plyr-embed-id={youtubeId} className="w-full h-full" />
       ) : (
         <video
           ref={containerRef as any}
-          className="w-full h-full"
+          className="w-full h-full rounded-xl"
           poster={poster}
           playsInline
           crossOrigin="anonymous"
