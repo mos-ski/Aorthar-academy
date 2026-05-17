@@ -45,42 +45,16 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
 
   return (
     <div className={`relative ${className ?? ''}`}>
-      {/* Mobile: show Drive player with native controls */}
-      <div className="md:hidden relative w-full aspect-video overflow-hidden rounded-xl">
+      {/* Video container - same for mobile and desktop */}
+      <div className="relative w-full aspect-video overflow-hidden rounded-xl bg-black">
         <iframe
           src={embedUrl}
-          allow="autoplay"
+          allow="autoplay; fullscreen"
           allowFullScreen
           title="Course lesson"
           className="absolute inset-0 w-full h-full border-none"
         />
       </div>
-
-      {/* Desktop: clip the Drive toolbar and extra chrome */}
-      <div className="hidden md:block relative w-full overflow-hidden rounded-xl" style={{ paddingTop: 'calc(56.25% - 8px)' }}>
-        <iframe
-          src={embedUrl}
-          allow="autoplay"
-          allowFullScreen
-          title="Course lesson"
-          className="absolute left-0 w-full"
-          style={{
-            border: 'none',
-            top: '-44px',
-            height: 'calc(100% + 84px)',
-          }}
-        />
-      </div>
-
-      {/* Desktop invisible blockers */}
-      <div
-        className="hidden md:block absolute left-0 right-0 z-10 rounded-t-xl pointer-events-none"
-        style={{ top: 0, height: '44px' }}
-      />
-      <div
-        className="hidden md:block absolute bottom-0 right-0 z-10 pointer-events-none"
-        style={{ width: '48px', height: '36px' }}
-      />
 
       {previewExpired && (
         <div
