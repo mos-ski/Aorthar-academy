@@ -223,6 +223,19 @@ export async function middleware(request: NextRequest) {
   const isBootcampSubdomain = product === 'bootcamp';
   const skipOnboarding = product !== null && (SKIP_ONBOARDING_PRODUCTS as readonly string[]).includes(product);
 
+  // Bootcamp subdomain: redirect university paths to bootcamp equivalents
+  if (isBootcampSubdomain) {
+    if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
+      return NextResponse.redirect(new URL('/courses-app/learn', request.url));
+    }
+    if (pathname === '/courses' || pathname.startsWith('/courses/')) {
+      return NextResponse.redirect(new URL('/courses-app', request.url));
+    }
+    if (pathname === '/classroom' || pathname.startsWith('/classroom/')) {
+      return NextResponse.redirect(new URL('/courses-app/learn', request.url));
+    }
+  }
+
   // Redirect logged-in users away from auth pages
   if (user && isAuthRoute(pathname)) {
     const nextParam = request.nextUrl.searchParams.get('next');
@@ -231,6 +244,7 @@ export async function middleware(request: NextRequest) {
       const dest = nextParam ?? '/courses-app/learn';
       return NextResponse.redirect(new URL(dest, request.url));
     }
+    // For university users, redirect to dashboard
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
@@ -272,7 +286,8 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user && !profile?.is_suspended && isSuspendedRoute(pathname)) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    const dest = isBootcampSubdomain ? '/courses-app/learn' : '/dashboard';
+    return NextResponse.redirect(new URL(dest, request.url));
   }
 
   // Student onboarding gate — skip on bootcamp, internship, admin, and base subdomains
@@ -285,7 +300,8 @@ export async function middleware(request: NextRequest) {
     }
 
     if (done && isOnboardingRoute(pathname)) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      const dest = isBootcampSubdomain ? '/courses-app/learn' : '/dashboard';
+      return NextResponse.redirect(new URL(dest, request.url));
     }
   }
 
