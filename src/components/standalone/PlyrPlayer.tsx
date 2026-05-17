@@ -17,14 +17,38 @@ interface Props {
   onPreviewExpired?: () => void;
 }
 
+// Ensure YouTube API is loaded
+function loadYouTubeAPI(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined') return resolve();
+    if (window.YT?.Player) return resolve();
+    
+    window.onYouTubeIframeAPIReady = () => resolve();
+    
+    if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
+      const script = document.createElement('script');
+      script.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(script);
+    }
+  });
+}
+
 export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson, className, previewSeconds, onPreviewExpired }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<Plyr | null>(null);
   const [previewExpired, setPreviewExpired] = useState(false);
   const [showEndOverlay, setShowEndOverlay] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
+    setError(null);
+
+    // Validate YouTube ID
+    if (youtubeId && youtubeId.length !== 11) {
+      setError('Invalid YouTube ID');
+      return;
+    }
 
     // Destroy previous instance
     if (playerRef.current) {
@@ -36,63 +60,85 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
     const isYouTube = !!youtubeId;
     const source = isYouTube ? youtubeId : src;
 
-    if (!source) return;
-
-    const player = new Plyr(containerRef.current, {
-      controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
-      settings: ['captions', 'quality', 'speed', 'loop'],
-      speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
-      keyboard: { focused: true, global: false },
-      tooltips: { controls: true, seek: true },
-      youtube: {
-        noCookie: true,
-        rel: 0,
-        showinfo: 0,
-        iv_load_policy: 3,
-        modestbranding: 1,
-      },
-    });
-
-    playerRef.current = player;
-
-    // Lock body scroll when fullscreen
-    const handleEnterFullscreen = () => {
-      document.body.classList.add('plyr--fullscreen-active');
-    };
-    const handleExitFullscreen = () => {
-      document.body.classList.remove('plyr--fullscreen-active');
-    };
-
-    player.on('enterfullscreen', handleEnterFullscreen);
-    player.on('exitfullscreen', handleExitFullscreen);
-
-    // Preview limit logic
-    if (previewSeconds) {
-      const checkTime = () => {
-        if (player.currentTime >= previewSeconds) {
-          player.pause();
-          setPreviewExpired(true);
-          onPreviewExpired?.();
-          player.off('timeupdate', checkTime);
-        }
-      };
-      player.on('timeupdate', checkTime);
+    if (!source) {
+      setError('No video source provided');
+      return;
     }
 
-    // End logic
-    player.on('ended', () => {
-      setShowEndOverlay(true);
-      onEnded?.();
-    });
+    // Initialize Plyr
+    const initPlayer = async () => {
+      try {
+        if (isYouTube) {
+          await loadYouTubeAPI();
+        }
+
+        const player = new Plyr(containerRef.current!, {
+          controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
+          settings: ['captions', 'quality', 'speed', 'loop'],
+          speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
+          keyboard: { focused: true, global: false },
+          tooltips: { controls: true, seek: true },
+          youtube: {
+            noCookie: true,
+            rel: 0,
+            showinfo: 0,
+            iv_load_policy: 3,
+            modestbranding: 1,
+          },
+        });
+
+        playerRef.current = player;
+
+        // Lock body scroll when fullscreen
+        const handleEnterFullscreen = () => document.body.classList.add('plyr--fullscreen-active');
+        const handleExitFullscreen = () => document.body.classList.remove('plyr--fullscreen-active');
+
+        player.on('enterfullscreen', handleEnterFullscreen);
+        player.on('exitfullscreen', handleExitFullscreen);
+
+        // Preview limit logic
+        if (previewSeconds) {
+          const checkTime = () => {
+            if (player.currentTime >= previewSeconds) {
+              player.pause();
+              setPreviewExpired(true);
+              onPreviewExpired?.();
+              player.off('timeupdate', checkTime);
+            }
+          };
+          player.on('timeupdate', checkTime);
+        }
+
+        // End logic
+        player.on('ended', () => {
+          setShowEndOverlay(true);
+          onEnded?.();
+        });
+      } catch (err) {
+        console.error('Plyr init error:', err);
+        setError('Failed to load video player');
+      }
+    };
+
+    void initPlayer();
 
     return () => {
-      player.off('enterfullscreen', handleEnterFullscreen);
-      player.off('exitfullscreen', handleExitFullscreen);
+      if (playerRef.current) {
+        playerRef.current.destroy();
+        playerRef.current = null;
+      }
       document.body.classList.remove('plyr--fullscreen-active');
-      player.destroy();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [youtubeId, src]);
+
+  if (error) {
+    return (
+      <div className={`relative w-full aspect-video flex items-center justify-center rounded-xl bg-black ${className ?? ''}`}>
+        <p className="text-white/50 text-sm">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className={`relative w-full aspect-video overflow-hidden rounded-xl bg-black ${className ?? ''}`}>
