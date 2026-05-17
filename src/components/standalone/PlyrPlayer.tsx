@@ -4,6 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import Plyr from 'plyr';
 import 'plyr/dist/plyr.css';
 
+declare global {
+  interface Window {
+    YT: { Player: any };
+    onYouTubeIframeAPIReady: () => void;
+  }
+}
+
 type NextLesson = { title: string; href: string };
 
 interface Props {
