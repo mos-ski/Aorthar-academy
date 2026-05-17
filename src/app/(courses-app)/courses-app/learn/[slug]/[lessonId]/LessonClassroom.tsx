@@ -117,7 +117,7 @@ export default function LessonClassroom({ course, lessons, currentLessonId, user
       </header>
 
       {/* ── Body ── */}
-      <div className="flex flex-1 md:min-h-0 md:overflow-hidden gap-6 px-6 sm:px-10 py-7 max-w-[1280px] mx-auto w-full">
+      <div className="flex flex-1 md:min-h-0 md:overflow-hidden gap-4 md:gap-6 px-4 sm:px-6 md:px-10 py-4 md:py-7 max-w-[1280px] mx-auto w-full">
 
         {/* ── Left sidebar (desktop, matches CourseWatch) ── */}
         <div className="w-[320px] shrink-0 flex-col gap-3 hidden md:flex md:min-h-0">
@@ -187,7 +187,7 @@ export default function LessonClassroom({ course, lessons, currentLessonId, user
           <h1 className="text-base font-semibold text-white/90">{currentLesson.title}</h1>
 
           {/* Video player */}
-          <div className="relative rounded-xl overflow-hidden bg-black w-full">
+          <div className="relative rounded-xl overflow-hidden bg-black w-full max-w-full">
             {youtubeId ? (
               <YouTubePlayer
                 videoId={youtubeId}

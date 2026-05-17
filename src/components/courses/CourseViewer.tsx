@@ -493,7 +493,7 @@ export default function CourseViewer({
               <>
                 <div className="overflow-hidden rounded-xl border border-white/10 bg-[#121417]">
                   {videoId ? (
-                    <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+                    <div className="relative w-full aspect-video">
                       <iframe
                         className="absolute inset-0 h-full w-full"
                         src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1`}

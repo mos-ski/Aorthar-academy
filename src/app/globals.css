@@ -171,6 +171,83 @@
     @apply w-full rounded border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
   }
 
+  /* Video player responsive container */
+  .video-player-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .video-player-container iframe,
+  .video-player-container video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  /* YouTube iframe API player responsive fixes */
+  .video-player-container > div {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .video-player-container > div iframe {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+  }
+
+  /* Video player overlays - mobile responsive */
+  .video-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 10;
+  }
+
+  @media (max-width: 640px) {
+    .video-overlay {
+      padding: 0.75rem;
+      gap: 0.75rem;
+    }
+
+    .video-overlay-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+    }
+
+    .video-overlay-title {
+      font-size: 0.875rem;
+    }
+
+    .video-overlay-description {
+      font-size: 0.75rem;
+    }
+
+    .video-overlay-button {
+      padding: 0.5rem 1rem;
+      font-size: 0.75rem;
+    }
+  }
+
+  /* Video player controls - ensure touch targets are large enough on mobile */
+  @media (max-width: 640px) {
+    .video-player-container .ytp-button {
+      min-width: 44px;
+      min-height: 44px;
+    }
+  }
+
   [data-reveal] {
     --reveal-y: 28px;
     --reveal-scale: 0.985;

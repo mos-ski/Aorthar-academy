@@ -169,7 +169,7 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
       </header>
 
       {/* Body */}
-      <div className="flex flex-1 md:min-h-0 md:overflow-hidden gap-6 px-6 sm:px-10 py-7 max-w-[1280px] mx-auto w-full">
+      <div className="flex flex-1 md:min-h-0 md:overflow-hidden gap-4 md:gap-6 px-4 sm:px-6 md:px-10 py-4 md:py-7 max-w-[1280px] mx-auto w-full">
 
         {/* Left: Course Menu */}
         <div className="w-[320px] shrink-0 flex-col gap-3 hidden md:flex md:min-h-0">
@@ -327,7 +327,7 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
           </h1>
 
           {/* Video player */}
-          <div className="relative rounded-xl overflow-hidden bg-black w-full">
+          <div className="relative rounded-xl overflow-hidden bg-black w-full max-w-full">
             {videoSource ? (
               <>
                 {videoSource.type === 'youtube' ? (
