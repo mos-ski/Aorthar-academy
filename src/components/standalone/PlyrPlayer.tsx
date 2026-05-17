@@ -39,8 +39,8 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
     if (!source) return;
 
     const player = new Plyr(containerRef.current, {
-      controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'pip', 'airplay', 'fullscreen'],
-      settings: ['quality', 'speed', 'loop'],
+      controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
+      settings: ['captions', 'quality', 'speed', 'loop'],
       speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
       keyboard: { focused: true, global: false },
       tooltips: { controls: true, seek: true },
