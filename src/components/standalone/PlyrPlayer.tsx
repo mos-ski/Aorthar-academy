@@ -55,6 +55,17 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
 
     playerRef.current = player;
 
+    // Lock body scroll when fullscreen
+    const handleEnterFullscreen = () => {
+      document.body.classList.add('plyr--fullscreen-active');
+    };
+    const handleExitFullscreen = () => {
+      document.body.classList.remove('plyr--fullscreen-active');
+    };
+
+    player.on('enterfullscreen', handleEnterFullscreen);
+    player.on('exitfullscreen', handleExitFullscreen);
+
     // Preview limit logic
     if (previewSeconds) {
       const checkTime = () => {
@@ -75,6 +86,9 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
     });
 
     return () => {
+      player.off('enterfullscreen', handleEnterFullscreen);
+      player.off('exitfullscreen', handleExitFullscreen);
+      document.body.classList.remove('plyr--fullscreen-active');
       player.destroy();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
