@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Plyr from 'plyr';
 import 'plyr/dist/plyr.css';
-import { Minimize2, Maximize2 } from 'lucide-react';
 
 type NextLesson = { title: string; href: string };
 
@@ -23,7 +22,6 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
   const playerRef = useRef<Plyr | null>(null);
   const [previewExpired, setPreviewExpired] = useState(false);
   const [showEndOverlay, setShowEndOverlay] = useState(false);
-  const [isMini, setIsMini] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -83,13 +81,7 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
   }, [youtubeId, src]);
 
   return (
-    <div
-      className={`relative w-full overflow-hidden rounded-xl bg-black transition-all duration-300 ease-in-out ${
-        isMini
-          ? 'fixed bottom-4 right-4 z-50 w-80 shadow-2xl border border-white/10'
-          : `aspect-video ${className ?? ''}`
-      }`}
-    >
+    <div className={`relative w-full aspect-video overflow-hidden rounded-xl bg-black ${className ?? ''}`}>
       {/* Video or YouTube container */}
       {youtubeId ? (
         <div ref={containerRef} data-plyr-provider="youtube" data-plyr-embed-id={youtubeId} />
@@ -104,15 +96,6 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
           <source src={src} type="video/mp4" />
         </video>
       )}
-
-      {/* Mini Player Toggle Button */}
-      <button
-        onClick={() => setIsMini(!isMini)}
-        className="absolute top-3 right-3 z-30 p-2 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors backdrop-blur-sm"
-        title={isMini ? 'Exit Mini Player' : 'Mini Player'}
-      >
-        {isMini ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
-      </button>
 
       {/* Preview Expired Overlay */}
       {previewExpired && (
