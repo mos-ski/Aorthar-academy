@@ -41,20 +41,17 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileId]);
 
-  const embedUrl = `https://drive.google.com/file/d/${fileId}/preview?usp=sharing`;
+  const embedUrl = `https://drive.google.com/file/d/${fileId}/preview?usp=sharing&rm=minimal`;
 
   return (
-    <div className={`relative ${className ?? ''}`}>
-      {/* Video container - same for mobile and desktop */}
-      <div className="relative w-full aspect-video overflow-hidden rounded-xl bg-black">
-        <iframe
-          src={embedUrl}
-          allow="autoplay; fullscreen"
-          allowFullScreen
-          title="Course lesson"
-          className="absolute inset-0 w-full h-full border-none"
-        />
-      </div>
+    <div className={`relative w-full aspect-video overflow-hidden rounded-xl bg-black ${className ?? ''}`}>
+      <iframe
+        src={embedUrl}
+        allow="autoplay; fullscreen"
+        allowFullScreen
+        title="Course lesson"
+        className="absolute inset-0 w-full h-full border-none"
+      />
 
       {previewExpired && (
         <div
