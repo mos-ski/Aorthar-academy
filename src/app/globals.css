@@ -248,6 +248,46 @@
     }
   }
 
+  /* Plyr Customization - Dark Theme + Brand Color */
+  .plyr {
+    --plyr-color-main: #a7d252;
+    --plyr-video-control-color: #ffffff;
+    --plyr-video-control-color-hover: #a7d252;
+    --plyr-video-control-background-hover: rgba(167, 210, 82, 0.1);
+    --plyr-range-fill-background: #a7d252;
+    --plyr-menu-background: #18191a;
+    --plyr-menu-color: #f5f8ef;
+    --plyr-badge-background: #a7d252;
+    --plyr-badge-text-color: #121413;
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+
+  .plyr--video .plyr__control.plyr__tab-focus,
+  .plyr--video .plyr__control:hover,
+  .plyr--video .plyr__control[aria-expanded='true'] {
+    background: rgba(167, 210, 82, 0.1);
+  }
+
+  .plyr__control--overlaid {
+    background: rgba(167, 210, 82, 0.9);
+    color: #121413;
+  }
+
+  .plyr__control--overlaid:hover {
+    background: #a7d252;
+  }
+
+  /* Mobile touch targets */
+  @media (max-width: 640px) {
+    .plyr__controls {
+      padding: 8px;
+    }
+    .plyr__control {
+      padding: 8px;
+    }
+  }
+
   [data-reveal] {
     --reveal-y: 28px;
     --reveal-scale: 0.985;
