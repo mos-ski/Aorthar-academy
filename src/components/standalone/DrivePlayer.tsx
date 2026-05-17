@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import PlyrPlayer from './PlyrPlayer';
 
 type NextLesson = { title: string; href: string };
@@ -14,14 +13,17 @@ interface Props {
   onPreviewExpired?: () => void;
 }
 
+function extractYouTubeId(url: string): string | null {
+  if (!url) return null;
+  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return match?.[1] ?? null;
+}
+
 export default function DrivePlayer({ fileId, onEnded, nextLesson, className, previewSeconds, onPreviewExpired }: Props) {
-  const [error, setError] = useState(false);
+  // Check if fileId is a YouTube URL or ID
+  const youtubeId = extractYouTubeId(fileId) ?? (fileId.length === 11 ? fileId : null);
 
-  // Construct R2 URL from fileId (e.g., "lesson-1.mp4")
-  // Fallback to fileId as full URL if it already looks like a URL
-  const videoSrc = fileId.startsWith('http') ? fileId : `${process.env.NEXT_PUBLIC_R2_BUCKET_URL || ''}/${fileId}`;
-
-  if (!videoSrc) {
+  if (!youtubeId) {
     return (
       <div className={`relative w-full aspect-video flex items-center justify-center rounded-xl bg-black ${className ?? ''}`}>
         <p className="text-white/50 text-sm">Video source not configured.</p>
@@ -31,7 +33,7 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
 
   return (
     <PlyrPlayer
-      src={videoSrc}
+      youtubeId={youtubeId}
       onEnded={onEnded}
       nextLesson={nextLesson}
       className={className}

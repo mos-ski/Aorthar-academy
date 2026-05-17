@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Check, CheckCircle2, ChevronRight, Clock3, Loader2, MessageSquare, Play, Sparkles, ThumbsDown, ThumbsUp, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import PlyrPlayer from '@/components/standalone/PlyrPlayer';
 
 type Resource = { id: string; type: string; title: string; url: string; sort_order: number };
 type Lesson = {
@@ -493,16 +494,7 @@ export default function CourseViewer({
               <>
                 <div className="overflow-hidden rounded-xl border border-white/10 bg-[#121417]">
                   {videoId ? (
-                    <div className="relative w-full aspect-video">
-                      <iframe
-                        className="absolute inset-0 h-full w-full"
-                        src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1`}
-                        title={activeLesson?.title ?? 'Lesson video'}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        referrerPolicy="strict-origin-when-cross-origin"
-                        allowFullScreen
-                      />
-                    </div>
+                    <PlyrPlayer youtubeId={videoId} />
                   ) : (
                     <div className="flex h-56 items-center justify-center text-white/60">
                       <Play className="mr-2 h-6 w-6" /> No video available

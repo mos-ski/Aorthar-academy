@@ -7,7 +7,8 @@ import 'plyr/dist/plyr.css';
 type NextLesson = { title: string; href: string };
 
 interface Props {
-  src: string;
+  src?: string;
+  youtubeId?: string;
   poster?: string;
   onEnded?: () => void;
   nextLesson?: NextLesson;
@@ -16,27 +17,40 @@ interface Props {
   onPreviewExpired?: () => void;
 }
 
-export default function PlyrPlayer({ src, poster, onEnded, nextLesson, className, previewSeconds, onPreviewExpired }: Props) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson, className, previewSeconds, onPreviewExpired }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<Plyr | null>(null);
   const [previewExpired, setPreviewExpired] = useState(false);
   const [showEndOverlay, setShowEndOverlay] = useState(false);
 
   useEffect(() => {
-    if (!videoRef.current) return;
+    if (!containerRef.current) return;
 
-    // Destroy previous instance if any
+    // Destroy previous instance
     if (playerRef.current) {
       playerRef.current.destroy();
       playerRef.current = null;
     }
 
-    const player = new Plyr(videoRef.current, {
-      controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
-      settings: ['captions', 'quality', 'speed'],
+    // Determine source type
+    const isYouTube = !!youtubeId;
+    const source = isYouTube ? youtubeId : src;
+
+    if (!source) return;
+
+    const player = new Plyr(containerRef.current, {
+      controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'pip', 'airplay', 'fullscreen'],
+      settings: ['quality', 'speed', 'loop'],
       speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
       keyboard: { focused: true, global: false },
       tooltips: { controls: true, seek: true },
+      youtube: {
+        noCookie: true,
+        rel: 0,
+        showinfo: 0,
+        iv_load_policy: 3,
+        modestbranding: 1,
+      },
     });
 
     playerRef.current = player;
@@ -64,19 +78,24 @@ export default function PlyrPlayer({ src, poster, onEnded, nextLesson, className
       player.destroy();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [src]);
+  }, [youtubeId, src]);
 
   return (
     <div className={`relative w-full aspect-video overflow-hidden rounded-xl bg-black ${className ?? ''}`}>
-      <video
-        ref={videoRef}
-        className="w-full h-full"
-        poster={poster}
-        playsInline
-        crossOrigin="anonymous"
-      >
-        <source src={src} type="video/mp4" />
-      </video>
+      {/* Video or YouTube container */}
+      {youtubeId ? (
+        <div ref={containerRef} data-plyr-provider="youtube" data-plyr-embed-id={youtubeId} />
+      ) : (
+        <video
+          ref={containerRef as any}
+          className="w-full h-full"
+          poster={poster}
+          playsInline
+          crossOrigin="anonymous"
+        >
+          <source src={src} type="video/mp4" />
+        </video>
+      )}
 
       {/* Preview Expired Overlay */}
       {previewExpired && (
