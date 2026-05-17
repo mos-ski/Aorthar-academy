@@ -45,14 +45,19 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
 
   return (
     <div className={`relative ${className ?? ''}`}>
-      {/* Container clips the Drive toolbar above and extra chrome below */}
-      <div className="relative w-full overflow-hidden rounded-xl" style={{ paddingTop: 'calc(56.25% - 8px)' }}>
-        {/* 
-          Drive toolbar is ~44px at top, bottom bar ~40px.
-          Shift iframe up 44px to push toolbar out of view.
-          Add 44px top + 40px bottom = 84px total extra height.
-          Net visible height matches the container.
-        */}
+      {/* Mobile: show Drive player with native controls */}
+      <div className="md:hidden relative w-full aspect-video overflow-hidden rounded-xl">
+        <iframe
+          src={embedUrl}
+          allow="autoplay"
+          allowFullScreen
+          title="Course lesson"
+          className="absolute inset-0 w-full h-full border-none"
+        />
+      </div>
+
+      {/* Desktop: clip the Drive toolbar and extra chrome */}
+      <div className="hidden md:block relative w-full overflow-hidden rounded-xl" style={{ paddingTop: 'calc(56.25% - 8px)' }}>
         <iframe
           src={embedUrl}
           allow="autoplay"
@@ -67,15 +72,13 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
         />
       </div>
 
-      {/* Invisible blocker over the top 44px — prevents any click on Drive toolbar area */}
+      {/* Desktop invisible blockers */}
       <div
-        className="absolute left-0 right-0 z-10 rounded-t-xl pointer-events-none"
+        className="hidden md:block absolute left-0 right-0 z-10 rounded-t-xl pointer-events-none"
         style={{ top: 0, height: '44px' }}
       />
-
-      {/* Invisible blocker over bottom-right corner — hides the pop-out/open-in-new-window icon */}
       <div
-        className="absolute bottom-0 right-0 z-10 pointer-events-none"
+        className="hidden md:block absolute bottom-0 right-0 z-10 pointer-events-none"
         style={{ width: '48px', height: '36px' }}
       />
 
