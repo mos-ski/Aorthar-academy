@@ -103,6 +103,15 @@ function getSubdomainRewrite(request: NextRequest): NextResponse | null {
   // bootcamp.aorthar.com (and legacy courses.aorthar.com) → /courses-app/*
   if (product === 'bootcamp') {
     if (isAuthPassthrough(pathname)) return null;
+    if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
+      return NextResponse.redirect(new URL('/courses-app/learn', request.url));
+    }
+    if (pathname === '/courses' || pathname.startsWith('/courses/')) {
+      return NextResponse.redirect(new URL('/courses-app', request.url));
+    }
+    if (pathname === '/classroom' || pathname.startsWith('/classroom/')) {
+      return NextResponse.redirect(new URL('/courses-app/learn', request.url));
+    }
     const url = request.nextUrl.clone();
     const cleanPath = pathname.startsWith('/courses-app')
       ? pathname.slice('/courses-app'.length) || '/'
@@ -222,19 +231,6 @@ export async function middleware(request: NextRequest) {
   const product = getProductFromHost(hostname);
   const isBootcampSubdomain = product === 'bootcamp';
   const skipOnboarding = product !== null && (SKIP_ONBOARDING_PRODUCTS as readonly string[]).includes(product);
-
-  // Bootcamp subdomain: redirect university paths to bootcamp equivalents
-  if (isBootcampSubdomain) {
-    if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) {
-      return NextResponse.redirect(new URL('/courses-app/learn', request.url));
-    }
-    if (pathname === '/courses' || pathname.startsWith('/courses/')) {
-      return NextResponse.redirect(new URL('/courses-app', request.url));
-    }
-    if (pathname === '/classroom' || pathname.startsWith('/classroom/')) {
-      return NextResponse.redirect(new URL('/courses-app/learn', request.url));
-    }
-  }
 
   // Redirect logged-in users away from auth pages
   if (user && isAuthRoute(pathname)) {
