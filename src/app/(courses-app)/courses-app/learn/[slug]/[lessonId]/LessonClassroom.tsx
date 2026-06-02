@@ -271,45 +271,36 @@ export default function LessonClassroom({ course, lessons, currentLessonId, user
           )}
 
           {/* Transcript */}
-          {currentLesson?.content && (
-            <div className="border-t" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
-              <button
-                onClick={() => setTranscriptOpen((o) => !o)}
-                className="w-full flex items-center justify-between py-4 text-left group"
-              >
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18M3 6h18M3 18h18" />
-                  </svg>
-                  <span className="text-xs font-semibold text-white/40 uppercase tracking-widest group-hover:text-white/60 transition-colors">
-                    Transcript
-                  </span>
-                </div>
-                <svg
-                  className="w-4 h-4 text-white/30 transition-transform"
-                  style={{ transform: transcriptOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          <div className="border-t" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+            <button
+              onClick={() => setTranscriptOpen((o) => !o)}
+              className="w-full flex items-center justify-between py-4 text-left group"
+            >
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18M3 6h18M3 18h18" />
                 </svg>
-              </button>
+                <span className="text-xs font-semibold text-white/40 uppercase tracking-widest group-hover:text-white/60 transition-colors">
+                  Transcript
+                </span>
+              </div>
+              <svg
+                className="w-4 h-4 text-white/30 transition-transform"
+                style={{ transform: transcriptOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
 
-              {transcriptOpen && (
-                <div
-                  className="pb-6 text-sm leading-7 text-white/50 space-y-3"
-                  style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
-                >
-                  <p className="pt-4 text-xs text-white/25 italic">
-                    Auto-generated from lesson notes — enable CC on the video for live captions.
-                  </p>
-                  <div
-                    className="prose prose-sm prose-invert max-w-none text-white/50"
-                    dangerouslySetInnerHTML={{ __html: currentLesson.content }}
-                  />
-                </div>
-              )}
-            </div>
-          )}
+            {transcriptOpen && (
+              <div className="pb-6 pt-2">
+                <p className="text-sm text-white/30 italic">
+                  Transcript not available for this lesson. Enable CC on the video player to follow along with captions.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

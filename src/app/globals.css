@@ -273,6 +273,12 @@
     height: 100% !important;
   }
 
+  /* Plyr hides the CC button when it can't enumerate YouTube caption tracks.
+     Force it visible — cc_load_policy:1 ensures YouTube has tracks loaded. */
+  .plyr--youtube .plyr__control[data-plyr="captions"] {
+    display: inline-flex !important;
+  }
+
   /* Lock body scroll when Plyr is fullscreen */
   .plyr--fullscreen {
     position: fixed !important;
