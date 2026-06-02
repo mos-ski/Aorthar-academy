@@ -263,11 +263,14 @@
     overflow: hidden;
   }
 
-  /* Fix YouTube embed: Plyr's 240%-height oversized-iframe trick shifts the video
-     too far up in this layout, clipping the top of the frame. Override to natural 16:9. */
-  .plyr--youtube .plyr__video-embed > .plyr__video-embed__container {
-    padding-bottom: 56.25% !important;
-    transform: none !important;
+  /* Force the YouTube iframe (created by the YT IFrame API) to fill its 16:9
+     wrapper, overriding any inline width/height the YT API sets on the iframe. */
+  .plyr--youtube iframe {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
   }
 
   /* Lock body scroll when Plyr is fullscreen */
