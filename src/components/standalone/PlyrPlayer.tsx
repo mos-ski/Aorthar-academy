@@ -85,12 +85,15 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
           speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
           keyboard: { focused: true, global: false },
           tooltips: { controls: true, seek: true },
+          captions: { active: false, language: 'auto', update: true },
           youtube: {
             noCookie: true,
             rel: 0,
             showinfo: 0,
             iv_load_policy: 3,
             modestbranding: 1,
+            cc_load_policy: 1,
+            cc_lang_pref: 'en',
           },
         });
 
