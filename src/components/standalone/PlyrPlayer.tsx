@@ -112,10 +112,11 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
               const isOn = btn?.getAttribute('aria-pressed') === 'true';
               const ytPlayer = (playerRef.current as any)?.embed;
               if (isOn) {
-                ytPlayer?.loadModule?.('captions');
+                // Enable captions via documented setOption API
                 ytPlayer?.setOption?.('captions', 'track', { languageCode: 'en' });
               } else {
-                ytPlayer?.unloadModule?.('captions');
+                // Disable: set empty track object (documented YouTube IFrame API)
+                ytPlayer?.setOption?.('captions', 'track', {});
               }
             }, 0);
           };
