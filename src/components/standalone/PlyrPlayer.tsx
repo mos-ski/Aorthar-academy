@@ -43,6 +43,7 @@ function loadYouTubeAPI(): Promise<void> {
 export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson, className, previewSeconds, onPreviewExpired }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<Plyr | null>(null);
+  const captionListenerRef = useRef<((e: Event) => void) | null>(null);
   const [previewExpired, setPreviewExpired] = useState(false);
   const [showEndOverlay, setShowEndOverlay] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,6 +100,29 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
 
         playerRef.current = player;
 
+        // Plyr's toggleCaptions() doesn't call the YouTube IFrame API — it only
+        // updates the button UI. Wire the CC button up to the API ourselves so
+        // clicking it actually enables/disables YouTube captions.
+        if (isYouTube && containerRef.current) {
+          const handleCaptionClick = (e: Event) => {
+            if (!(e.target as HTMLElement).closest?.('[data-plyr="captions"]')) return;
+            // Let Plyr's delegation run first, then read the updated aria-pressed
+            setTimeout(() => {
+              const btn = containerRef.current?.querySelector('[data-plyr="captions"]');
+              const isOn = btn?.getAttribute('aria-pressed') === 'true';
+              const ytPlayer = (playerRef.current as any)?.embed;
+              if (isOn) {
+                ytPlayer?.loadModule?.('captions');
+                ytPlayer?.setOption?.('captions', 'track', { languageCode: 'en' });
+              } else {
+                ytPlayer?.unloadModule?.('captions');
+              }
+            }, 0);
+          };
+          captionListenerRef.current = handleCaptionClick;
+          containerRef.current.addEventListener('click', handleCaptionClick);
+        }
+
         // Lock body scroll when fullscreen
         const handleEnterFullscreen = () => document.body.classList.add('plyr--fullscreen-active');
         const handleExitFullscreen = () => document.body.classList.remove('plyr--fullscreen-active');
@@ -133,6 +157,10 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
     void initPlayer();
 
     return () => {
+      if (captionListenerRef.current && containerRef.current) {
+        containerRef.current.removeEventListener('click', captionListenerRef.current);
+        captionListenerRef.current = null;
+      }
       if (playerRef.current) {
         playerRef.current.destroy();
         playerRef.current = null;
