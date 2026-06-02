@@ -100,28 +100,40 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
 
         playerRef.current = player;
 
-        // Plyr's toggleCaptions() doesn't call the YouTube IFrame API — it only
-        // updates the button UI. Wire the CC button up to the API ourselves so
-        // clicking it actually enables/disables YouTube captions.
+        // Plyr's toggleCaptions() never calls the YouTube IFrame API — we own
+        // the toggle completely. Capture phase so we intercept before Plyr's
+        // bubble-phase delegation runs and double-toggles the UI state.
         if (isYouTube && containerRef.current) {
+          let captionsEnabled = false;
+
           const handleCaptionClick = (e: Event) => {
             if (!(e.target as HTMLElement).closest?.('[data-plyr="captions"]')) return;
-            // Let Plyr's delegation run first, then read the updated aria-pressed
-            setTimeout(() => {
-              const btn = containerRef.current?.querySelector('[data-plyr="captions"]');
-              const isOn = btn?.getAttribute('aria-pressed') === 'true';
-              const ytPlayer = (playerRef.current as any)?.embed;
-              if (isOn) {
-                // Enable captions via documented setOption API
-                ytPlayer?.setOption?.('captions', 'track', { languageCode: 'en' });
-              } else {
-                // Disable: set empty track object (documented YouTube IFrame API)
-                ytPlayer?.setOption?.('captions', 'track', {});
-              }
-            }, 0);
+            // Stop Plyr's bubble-phase handler from also firing
+            e.stopImmediatePropagation();
+
+            captionsEnabled = !captionsEnabled;
+            const ytPlayer = (playerRef.current as any)?.embed;
+
+            if (captionsEnabled) {
+              ytPlayer?.loadModule?.('captions');
+              ytPlayer?.setOption?.('captions', 'track', { languageCode: 'en' });
+              ytPlayer?.setOption?.('captions', 'fontSize', -1); // smaller caption text
+            } else {
+              ytPlayer?.setOption?.('captions', 'track', {});
+              ytPlayer?.unloadModule?.('captions');
+            }
+
+            // Keep Plyr button in sync
+            const btn = containerRef.current?.querySelector('[data-plyr="captions"]') as HTMLElement | null;
+            if (btn) {
+              btn.setAttribute('aria-pressed', String(captionsEnabled));
+              btn.classList.toggle('plyr__control--pressed', captionsEnabled);
+            }
           };
+
           captionListenerRef.current = handleCaptionClick;
-          containerRef.current.addEventListener('click', handleCaptionClick);
+          // Use capture:true so our handler fires before Plyr's bubble handler
+          containerRef.current.addEventListener('click', handleCaptionClick, true);
         }
 
         // Lock body scroll when fullscreen
@@ -159,7 +171,7 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
 
     return () => {
       if (captionListenerRef.current && containerRef.current) {
-        containerRef.current.removeEventListener('click', captionListenerRef.current);
+        containerRef.current.removeEventListener('click', captionListenerRef.current, true);
         captionListenerRef.current = null;
       }
       if (playerRef.current) {
