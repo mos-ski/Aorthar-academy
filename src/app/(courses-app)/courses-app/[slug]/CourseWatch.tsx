@@ -321,13 +321,13 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
         </div>
 
         {/* Right: Video + title */}
-        <div className="flex-1 flex flex-col gap-4 min-w-0 md:h-full md:overflow-hidden md:sticky md:top-0 self-start">
+        <div className="flex-1 flex flex-col gap-4 min-w-0 md:h-full md:overflow-y-auto md:sticky md:top-0 self-start">
           <h1 className="text-base font-semibold text-white/90">
             {activeLesson?.title ?? course.title}
           </h1>
 
           {/* Video player */}
-          <div className="relative rounded-xl overflow-hidden bg-black w-full max-w-full">
+          <div className="relative rounded-xl overflow-hidden bg-black w-full max-w-full shrink-0">
             {videoSource ? (
               <>
                 {videoSource.type === 'youtube' ? (
