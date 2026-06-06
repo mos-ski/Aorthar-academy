@@ -33,6 +33,7 @@ interface Lesson {
   youtubeUrl: string;
   content: string | null;
   completed: boolean;
+  scheduled?: boolean;
 }
 
 interface Course {
@@ -58,17 +59,18 @@ export default function LessonClassroom({ course, lessons, currentLessonId, user
   const [isPending, startTransition] = useTransition();
   const [transcriptOpen, setTranscriptOpen] = useState(false);
 
-  const currentLesson = lessons.find((l) => l.id === currentLessonId) ?? lessons?.[0];
-  const currentIndex = currentLesson ? lessons.findIndex((l) => l.id === currentLesson.id) : -1;
-  const nextLesson = lessons[currentIndex + 1] ?? null;
-  const prevLesson = currentIndex > 0 ? lessons[currentIndex - 1] : null;
+  const publishedLessons = lessons.filter((l) => !l.scheduled);
+  const currentLesson = publishedLessons.find((l) => l.id === currentLessonId) ?? publishedLessons[0];
+  const currentIndex = currentLesson ? publishedLessons.findIndex((l) => l.id === currentLesson.id) : -1;
+  const nextLesson = publishedLessons[currentIndex + 1] ?? null;
+  const prevLesson = currentIndex > 0 ? publishedLessons[currentIndex - 1] : null;
 
   const videoUrl = currentLesson?.youtubeUrl ?? '';
   const youtubeId = videoUrl ? extractYouTubeId(videoUrl) : null;
   const driveId = !youtubeId && videoUrl ? extractDriveId(videoUrl) : null;
 
   const completedCount = completedIds.size;
-  const totalCount = lessons.length;
+  const totalCount = publishedLessons.length;
   const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   async function markComplete(lessonId: string) {
@@ -132,6 +134,22 @@ export default function LessonClassroom({ course, lessons, currentLessonId, user
               {lessons.map((lesson) => {
                 const isActive = lesson.id === currentLessonId;
                 const isDone = completedIds.has(lesson.id);
+                const isScheduled = lesson.scheduled;
+
+                if (isScheduled) {
+                  return (
+                    <li key={lesson.id} className="border-b last:border-b-0" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                      <div className="w-full flex items-center justify-between px-5 py-3.5 cursor-default">
+                        <span className="text-sm leading-snug" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                          {lesson.sortOrder}. {lesson.title}
+                        </span>
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0 ml-3" style={{ backgroundColor: 'rgba(99,130,255,0.15)', color: 'rgba(130,160,255,0.8)' }}>
+                          Coming Soon
+                        </span>
+                      </div>
+                    </li>
+                  );
+                }
 
                 return (
                   <li key={lesson.id} className="border-b last:border-b-0" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
@@ -311,6 +329,28 @@ export default function LessonClassroom({ course, lessons, currentLessonId, user
           {lessons.map((lesson) => {
             const isActive = lesson.id === currentLessonId;
             const isDone = completedIds.has(lesson.id);
+            const isScheduled = lesson.scheduled;
+
+            if (isScheduled) {
+              return (
+                <div
+                  key={lesson.id}
+                  className="w-full flex items-center gap-3 px-5 py-3.5 border-b last:border-b-0"
+                  style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+                >
+                  <div className="w-5 h-5 rounded-full shrink-0 border border-white/10 flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'rgba(130,160,255,0.5)' }} />
+                  </div>
+                  <span className="flex-1 text-sm leading-snug" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                    {lesson.sortOrder}. {lesson.title}
+                  </span>
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0" style={{ backgroundColor: 'rgba(99,130,255,0.15)', color: 'rgba(130,160,255,0.8)' }}>
+                    Coming Soon
+                  </span>
+                </div>
+              );
+            }
+
             return (
               <button
                 key={lesson.id}

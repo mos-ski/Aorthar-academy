@@ -15,6 +15,7 @@ interface Lesson {
   content: string | null;
   sort_order: number;
   is_published: boolean;
+  is_scheduled: boolean;
 }
 
 interface Course {
@@ -706,11 +707,25 @@ function LessonRow({
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              onClick={() => onUpdate({ is_published: !lesson.is_published })}
+              onClick={() => {
+                if (lesson.is_published) {
+                  onUpdate({ is_published: false, is_scheduled: false });
+                } else if (lesson.is_scheduled) {
+                  onUpdate({ is_published: true, is_scheduled: false });
+                } else {
+                  onUpdate({ is_published: false, is_scheduled: true });
+                }
+              }}
               disabled={saving}
-              className={`text-xs px-2 py-1 rounded border ${lesson.is_published ? 'border-green-500/40 text-green-600' : 'border-yellow-500/40 text-yellow-600'}`}
+              className={`text-xs px-2 py-1 rounded border ${
+                lesson.is_published
+                  ? 'border-green-500/40 text-green-600'
+                  : lesson.is_scheduled
+                    ? 'border-blue-500/40 text-blue-500'
+                    : 'border-yellow-500/40 text-yellow-600'
+              }`}
             >
-              {lesson.is_published ? 'Published' : 'Draft'}
+              {lesson.is_published ? 'Published' : lesson.is_scheduled ? 'Scheduled' : 'Draft'}
             </button>
             <button type="button" onClick={() => setEditing(true)} className="text-xs text-muted-foreground hover:text-foreground">Edit</button>
             <button type="button" onClick={onDelete} disabled={saving} className="text-xs text-red-500 hover:text-red-600">Delete</button>

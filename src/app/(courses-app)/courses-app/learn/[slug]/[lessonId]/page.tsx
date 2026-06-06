@@ -33,37 +33,45 @@ export default async function LessonPage({ params }: Props) {
 
   if (!purchase) redirect(`/courses-app/${slug}`);
 
-  // Load all published lessons
-  const { data: lessons } = await supabase
+  // Load published and scheduled lessons
+  const { data: allLessons } = await supabase
     .from('standalone_lessons')
-    .select('id, title, sort_order, youtube_url, content')
+    .select('id, title, sort_order, youtube_url, content, is_published, is_scheduled')
     .eq('course_id', course.id)
-    .eq('is_published', true)
+    .or('is_published.eq.true,is_scheduled.eq.true')
     .order('sort_order', { ascending: true });
 
-  const lesson = (lessons ?? []).find((l) => l.id === lessonId);
-  if (!lesson) notFound();
+  const publishedLessons = (allLessons ?? []).filter((l) => l.is_published);
 
-  // Load completed lessons for this user
-  const lessonIds = (lessons ?? []).map((l) => l.id);
+  // If requested lesson is scheduled (not published), redirect to first published lesson
+  const isRequestedLessonScheduled = (allLessons ?? []).find((l) => l.id === lessonId && l.is_scheduled && !l.is_published);
+  if (isRequestedLessonScheduled || !publishedLessons.find((l) => l.id === lessonId)) {
+    const first = publishedLessons[0];
+    if (first) redirect(`/courses-app/learn/${slug}/${first.id}`);
+    else redirect(`/courses-app/${slug}`);
+  }
+
+  // Load completed lessons for this user (only published lessons count)
+  const publishedIds = publishedLessons.map((l) => l.id);
   const { data: progress } = await supabase
     .from('standalone_lesson_progress')
     .select('lesson_id')
     .eq('user_id', user.id)
-    .in('lesson_id', lessonIds.length ? lessonIds : ['00000000-0000-0000-0000-000000000000']);
+    .in('lesson_id', publishedIds.length ? publishedIds : ['00000000-0000-0000-0000-000000000000']);
 
   const completedIds = new Set((progress ?? []).map((p) => p.lesson_id));
 
   return (
     <LessonClassroom
       course={{ id: course.id, slug: course.slug, title: course.title }}
-      lessons={(lessons ?? []).map((l) => ({
+      lessons={(allLessons ?? []).map((l) => ({
         id: l.id,
         title: l.title,
         sortOrder: l.sort_order,
         youtubeUrl: l.youtube_url,
         content: l.content,
         completed: completedIds.has(l.id),
+        scheduled: l.is_scheduled && !l.is_published,
       }))}
       currentLessonId={lessonId}
       userEmail={user.email ?? ''}
