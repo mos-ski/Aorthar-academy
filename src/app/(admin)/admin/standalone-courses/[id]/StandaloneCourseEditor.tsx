@@ -107,6 +107,8 @@ export default function StandaloneCourseEditor({
   const [lessonSaving, setLessonSaving] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkSaving, setBulkSaving] = useState(false);
 
   const selectedSaleType = saleTypeOptions.find((option) => option.value === fields.sale_type) ?? saleTypeOptions[2];
   const lessonsAreExpected = fields.sale_type === 'recorded_course';
@@ -229,6 +231,49 @@ export default function StandaloneCourseEditor({
     } finally {
       setLessonSaving(null);
     }
+  }
+
+  async function bulkSetStatus(status: 'draft' | 'scheduled' | 'published'): Promise<void> {
+    if (selectedIds.size === 0) return;
+    setBulkSaving(true);
+    const patch =
+      status === 'published'
+        ? { is_published: true, is_scheduled: false }
+        : status === 'scheduled'
+          ? { is_published: false, is_scheduled: true }
+          : { is_published: false, is_scheduled: false };
+    try {
+      await Promise.all(
+        [...selectedIds].map((id) =>
+          fetch(`/api/admin/standalone-courses/${course.id}/lessons/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(patch),
+          }),
+        ),
+      );
+      setLessons((prev) =>
+        prev.map((l) => (selectedIds.has(l.id) ? { ...l, ...patch } : l)),
+      );
+      setSelectedIds(new Set());
+      toast.success(`${selectedIds.size} lesson${selectedIds.size !== 1 ? 's' : ''} set to ${status}`);
+    } finally {
+      setBulkSaving(false);
+    }
+  }
+
+  function toggleSelect(id: string): void {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll(): void {
+    setSelectedIds((prev) =>
+      prev.size === lessons.length ? new Set() : new Set(lessons.map((l) => l.id)),
+    );
   }
 
   async function deleteCourse(): Promise<void> {
@@ -433,13 +478,68 @@ export default function StandaloneCourseEditor({
       {/* Lessons */}
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold">Lessons ({lessons.length})</h2>
+          <div className="flex items-center gap-3">
+            {lessons.length > 0 && (
+              <input
+                type="checkbox"
+                checked={selectedIds.size === lessons.length && lessons.length > 0}
+                ref={(el) => { if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < lessons.length; }}
+                onChange={toggleSelectAll}
+                className="h-4 w-4 cursor-pointer"
+                title="Select all"
+              />
+            )}
+            <h2 className="text-base font-semibold">
+              Lessons ({lessons.length})
+              {selectedIds.size > 0 && (
+                <span className="ml-2 text-sm font-normal text-muted-foreground">{selectedIds.size} selected</span>
+              )}
+            </h2>
+          </div>
           {lessonsAreExpected && (
             <button type="button" onClick={() => setAddingLesson(true)} className="text-sm px-3 py-1.5 rounded border hover:bg-muted">
               + Add Lesson
             </button>
           )}
         </div>
+
+        {/* Bulk action bar */}
+        {selectedIds.size > 0 && (
+          <div className="mb-4 flex items-center gap-2 rounded-lg border bg-muted/30 px-4 py-2.5">
+            <span className="text-xs text-muted-foreground mr-1">Set status:</span>
+            <button
+              type="button"
+              disabled={bulkSaving}
+              onClick={() => bulkSetStatus('draft')}
+              className="text-xs px-2.5 py-1 rounded border border-yellow-500/40 text-yellow-600 hover:bg-yellow-500/10 disabled:opacity-50"
+            >
+              Draft
+            </button>
+            <button
+              type="button"
+              disabled={bulkSaving}
+              onClick={() => bulkSetStatus('scheduled')}
+              className="text-xs px-2.5 py-1 rounded border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 disabled:opacity-50"
+            >
+              Scheduled
+            </button>
+            <button
+              type="button"
+              disabled={bulkSaving}
+              onClick={() => bulkSetStatus('published')}
+              className="text-xs px-2.5 py-1 rounded border border-green-500/40 text-green-600 hover:bg-green-500/10 disabled:opacity-50"
+            >
+              Published
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds(new Set())}
+              className="ml-auto text-xs text-muted-foreground hover:text-foreground"
+            >
+              Clear
+            </button>
+          </div>
+        )}
 
         {!lessonsAreExpected && (
           <div className="mb-4 rounded-lg border bg-muted/20 p-4">
@@ -495,6 +595,8 @@ export default function StandaloneCourseEditor({
                 lesson={lesson}
                 index={i}
                 saving={lessonSaving === lesson.id}
+                selected={selectedIds.has(lesson.id)}
+                onToggleSelect={() => toggleSelect(lesson.id)}
                 onUpdate={(patch) => updateLesson(lesson.id, patch)}
                 onDelete={() => deleteLesson(lesson.id)}
               />
@@ -646,12 +748,16 @@ function LessonRow({
   lesson,
   index,
   saving,
+  selected,
+  onToggleSelect,
   onUpdate,
   onDelete,
 }: {
   lesson: Lesson;
   index: number;
   saving: boolean;
+  selected: boolean;
+  onToggleSelect: () => void;
   onUpdate: (patch: Partial<Lesson>) => void;
   onDelete: () => void;
 }): React.ReactElement {
@@ -694,6 +800,12 @@ function LessonRow({
         </div>
       ) : (
         <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={onToggleSelect}
+            className="h-4 w-4 cursor-pointer shrink-0"
+          />
           <span className="text-xs text-muted-foreground w-6 shrink-0">{index + 1}</span>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{lesson.title}</p>
