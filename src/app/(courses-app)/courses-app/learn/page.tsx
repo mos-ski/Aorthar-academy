@@ -37,17 +37,25 @@ export default async function MyCoursesPage() {
   const allCourseIds = [...new Set([...purchasedIds, ...(allCourses ?? []).map((c) => c.id)])];
   const { data: lessonCounts } = await supabase
     .from('standalone_lessons')
-    .select('id, course_id')
+    .select('id, course_id, is_published, is_scheduled')
     .in('course_id', allCourseIds.length ? allCourseIds : ['00000000-0000-0000-0000-000000000000'])
-    .eq('is_published', true);
+    .or('is_published.eq.true,is_scheduled.eq.true');
+
+  const publishedLessonCounts = (lessonCounts ?? []).filter((l) => l.is_published);
+  const scheduledLessonCounts = (lessonCounts ?? []).filter((l) => l.is_scheduled && !l.is_published);
 
   const countMap: Record<string, number> = {};
-  (lessonCounts ?? []).forEach((l) => {
+  publishedLessonCounts.forEach((l) => {
     countMap[l.course_id] = (countMap[l.course_id] ?? 0) + 1;
   });
 
-  // ── Progress for purchased courses ──
-  const purchasedLessonIds = (lessonCounts ?? []).filter((l) => purchasedIds.includes(l.course_id)).map((l) => l.id);
+  const scheduledCountMap: Record<string, number> = {};
+  scheduledLessonCounts.forEach((l) => {
+    scheduledCountMap[l.course_id] = (scheduledCountMap[l.course_id] ?? 0) + 1;
+  });
+
+  // ── Progress for purchased courses (published lessons only) ──
+  const purchasedLessonIds = publishedLessonCounts.filter((l) => purchasedIds.includes(l.course_id)).map((l) => l.id);
   const { data: progress } = await supabase
     .from('standalone_lesson_progress')
     .select('lesson_id')
@@ -58,7 +66,7 @@ export default async function MyCoursesPage() {
 
   const totalMap: Record<string, number> = {};
   const completedMap: Record<string, number> = {};
-  (lessonCounts ?? []).forEach((l) => {
+  publishedLessonCounts.forEach((l) => {
     totalMap[l.course_id] = (totalMap[l.course_id] ?? 0) + 1;
     if (completedSet.has(l.id)) {
       completedMap[l.course_id] = (completedMap[l.course_id] ?? 0) + 1;
@@ -123,6 +131,7 @@ export default async function MyCoursesPage() {
               if (!course) return null;
               const total = totalMap[course.id] ?? 0;
               const completed = completedMap[course.id] ?? 0;
+              const scheduled = scheduledCountMap[course.id] ?? 0;
               const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
               const firstLesson = firstLessonMap[course.id];
 
@@ -151,6 +160,11 @@ export default async function MyCoursesPage() {
                       </div>
                       <span className="text-xs text-white/40 shrink-0">{completed}/{total} lessons</span>
                     </div>
+                    {scheduled > 0 && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full mt-1 w-fit" style={{ backgroundColor: 'rgba(99,130,255,0.12)', color: 'rgba(150,175,255,0.9)' }}>
+                        <span>⏳</span> {scheduled} coming soon
+                      </span>
+                    )}
                   </div>
                   <div className="flex sm:flex-col items-center sm:items-end justify-end gap-2 shrink-0 self-center">
                     <span className="text-sm font-semibold px-4 py-2 text-white whitespace-nowrap" style={{ backgroundColor: '#08694a' }}>
@@ -191,7 +205,12 @@ export default async function MyCoursesPage() {
                     <h3 className="text-sm font-semibold text-white leading-snug">{course.title}</h3>
                     <p className="text-xs text-white/40 line-clamp-2 flex-1">{course.description}</p>
                     <div className="flex items-center justify-between mt-auto pt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                      <span className="text-xs text-white/40">{countMap[course.id] ?? 0} lessons</span>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-white/40">{countMap[course.id] ?? 0} lessons</span>
+                        {(scheduledCountMap[course.id] ?? 0) > 0 && (
+                          <span className="text-[10px]" style={{ color: 'rgba(150,175,255,0.7)' }}>+ {scheduledCountMap[course.id]} coming soon</span>
+                        )}
+                      </div>
                       <span className="text-sm font-bold" style={{ color: '#a7d252' }}>₦{course.price_ngn.toLocaleString()}</span>
                     </div>
                   </div>
