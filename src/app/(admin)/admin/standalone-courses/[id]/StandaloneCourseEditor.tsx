@@ -103,7 +103,7 @@ export default function StandaloneCourseEditor({
 
   const [lessons, setLessons] = useState<Lesson[]>(initialLessons);
   const [addingLesson, setAddingLesson] = useState(false);
-  const [newLesson, setNewLesson] = useState({ title: '', youtube_url: '', content: '' });
+  const [newLesson, setNewLesson] = useState({ title: '', youtube_url: '', content: '', status: 'draft' as 'draft' | 'scheduled' | 'published' });
   const [lessonSaving, setLessonSaving] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -186,6 +186,8 @@ export default function StandaloneCourseEditor({
           youtube_url: newLesson.youtube_url,
           content: newLesson.content || null,
           sort_order: lessons.length + 1,
+          is_published: newLesson.status === 'published',
+          is_scheduled: newLesson.status === 'scheduled',
         }),
       });
       if (!res.ok) {
@@ -195,7 +197,7 @@ export default function StandaloneCourseEditor({
       }
       const created: Lesson = await res.json();
       setLessons((prev) => [...prev, created]);
-      setNewLesson({ title: '', youtube_url: '', content: '' });
+      setNewLesson({ title: '', youtube_url: '', content: '', status: 'draft' });
       setAddingLesson(false);
       toast.success('Lesson added');
     } finally {
@@ -519,12 +521,19 @@ export default function StandaloneCourseEditor({
         {/* Add lesson form */}
         {addingLesson && lessonsAreExpected && (
           <form onSubmit={addLesson} className="mb-4 p-4 rounded-lg border bg-muted/20 flex flex-col gap-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <Field label="Lesson Title">
                 <input className="input" value={newLesson.title} onChange={(e) => setNewLesson((n) => ({ ...n, title: e.target.value }))} required placeholder="Welcome!" />
               </Field>
               <Field label="YouTube URL">
                 <input className="input" value={newLesson.youtube_url} onChange={(e) => setNewLesson((n) => ({ ...n, youtube_url: e.target.value }))} placeholder="https://youtu.be/…" />
+              </Field>
+              <Field label="Status">
+                <select className="input" value={newLesson.status} onChange={(e) => setNewLesson((n) => ({ ...n, status: e.target.value as 'draft' | 'scheduled' | 'published' }))}>
+                  <option value="draft">Draft</option>
+                  <option value="scheduled">Scheduled</option>
+                  <option value="published">Published</option>
+                </select>
               </Field>
             </div>
             <Field label="Notes / Summary">
