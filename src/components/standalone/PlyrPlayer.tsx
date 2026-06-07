@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Plyr from 'plyr';
+import type Plyr from 'plyr';
 import 'plyr/dist/plyr.css';
 
 declare global {
@@ -80,6 +80,7 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
           await loadYouTubeAPI();
         }
 
+        const { default: Plyr } = await import('plyr');
         const player = new Plyr(containerRef.current!, {
           controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
           settings: ['captions', 'quality', 'speed', 'loop'],
