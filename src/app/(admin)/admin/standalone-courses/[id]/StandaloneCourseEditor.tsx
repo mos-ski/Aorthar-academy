@@ -495,51 +495,13 @@ export default function StandaloneCourseEditor({
                 <span className="ml-2 text-sm font-normal text-muted-foreground">{selectedIds.size} selected</span>
               )}
             </h2>
-          </div>
-          {lessonsAreExpected && (
-            <button type="button" onClick={() => setAddingLesson(true)} className="text-sm px-3 py-1.5 rounded border hover:bg-muted">
-              + Add Lesson
-            </button>
-          )}
         </div>
-
-        {/* Bulk action bar */}
-        {selectedIds.size > 0 && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg border bg-muted/30 px-4 py-2.5">
-            <span className="text-xs text-muted-foreground mr-1">Set status:</span>
-            <button
-              type="button"
-              disabled={bulkSaving}
-              onClick={() => bulkSetStatus('draft')}
-              className="text-xs px-2.5 py-1 rounded border border-yellow-500/40 text-yellow-600 hover:bg-yellow-500/10 disabled:opacity-50"
-            >
-              Draft
-            </button>
-            <button
-              type="button"
-              disabled={bulkSaving}
-              onClick={() => bulkSetStatus('scheduled')}
-              className="text-xs px-2.5 py-1 rounded border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 disabled:opacity-50"
-            >
-              Scheduled
-            </button>
-            <button
-              type="button"
-              disabled={bulkSaving}
-              onClick={() => bulkSetStatus('published')}
-              className="text-xs px-2.5 py-1 rounded border border-green-500/40 text-green-600 hover:bg-green-500/10 disabled:opacity-50"
-            >
-              Published
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedIds(new Set())}
-              className="ml-auto text-xs text-muted-foreground hover:text-foreground"
-            >
-              Clear
-            </button>
-          </div>
+        {lessonsAreExpected && (
+          <button type="button" onClick={() => setAddingLesson(true)} className="text-sm px-3 py-1.5 rounded border hover:bg-muted">
+            + Add Lesson
+          </button>
         )}
+      </div>
 
         {!lessonsAreExpected && (
           <div className="mb-4 rounded-lg border bg-muted/20 p-4">
@@ -601,6 +563,44 @@ export default function StandaloneCourseEditor({
                 onDelete={() => deleteLesson(lesson.id)}
               />
             ))}
+          </div>
+        )}
+
+        {/* Bulk action bar - moved below lesson list for easy access */}
+        {selectedIds.size > 0 && (
+          <div className="mt-4 flex items-center gap-2 rounded-lg border bg-muted/30 px-4 py-2.5">
+            <span className="text-xs text-muted-foreground mr-1">Set status:</span>
+            <button
+              type="button"
+              disabled={bulkSaving}
+              onClick={() => bulkSetStatus('draft')}
+              className="text-xs px-2.5 py-1 rounded border border-yellow-500/40 text-yellow-600 hover:bg-yellow-500/10 disabled:opacity-50"
+            >
+              Draft
+            </button>
+            <button
+              type="button"
+              disabled={bulkSaving}
+              onClick={() => bulkSetStatus('scheduled')}
+              className="text-xs px-2.5 py-1 rounded border border-blue-500/40 text-blue-500 hover:bg-blue-500/10 disabled:opacity-50"
+            >
+              Scheduled
+            </button>
+            <button
+              type="button"
+              disabled={bulkSaving}
+              onClick={() => bulkSetStatus('published')}
+              className="text-xs px-2.5 py-1 rounded border border-green-500/40 text-green-600 hover:bg-green-500/10 disabled:opacity-50"
+            >
+              Published
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds(new Set())}
+              className="ml-auto text-xs text-muted-foreground hover:text-foreground"
+            >
+              Clear
+            </button>
           </div>
         )}
       </section>
