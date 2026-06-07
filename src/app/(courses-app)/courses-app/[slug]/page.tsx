@@ -47,13 +47,14 @@ export default async function CourseDetailPage({ params }: Props) {
 
   const { data: lessons } = await supabase
     .from('standalone_lessons')
-    .select('id, title, sort_order, youtube_url, content')
+    .select('id, title, sort_order, youtube_url, content, is_published, is_scheduled')
     .eq('course_id', course.id)
-    .eq('is_published', true)
+    .or('is_published.eq.true,is_scheduled.eq.true')
     .order('sort_order', { ascending: true });
 
-  const allLessons = (lessons ?? []) as { id: string; title: string; sort_order: number; youtube_url: string; content: string | null }[];
-  const firstLesson = allLessons[0] ?? null;
+  const allLessons = (lessons ?? []) as { id: string; title: string; sort_order: number; youtube_url: string; content: string | null; is_published: boolean; is_scheduled: boolean }[];
+  const publishedLessons = allLessons.filter((l) => l.is_published);
+  const firstLesson = publishedLessons[0] ?? null;
 
   const { data: { user } } = await supabase.auth.getUser();
   let hasPurchased = false;
@@ -70,7 +71,8 @@ export default async function CourseDetailPage({ params }: Props) {
   return (
     <CourseWatch
       course={course}
-      lessons={allLessons}
+      lessons={publishedLessons}
+      scheduledLessons={allLessons.filter((l) => l.is_scheduled && !l.is_published)}
       firstLesson={firstLesson}
       hasPurchased={hasPurchased}
       isLoggedIn={Boolean(user)}

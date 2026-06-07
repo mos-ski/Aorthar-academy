@@ -9,6 +9,7 @@ import BuyButton from '@/components/standalone/BuyButton';
 import UserAvatar from '@/components/standalone/UserAvatar';
 
 type Lesson = { id: string; title: string; sort_order: number; youtube_url: string; content: string | null };
+type ScheduledLesson = { id: string; title: string; sort_order: number };
 
 interface Props {
   course: {
@@ -23,6 +24,7 @@ interface Props {
     thumbnail_url: string | null;
   };
   lessons: Lesson[];
+  scheduledLessons?: ScheduledLesson[];
   firstLesson: Lesson | null;
   hasPurchased: boolean;
   isLoggedIn: boolean;
@@ -73,7 +75,7 @@ function getCompletedIds(lessons: Lesson[], activeId: string | undefined): Set<s
   return set;
 }
 
-export default function CourseWatch({ course, lessons, firstLesson, hasPurchased, isLoggedIn, userEmail, userFullName, userAvatarUrl }: Props) {
+export default function CourseWatch({ course, lessons, scheduledLessons = [], firstLesson, hasPurchased, isLoggedIn, userEmail, userFullName, userAvatarUrl }: Props) {
   const [paywallVisible, setPaywallVisible] = useState(false);
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(firstLesson);
   const [couponInput, setCouponInput] = useState('');
@@ -123,6 +125,15 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
   const activeLessonIdx = lessons.findIndex(l => l.id === activeLesson?.id);
   const nextLesson = lessons[activeLessonIdx + 1] ?? null;
   const completedIds = getCompletedIds(lessons, activeLesson?.id);
+
+  // Merged course menu: published lessons (playable) + scheduled lessons (coming soon), in order
+  type MenuEntry =
+    | { kind: 'lesson'; lesson: Lesson; lessonIndex: number }
+    | { kind: 'scheduled'; lesson: ScheduledLesson };
+  const menuEntries: MenuEntry[] = [
+    ...lessons.map((lesson, lessonIndex): MenuEntry => ({ kind: 'lesson', lesson, lessonIndex })),
+    ...scheduledLessons.map((lesson): MenuEntry => ({ kind: 'scheduled', lesson })),
+  ].sort((a, b) => a.lesson.sort_order - b.lesson.sort_order);
 
   function selectLesson(lesson: Lesson, unlocked: boolean) {
     if (!unlocked) return;
@@ -179,11 +190,28 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
             className="rounded-xl border overflow-hidden flex-1 min-h-0"
             style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: '#18191a' }}
           >
-            {lessons.length === 0 ? (
+            {menuEntries.length === 0 ? (
               <div className="px-5 py-8 text-center text-sm text-white/30">Lessons coming soon</div>
             ) : (
               <ul className="h-full overflow-y-auto">
-                {lessons.map((lesson, i) => {
+                {menuEntries.map((entry) => {
+                  if (entry.kind === 'scheduled') {
+                    const lesson = entry.lesson;
+                    return (
+                      <li key={`scheduled-${lesson.id}`} className="border-b last:border-b-0" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                        <div className="w-full flex items-center justify-between px-5 py-3.5 cursor-default">
+                          <span className="text-sm leading-snug" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                            {lesson.sort_order}. {lesson.title}
+                          </span>
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0 ml-3" style={{ backgroundColor: 'rgba(99,130,255,0.15)', color: 'rgba(130,160,255,0.8)' }}>
+                            Scheduled
+                          </span>
+                        </div>
+                      </li>
+                    );
+                  }
+
+                  const { lesson, lessonIndex: i } = entry;
                   const isActive = activeLesson?.id === lesson.id;
                   const isDone = completedIds.has(lesson.id);
                   const isFirst = i === 0;
@@ -213,7 +241,7 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
                             fontWeight: isActive ? 500 : 400,
                           }}
                         >
-                          {i + 1}. {lesson.title}
+                          {lesson.sort_order}. {lesson.title}
                         </span>
 
                         {isDone ? (
@@ -473,7 +501,26 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
       <div className="md:hidden px-5 pb-8">
         <h2 className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-3">Course Menu</h2>
         <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: '#18191a' }}>
-          {lessons.map((lesson, i) => {
+          {menuEntries.map((entry) => {
+            if (entry.kind === 'scheduled') {
+              const lesson = entry.lesson;
+              return (
+                <div
+                  key={`scheduled-${lesson.id}`}
+                  className="w-full flex items-center justify-between px-5 py-3.5 border-b last:border-b-0"
+                  style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+                >
+                  <span className="text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                    {lesson.sort_order}. {lesson.title}
+                  </span>
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0 ml-3" style={{ backgroundColor: 'rgba(99,130,255,0.15)', color: 'rgba(130,160,255,0.8)' }}>
+                    Scheduled
+                  </span>
+                </div>
+              );
+            }
+
+            const { lesson, lessonIndex: i } = entry;
             const isActive = activeLesson?.id === lesson.id;
             const isDone = completedIds.has(lesson.id);
             const isFirst = i === 0;
@@ -502,7 +549,7 @@ export default function CourseWatch({ course, lessons, firstLesson, hasPurchased
                     fontWeight: isActive ? 500 : 400,
                   }}
                 >
-                  {i + 1}. {lesson.title}
+                  {lesson.sort_order}. {lesson.title}
                 </span>
                 {isDone ? (
                   <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="shrink-0 ml-3">
