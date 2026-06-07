@@ -37,9 +37,10 @@ export default async function MyCoursesPage() {
   const allCourseIds = [...new Set([...purchasedIds, ...(allCourses ?? []).map((c) => c.id)])];
   const { data: lessonCounts } = await supabase
     .from('standalone_lessons')
-    .select('id, course_id, is_published, is_scheduled')
+    .select('id, course_id, title, sort_order, is_published, is_scheduled')
     .in('course_id', allCourseIds.length ? allCourseIds : ['00000000-0000-0000-0000-000000000000'])
-    .or('is_published.eq.true,is_scheduled.eq.true');
+    .or('is_published.eq.true,is_scheduled.eq.true')
+    .order('sort_order', { ascending: true });
 
   const publishedLessonCounts = (lessonCounts ?? []).filter((l) => l.is_published);
   const scheduledLessonCounts = (lessonCounts ?? []).filter((l) => l.is_scheduled && !l.is_published);
@@ -50,8 +51,10 @@ export default async function MyCoursesPage() {
   });
 
   const scheduledCountMap: Record<string, number> = {};
+  const scheduledLessonsMap: Record<string, { id: string; title: string; sortOrder: number }[]> = {};
   scheduledLessonCounts.forEach((l) => {
     scheduledCountMap[l.course_id] = (scheduledCountMap[l.course_id] ?? 0) + 1;
+    (scheduledLessonsMap[l.course_id] ??= []).push({ id: l.id, title: l.title, sortOrder: l.sort_order });
   });
 
   // ── Progress for purchased courses (published lessons only) ──
@@ -131,47 +134,67 @@ export default async function MyCoursesPage() {
               if (!course) return null;
               const total = totalMap[course.id] ?? 0;
               const completed = completedMap[course.id] ?? 0;
-              const scheduled = scheduledCountMap[course.id] ?? 0;
+              const scheduledLessons = scheduledLessonsMap[course.id] ?? [];
               const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
               const firstLesson = firstLessonMap[course.id];
 
               return (
-                <Link
+                <div
                   key={course.id}
-                  href={firstLesson ? `/courses-app/learn/${course.slug}/${firstLesson}` : `/courses-app/${course.slug}`}
-                  className="flex flex-col sm:flex-row gap-4 rounded-lg border p-5 transition-colors hover:border-[#a7d252]/40"
+                  className="rounded-lg border overflow-hidden transition-colors hover:border-[#a7d252]/40"
                   style={{ backgroundColor: '#1e1f20', borderColor: 'rgba(255,255,255,0.08)' }}
                 >
-                  <div className="w-full sm:w-40 aspect-video sm:aspect-auto sm:h-24 rounded overflow-hidden shrink-0">
-                    {course.thumbnail_url ? (
-                      <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: '#08694a' }}>
-                        <span className="text-xs text-white/40">No preview</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-2 flex-1">
-                    <h3 className="font-semibold text-white">{course.title}</h3>
-                    <p className="text-xs text-white/40">{course.instructor_name}</p>
-                    <div className="flex items-center gap-3 mt-1">
-                      <div className="flex-1 h-1.5 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
-                        <div className="h-1.5 rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: '#a7d252' }} />
-                      </div>
-                      <span className="text-xs text-white/40 shrink-0">{completed}/{total} lessons</span>
+                  <Link
+                    href={firstLesson ? `/courses-app/learn/${course.slug}/${firstLesson}` : `/courses-app/${course.slug}`}
+                    className="flex flex-col sm:flex-row gap-4 p-5"
+                  >
+                    <div className="w-full sm:w-40 aspect-video sm:aspect-auto sm:h-24 rounded overflow-hidden shrink-0">
+                      {course.thumbnail_url ? (
+                        <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: '#08694a' }}>
+                          <span className="text-xs text-white/40">No preview</span>
+                        </div>
+                      )}
                     </div>
-                    {scheduled > 0 && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full mt-1 w-fit" style={{ backgroundColor: 'rgba(99,130,255,0.12)', color: 'rgba(150,175,255,0.9)' }}>
-                        <span>⏳</span> {scheduled} coming soon
+                    <div className="flex flex-col gap-2 flex-1">
+                      <h3 className="font-semibold text-white">{course.title}</h3>
+                      <p className="text-xs text-white/40">{course.instructor_name}</p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <div className="flex-1 h-1.5 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
+                          <div className="h-1.5 rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: '#a7d252' }} />
+                        </div>
+                        <span className="text-xs text-white/40 shrink-0">{completed}/{total} lessons</span>
+                      </div>
+                    </div>
+                    <div className="flex sm:flex-col items-center sm:items-end justify-end gap-2 shrink-0 self-center">
+                      <span className="text-sm font-semibold px-4 py-2 text-white whitespace-nowrap" style={{ backgroundColor: '#08694a' }}>
+                        {pct > 0 ? 'Continue →' : 'Start →'}
                       </span>
-                    )}
-                  </div>
-                  <div className="flex sm:flex-col items-center sm:items-end justify-end gap-2 shrink-0 self-center">
-                    <span className="text-sm font-semibold px-4 py-2 text-white whitespace-nowrap" style={{ backgroundColor: '#08694a' }}>
-                      {pct > 0 ? 'Continue →' : 'Start →'}
-                    </span>
-                  </div>
-                </Link>
+                    </div>
+                  </Link>
+
+                  {scheduledLessons.length > 0 && (
+                    <div className="border-t px-5 py-3" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-white/30 mb-2">Coming up</p>
+                      <ul className="flex flex-col gap-1.5">
+                        {scheduledLessons.map((lesson) => (
+                          <li key={lesson.id} className="flex items-center justify-between gap-3">
+                            <span className="text-sm truncate" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                              {lesson.sortOrder}. {lesson.title}
+                            </span>
+                            <span
+                              className="text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0"
+                              style={{ backgroundColor: 'rgba(99,130,255,0.15)', color: 'rgba(130,160,255,0.8)' }}
+                            >
+                              Scheduled
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
