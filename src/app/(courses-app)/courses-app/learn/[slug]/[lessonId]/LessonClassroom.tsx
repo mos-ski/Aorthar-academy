@@ -144,7 +144,7 @@ export default function LessonClassroom({ course, lessons, currentLessonId, user
                           {lesson.sortOrder}. {lesson.title}
                         </span>
                         <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0 ml-3" style={{ backgroundColor: 'rgba(99,130,255,0.15)', color: 'rgba(130,160,255,0.8)' }}>
-                          Coming Soon
+                          Scheduled
                         </span>
                       </div>
                     </li>
@@ -345,7 +345,7 @@ export default function LessonClassroom({ course, lessons, currentLessonId, user
                     {lesson.sortOrder}. {lesson.title}
                   </span>
                   <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0" style={{ backgroundColor: 'rgba(99,130,255,0.15)', color: 'rgba(130,160,255,0.8)' }}>
-                    Coming Soon
+                    Scheduled
                   </span>
                 </div>
               );
