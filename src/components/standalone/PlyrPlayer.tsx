@@ -44,6 +44,7 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<Plyr | null>(null);
   const captionListenerRef = useRef<((e: Event) => void) | null>(null);
+  const fullscreenListenerRef = useRef<((e: Event) => void) | null>(null);
   const orientationHandlerRef = useRef<() => void>(null);
   const [previewExpired, setPreviewExpired] = useState(false);
   const [showEndOverlay, setShowEndOverlay] = useState(false);
@@ -83,14 +84,7 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
       return;
     }
 
-    // iOS Safari has no way to put a YouTube iframe into true (chrome-hiding)
-    // fullscreen — webkitEnterFullscreen only works on <video> elements, so
-    // Plyr falls back to a CSS-positioned "fullscreen" that still leaves
-    // Safari's tab bar visible. Drop the control there rather than offer a
-    // fullscreen button that can't deliver what it promises.
     const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const baseControls = ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'];
-    const controls = isYouTube && isIos ? baseControls.filter((c) => c !== 'fullscreen') : baseControls;
 
     // Initialize Plyr
     const initPlayer = async () => {
@@ -101,7 +95,7 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
 
         const { default: Plyr } = await import('plyr');
         const player = new Plyr(containerRef.current!, {
-          controls,
+          controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
           settings: ['captions', 'quality', 'speed', 'loop'],
           speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
           keyboard: { focused: true, global: false },
@@ -156,6 +150,41 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
           containerRef.current.addEventListener('click', handleCaptionClick, true);
         }
 
+        // iOS Safari can't put an arbitrary <div> into chrome-hiding fullscreen
+        // (Plyr's default falls back to a CSS-positioned overlay that leaves the
+        // tab bar visible), but it CAN do real fullscreen on the YouTube <iframe>
+        // itself — that's how every other site's embedded YouTube player gets a
+        // proper fullscreen on iPhone. Request it directly on the iframe so we
+        // get the same native, chrome-hiding result.
+        const requestIframeFullscreen = (): boolean => {
+          const iframe = containerRef.current?.querySelector('iframe') as (HTMLIFrameElement & {
+            webkitRequestFullscreen?: () => void;
+            webkitEnterFullscreen?: () => void;
+          }) | null;
+          if (!iframe) return false;
+          const request = iframe.requestFullscreen?.bind(iframe)
+            ?? iframe.webkitRequestFullscreen?.bind(iframe)
+            ?? iframe.webkitEnterFullscreen?.bind(iframe);
+          if (!request) return false;
+          request();
+          return true;
+        };
+
+        if (isYouTube && isIos && containerRef.current) {
+          const handleFullscreenClick = (e: Event) => {
+            if (!(e.target as HTMLElement).closest?.('[data-plyr="fullscreen"]')) return;
+            if (requestIframeFullscreen()) {
+              // Stop Plyr's bubble-phase handler — it would otherwise also
+              // engage its CSS-fallback fullscreen on top of the real one
+              e.stopImmediatePropagation();
+              e.preventDefault();
+            }
+          };
+
+          fullscreenListenerRef.current = handleFullscreenClick;
+          containerRef.current.addEventListener('click', handleFullscreenClick, true);
+        }
+
         // Lock body scroll when fullscreen
         const handleEnterFullscreen = () => {
           document.body.classList.add('plyr--fullscreen-active');
@@ -172,15 +201,15 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
         player.on('enterfullscreen', handleEnterFullscreen);
         player.on('exitfullscreen', handleExitFullscreen);
 
-        // Auto-fullscreen on landscape rotation (only after user has manually entered fullscreen once).
-        // Skipped on iOS for YouTube — that combo can't reach true fullscreen (see controls setup above),
-        // so auto-triggering it would just shove users into the same broken CSS-fallback view.
+        // Auto-fullscreen on landscape rotation (only after user has manually entered fullscreen once)
         const handleOrientationChange = () => {
-          if (fullscreenOptIn && isYouTube && !isIos && window.innerHeight > 0 && window.innerWidth > window.innerHeight) {
+          if (fullscreenOptIn && isYouTube && window.innerHeight > 0 && window.innerWidth > window.innerHeight) {
             // Landscape mode - request fullscreen
             setTimeout(() => {
               try {
-                player.fullscreen.enter();
+                if (!(isIos && requestIframeFullscreen())) {
+                  player.fullscreen.enter();
+                }
               } catch (e) {
                 // Silently fail if fullscreen not available
               }
@@ -222,6 +251,10 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
       if (captionListenerRef.current && containerRef.current) {
         containerRef.current.removeEventListener('click', captionListenerRef.current, true);
         captionListenerRef.current = null;
+      }
+      if (fullscreenListenerRef.current && containerRef.current) {
+        containerRef.current.removeEventListener('click', fullscreenListenerRef.current, true);
+        fullscreenListenerRef.current = null;
       }
       if (playerRef.current) {
         playerRef.current.destroy();
