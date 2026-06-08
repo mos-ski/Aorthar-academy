@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import YouTubePlayer from '@/components/standalone/YouTubePlayer';
 import DrivePlayer from '@/components/standalone/DrivePlayer';
 import UserAvatar from '@/components/standalone/UserAvatar';
+import { Loader2 } from 'lucide-react';
 
 function extractYouTubeId(url: string): string | null {
   const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
@@ -53,11 +54,23 @@ interface Props {
 
 export default function LessonClassroom({ course, lessons, currentLessonId, userEmail, userFullName, userAvatarUrl }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
   const [completedIds, setCompletedIds] = useState<Set<string>>(
     new Set(lessons.filter((l) => l.completed).map((l) => l.id)),
   );
   const [isPending, startTransition] = useTransition();
   const [transcriptOpen, setTranscriptOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Scroll to top on navigation (especially important on mobile)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [pathname]);
+
+  // Show loader during transition
+  useEffect(() => {
+    setIsLoading(isPending);
+  }, [isPending]);
 
   const publishedLessons = lessons.filter((l) => !l.scheduled);
   const currentLesson = publishedLessons.find((l) => l.id === currentLessonId) ?? publishedLessons[0];
@@ -100,6 +113,21 @@ export default function LessonClassroom({ course, lessons, currentLessonId, user
 
   return (
     <div className="min-h-screen md:h-[100dvh] md:overflow-hidden flex flex-col" style={{ backgroundColor: '#0f1011', color: '#fff' }}>
+
+      {/* ── Loading overlay ── */}
+      {isLoading && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ backgroundColor: 'rgba(15,16,17,0.95)' }}
+          aria-busy="true"
+          aria-live="polite"
+        >
+          <div className="flex flex-col items-center gap-3 text-center px-4">
+            <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#a7d252' }} />
+            <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.8)' }}>Loading lesson…</span>
+          </div>
+        </div>
+      )}
 
       {/* ── Top nav (matches CourseWatch) ── */}
       <header
