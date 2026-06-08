@@ -83,6 +83,15 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
       return;
     }
 
+    // iOS Safari has no way to put a YouTube iframe into true (chrome-hiding)
+    // fullscreen — webkitEnterFullscreen only works on <video> elements, so
+    // Plyr falls back to a CSS-positioned "fullscreen" that still leaves
+    // Safari's tab bar visible. Drop the control there rather than offer a
+    // fullscreen button that can't deliver what it promises.
+    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const baseControls = ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'];
+    const controls = isYouTube && isIos ? baseControls.filter((c) => c !== 'fullscreen') : baseControls;
+
     // Initialize Plyr
     const initPlayer = async () => {
       try {
@@ -92,7 +101,7 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
 
         const { default: Plyr } = await import('plyr');
         const player = new Plyr(containerRef.current!, {
-          controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
+          controls,
           settings: ['captions', 'quality', 'speed', 'loop'],
           speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
           keyboard: { focused: true, global: false },
@@ -163,9 +172,11 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
         player.on('enterfullscreen', handleEnterFullscreen);
         player.on('exitfullscreen', handleExitFullscreen);
 
-        // iOS: Auto-fullscreen on landscape rotation (only after user has manually entered fullscreen once)
+        // Auto-fullscreen on landscape rotation (only after user has manually entered fullscreen once).
+        // Skipped on iOS for YouTube — that combo can't reach true fullscreen (see controls setup above),
+        // so auto-triggering it would just shove users into the same broken CSS-fallback view.
         const handleOrientationChange = () => {
-          if (fullscreenOptIn && isYouTube && window.innerHeight > 0 && window.innerWidth > window.innerHeight) {
+          if (fullscreenOptIn && isYouTube && !isIos && window.innerHeight > 0 && window.innerWidth > window.innerHeight) {
             // Landscape mode - request fullscreen
             setTimeout(() => {
               try {
