@@ -144,6 +144,23 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
         player.on('enterfullscreen', handleEnterFullscreen);
         player.on('exitfullscreen', handleExitFullscreen);
 
+        // iOS: Auto-fullscreen on landscape rotation
+        const handleOrientationChange = () => {
+          if (isYouTube && window.innerHeight > 0 && window.innerWidth > window.innerHeight) {
+            // Landscape mode - request fullscreen
+            setTimeout(() => {
+              try {
+                player.fullscreen.enter();
+              } catch (e) {
+                // Silently fail if fullscreen not available
+              }
+            }, 100);
+          }
+        };
+
+        window.addEventListener('orientationchange', handleOrientationChange);
+        window.addEventListener('resize', handleOrientationChange);
+
         // Preview limit logic
         if (previewSeconds) {
           const checkTime = () => {
