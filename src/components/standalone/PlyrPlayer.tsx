@@ -44,9 +44,19 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<Plyr | null>(null);
   const captionListenerRef = useRef<((e: Event) => void) | null>(null);
+  const orientationHandlerRef = useRef<() => void>(null);
   const [previewExpired, setPreviewExpired] = useState(false);
   const [showEndOverlay, setShowEndOverlay] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fullscreenOptIn, setFullscreenOptIn] = useState(false);
+
+  // Load opt-in preference from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('plyr-fullscreen-optin');
+      if (stored === 'true') setFullscreenOptIn(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -138,15 +148,24 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
         }
 
         // Lock body scroll when fullscreen
-        const handleEnterFullscreen = () => document.body.classList.add('plyr--fullscreen-active');
+        const handleEnterFullscreen = () => {
+          document.body.classList.add('plyr--fullscreen-active');
+          // User manually entered fullscreen - opt them in for auto-fullscreen on rotation
+          if (!fullscreenOptIn) {
+            setFullscreenOptIn(true);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('plyr-fullscreen-optin', 'true');
+            }
+          }
+        };
         const handleExitFullscreen = () => document.body.classList.remove('plyr--fullscreen-active');
 
         player.on('enterfullscreen', handleEnterFullscreen);
         player.on('exitfullscreen', handleExitFullscreen);
 
-        // iOS: Auto-fullscreen on landscape rotation
+        // iOS: Auto-fullscreen on landscape rotation (only after user has manually entered fullscreen once)
         const handleOrientationChange = () => {
-          if (isYouTube && window.innerHeight > 0 && window.innerWidth > window.innerHeight) {
+          if (fullscreenOptIn && isYouTube && window.innerHeight > 0 && window.innerWidth > window.innerHeight) {
             // Landscape mode - request fullscreen
             setTimeout(() => {
               try {
@@ -158,6 +177,7 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
           }
         };
 
+        orientationHandlerRef.current = handleOrientationChange;
         window.addEventListener('orientationchange', handleOrientationChange);
         window.addEventListener('resize', handleOrientationChange);
 
@@ -197,6 +217,10 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
         playerRef.current = null;
       }
       document.body.classList.remove('plyr--fullscreen-active');
+      if (orientationHandlerRef.current) {
+        window.removeEventListener('orientationchange', orientationHandlerRef.current);
+        window.removeEventListener('resize', orientationHandlerRef.current);
+      }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [youtubeId, src]);
