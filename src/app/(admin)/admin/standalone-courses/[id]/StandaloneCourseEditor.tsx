@@ -774,9 +774,18 @@ function LessonRow({
   const [title, setTitle] = useState(lesson.title);
   const [youtubeUrl, setYoutubeUrl] = useState(lesson.youtube_url);
   const [content, setContent] = useState(lesson.content ?? '');
+  const [status, setStatus] = useState<'draft' | 'scheduled' | 'published'>(
+    lesson.is_published ? 'published' : lesson.is_scheduled ? 'scheduled' : 'draft'
+  );
 
   function save(): void {
-    onUpdate({ title, youtube_url: youtubeUrl, content: content || null });
+    onUpdate({
+      title,
+      youtube_url: youtubeUrl,
+      content: content || null,
+      is_published: status === 'published',
+      is_scheduled: status === 'scheduled',
+    });
     setEditing(false);
   }
 
@@ -784,12 +793,19 @@ function LessonRow({
     <div className="rounded-lg border p-4 bg-card">
       {editing ? (
         <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Field label="Title">
               <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} />
             </Field>
             <Field label="YouTube URL">
               <input className="input" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} placeholder="https://youtu.be/…" />
+            </Field>
+            <Field label="Status">
+              <select className="input" value={status} onChange={(e) => setStatus(e.target.value as 'draft' | 'scheduled' | 'published')}>
+                <option value="draft">Draft</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="published">Published</option>
+              </select>
             </Field>
           </div>
           <Field label="Notes / Summary">
