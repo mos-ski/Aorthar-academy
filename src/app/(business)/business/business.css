@@ -1,0 +1,106 @@
+/* Business site responsive styles */
+
+.biz-nav-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.biz-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5rem;
+  align-items: start;
+}
+
+.biz-services-detail {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 4rem;
+  align-items: start;
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+  border-top: 1px solid #1f1f1f;
+}
+
+.biz-contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6rem;
+  align-items: start;
+}
+
+.biz-hero {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 8rem 2rem 6rem;
+}
+
+.biz-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 6rem 2rem;
+}
+
+@media (max-width: 768px) {
+  /* Nav: hide links, keep logo + CTA */
+  .biz-nav-links {
+    display: none;
+  }
+
+  /* Hero */
+  .biz-hero {
+    padding: 4rem 1.5rem 3rem;
+  }
+
+  /* Inner sections */
+  .biz-section {
+    padding: 3.5rem 1.5rem;
+  }
+
+  /* Stack 2-column grids */
+  .biz-2col {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .biz-services-detail {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+  }
+
+  /* Contact: form on top, info below */
+  .biz-contact-grid {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+
+  .biz-contact-grid > :first-child {
+    order: 2;
+  }
+
+  .biz-contact-grid > :last-child {
+    order: 1;
+  }
+
+  /* CTA sections */
+  .biz-cta-section {
+    padding: 4rem 1.5rem !important;
+  }
+
+  /* Footer nav wrap */
+  .biz-footer {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  /* Packages CTA box */
+  .biz-cta-box {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+}

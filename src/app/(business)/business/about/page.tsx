@@ -14,7 +14,7 @@ const values = [
 
 export default function AboutPage() {
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '6rem 2rem' }}>
+    <div className="biz-section">
       <p style={{ color: lime, fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '1.25rem' }}>
         About Aorthar
       </p>
@@ -22,7 +22,7 @@ export default function AboutPage() {
         We exist to make<br />businesses <span style={{ color: lime }}>unmissable.</span>
       </h1>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5rem', marginBottom: '6rem', alignItems: 'start' }}>
+      <div className="biz-2col" style={{ marginBottom: '6rem' }}>
         <div>
           <p style={{ color: muted, fontSize: '1.05rem', lineHeight: 1.8, marginBottom: '1.5rem' }}>
             Aorthar is a full-service agency covering marketing, branding, and product development. We work with startups, SMEs, and established businesses that want to grow — and need a team that can think strategically and build practically.

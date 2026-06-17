@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
+import './business.css';
 
 export const metadata: Metadata = {
   title: 'Aorthar Agency — Marketing. Branding. Product.',
@@ -38,7 +39,7 @@ function Nav() {
           />
         </Link>
 
-        <ul style={{ display: 'flex', gap: '2rem', listStyle: 'none', margin: 0, padding: 0 }}>
+        <ul className="biz-nav-links">
           {navLinks.map((l) => (
             <li key={l.href}>
               <Link
@@ -81,15 +82,16 @@ function Footer() {
   return (
     <footer style={{ borderTop: '1px solid #1f1f1f', marginTop: '6rem', background: '#0a0a0a' }}>
       <div
+        className="biz-footer"
         style={{
           maxWidth: 1200,
           margin: '0 auto',
           padding: '3rem 2rem',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           justifyContent: 'space-between',
           flexWrap: 'wrap' as const,
-          gap: '1rem',
+          gap: '1.5rem',
         }}
       >
         <div>
@@ -98,14 +100,13 @@ function Footer() {
             alt="Aorthar"
             width={80}
             height={34}
-            style={{ marginBottom: '0.5rem' }}
           />
-          <p style={{ color: '#888', fontSize: '0.8rem', marginTop: '0.4rem' }}>
+          <p style={{ color: '#888', fontSize: '0.8rem', marginTop: '0.5rem' }}>
             Marketing. Branding. Product.
           </p>
         </div>
 
-        <nav style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' as const }}>
+        <nav style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' as const }}>
           {[
             ['/business/services', 'Services'],
             ['/business/packages', 'Packages'],

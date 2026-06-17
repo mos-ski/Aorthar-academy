@@ -75,8 +75,8 @@ export default function ContactPage() {
   };
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '6rem 2rem' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6rem', alignItems: 'start' }}>
+    <div className="biz-section">
+      <div className="biz-contact-grid">
         {/* Left */}
         <div>
           <p style={{ color: lime, fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '1.25rem' }}>

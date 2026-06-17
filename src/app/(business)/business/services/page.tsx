@@ -46,7 +46,7 @@ const services = [
 
 export default function ServicesPage() {
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '6rem 2rem' }}>
+    <div className="biz-section">
       <p style={{ color: lime, fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '1.25rem' }}>
         What We Do
       </p>
@@ -55,7 +55,7 @@ export default function ServicesPage() {
       </h1>
 
       {services.map((s, i) => (
-        <div key={s.id} style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '4rem', alignItems: 'start', paddingTop: '5rem', paddingBottom: '5rem', borderTop: `1px solid ${border}` }}>
+        <div key={s.id} className="biz-services-detail">
           <div>
             <div style={{ width: 32, height: 3, background: lime, marginBottom: '1.25rem' }} />
             <h2 style={{ fontSize: '2rem', fontWeight: 900, marginBottom: '0.5rem' }}>{s.title}</h2>
@@ -75,7 +75,7 @@ export default function ServicesPage() {
         </div>
       ))}
 
-      <div style={{ marginTop: '2rem', padding: '3rem', background: surface, border: `1px solid ${border}`, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '2rem', flexWrap: 'wrap' }}>
+      <div className="biz-cta-box" style={{ marginTop: '2rem', padding: '3rem', background: surface, border: `1px solid ${border}`, borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '2rem', flexWrap: 'wrap' }}>
         <div>
           <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Not sure which service you need?</h3>
           <p style={{ color: muted, fontSize: '0.925rem' }}>Tell us your goal. We&apos;ll recommend the right starting point.</p>

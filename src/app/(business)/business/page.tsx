@@ -23,7 +23,7 @@ export default function BusinessHome() {
   return (
     <>
       {/* Hero */}
-      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '8rem 2rem 6rem' }}>
+      <section className="biz-hero">
         <p style={{ color: lime, fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
           Marketing · Branding · Product Development
         </p>
@@ -57,7 +57,7 @@ export default function BusinessHome() {
       </section>
 
       {/* CTA */}
-      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '8rem 2rem', textAlign: 'center' }}>
+      <section className="biz-cta-section" style={{ maxWidth: 1200, margin: '0 auto', padding: '8rem 2rem', textAlign: 'center' }}>
         <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 900, letterSpacing: '-0.02em', marginBottom: '1.5rem' }}>
           Ready to build something <span style={{ color: lime }}>real?</span>
         </h2>

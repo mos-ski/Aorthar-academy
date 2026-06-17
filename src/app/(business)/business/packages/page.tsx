@@ -67,7 +67,7 @@ const packages = [
 
 export default function PackagesPage() {
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '6rem 2rem' }}>
+    <div className="biz-section">
       <p style={{ color: lime, fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '1.25rem' }}>
         Packages & Pricing
       </p>
