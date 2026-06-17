@@ -45,21 +45,79 @@ export async function sendContactEmail(formData: FormData): Promise<ContactResul
     to: email,
     subject: 'We received your message — Aorthar Agency',
     html: `
-      <div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:2rem;background:#0a0a0a;color:#fff;">
-        <div style="margin-bottom:2rem;">
-          <span style="font-weight:900;font-size:1.1rem;letter-spacing:0.08em;">AORTHAR<span style="color:#a7d252;">/</span></span>
-        </div>
-        <h1 style="font-size:1.5rem;font-weight:800;margin-bottom:1rem;">We got your message, ${name}.</h1>
-        <p style="color:#aaa;line-height:1.7;margin-bottom:1rem;">
-          Thanks for reaching out to Aorthar Agency. We've received your inquiry and will get back to you within <strong style="color:#fff;">24 hours</strong>.
-        </p>
-        <p style="color:#aaa;line-height:1.7;margin-bottom:2rem;">
-          In the meantime, feel free to browse our <a href="https://business.aorthar.com/packages" style="color:#a7d252;">packages</a> or learn more <a href="https://business.aorthar.com/about" style="color:#a7d252;">about us</a>.
-        </p>
-        <div style="border-top:1px solid #1f1f1f;padding-top:1.5rem;color:#555;font-size:0.8rem;">
-          Aorthar Agency · Marketing. Branding. Product. · <a href="https://business.aorthar.com" style="color:#555;">business.aorthar.com</a>
-        </div>
-      </div>
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="color-scheme" content="dark"><meta name="supported-color-schemes" content="dark"></head>
+<body style="margin:0;padding:0;background-color:#0a0a0a;">
+<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#0a0a0a" style="background-color:#0a0a0a;">
+  <tr>
+    <td align="center" style="padding:40px 20px;">
+      <table width="560" cellpadding="0" cellspacing="0" bgcolor="#0a0a0a" style="background-color:#0a0a0a;max-width:560px;width:100%;">
+
+        <!-- Logo -->
+        <tr>
+          <td style="padding-bottom:36px;">
+            <span style="font-weight:900;font-size:18px;letter-spacing:4px;color:#ffffff;font-family:-apple-system,system-ui,sans-serif;">AORTHAR<span style="color:#a7d252;">/</span></span>
+          </td>
+        </tr>
+
+        <!-- Heading -->
+        <tr>
+          <td style="padding-bottom:20px;">
+            <h1 style="font-size:26px;font-weight:800;color:#ffffff;margin:0;line-height:1.3;font-family:-apple-system,system-ui,sans-serif;">We got your message, ${name}.</h1>
+          </td>
+        </tr>
+
+        <!-- Body text -->
+        <tr>
+          <td style="padding-bottom:24px;">
+            <p style="color:#aaaaaa;line-height:1.75;margin:0;font-family:-apple-system,system-ui,sans-serif;font-size:15px;">
+              Thanks for reaching out to Aorthar Agency. We&apos;ve received your inquiry and will get back to you within <strong style="color:#ffffff;">24 hours</strong>.
+            </p>
+          </td>
+        </tr>
+
+        ${service ? `
+        <!-- Services summary -->
+        <tr>
+          <td style="padding-bottom:24px;">
+            <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#141414" style="background-color:#141414;border-radius:8px;border:1px solid #222222;">
+              <tr>
+                <td style="padding:18px 20px;">
+                  <p style="color:#666666;font-size:11px;text-transform:uppercase;letter-spacing:2px;margin:0 0 10px;font-family:-apple-system,system-ui,sans-serif;">Your inquiry</p>
+                  <p style="color:#ffffff;margin:0;font-family:-apple-system,system-ui,sans-serif;font-size:14px;line-height:1.6;">${service}</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        ` : ''}
+
+        <!-- CTA line -->
+        <tr>
+          <td style="padding-bottom:36px;">
+            <p style="color:#aaaaaa;line-height:1.75;margin:0;font-family:-apple-system,system-ui,sans-serif;font-size:15px;">
+              In the meantime, feel free to browse our <a href="https://business.aorthar.com/packages" style="color:#a7d252;text-decoration:none;">packages</a> or learn more <a href="https://business.aorthar.com/about" style="color:#a7d252;text-decoration:none;">about us</a>.
+            </p>
+          </td>
+        </tr>
+
+        <!-- Divider + footer -->
+        <tr>
+          <td style="border-top:1px solid #1f1f1f;padding-top:24px;">
+            <p style="color:#444444;font-size:12px;margin:0;font-family:-apple-system,system-ui,sans-serif;">
+              Aorthar Agency &middot; Marketing. Branding. Product. &middot;
+              <a href="https://business.aorthar.com" style="color:#444444;text-decoration:none;">business.aorthar.com</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
     `,
   });
 
