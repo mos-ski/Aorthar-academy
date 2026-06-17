@@ -143,7 +143,7 @@ const adminPrimaryModules: Array<{
   { key: 'business', label: 'Business', icon: Megaphone, href: '/admin/business' },
   { key: 'admin_access', label: 'Admin Access', icon: ShieldCheck, href: '/admin/admin-access' },
   { key: 'audit_logs', label: 'Audit Logs', icon: ScrollText, href: '/admin/audit-logs' },
-  { key: 'profile', label: 'Profile Settings', icon: CircleUser, href: '/settings' },
+  { key: 'profile', label: 'Profile Settings', icon: CircleUser, href: '/admin/profile' },
 ];
 
 const mobileStudentNav = [
@@ -222,7 +222,7 @@ export default function Sidebar({
     || (pathname === '/admin/ops'
       && (tab === 'transactions' || tab === 'students' || courseTab === 'external')
       && moduleParam !== 'university');
-  const inProfilePath = pathname.startsWith('/settings');
+  const inProfilePath = pathname.startsWith('/admin/profile') || pathname.startsWith('/settings');
 
   const inAdminAccessPath = pathname.startsWith('/admin/admin-access');
   const inAuditLogsPath = pathname.startsWith('/admin/audit-logs');
@@ -264,7 +264,7 @@ export default function Sidebar({
       : activeModule === 'audit_logs'
       ? [{ href: '/admin/audit-logs', label: 'Audit Logs', icon: ScrollText }]
       : activeModule === 'profile'
-      ? [{ href: '/settings', label: 'Account & Profile', icon: Settings }]
+      ? [{ href: '/admin/profile', label: 'Account & Profile', icon: Settings }]
       : adminOverviewNav;
 
   const secondaryTitle =
