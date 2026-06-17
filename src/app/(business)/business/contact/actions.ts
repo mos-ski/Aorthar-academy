@@ -30,10 +30,18 @@ export async function sendContactEmail(formData: FormData): Promise<ContactResul
     message,
   });
 
+  // Fetch team email from settings (falls back to env var, then hardcoded default)
+  const { data: settingRow } = await supabase
+    .from('site_settings')
+    .select('value')
+    .eq('key', 'contact_email')
+    .single();
+  const teamEmail = settingRow?.value || process.env.CONTACT_EMAIL || 'aorthardesignteam@gmail.com';
+
   // Notify the team
   await resend.emails.send({
     from: 'Aorthar Agency <noreply@aorthar.com>',
-    to: process.env.CONTACT_EMAIL ?? 'aorthardesignteam@gmail.com',
+    to: teamEmail,
     replyTo: email,
     subject: `New agency inquiry from ${name}${service ? ` — ${service}` : ''}`,
     text: `Name: ${name}\nEmail: ${email}\nService: ${service || 'Not specified'}\n\n${message}`,

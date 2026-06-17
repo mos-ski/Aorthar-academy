@@ -126,6 +126,7 @@ const adminMarketplaceNav: NavItem[] = [
 
 const adminBusinessNav: NavItem[] = [
   { href: '/admin/business', label: 'Inquiries', icon: Inbox },
+  { href: '/admin/business/settings', label: 'Settings', icon: Settings },
 ];
 
 const adminPrimaryModules: Array<{
