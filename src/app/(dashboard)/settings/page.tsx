@@ -26,6 +26,7 @@ export default async function SettingsPage() {
       subscription={subscription as { start_date: string; end_date: string | null; plans: { name: string; billing_type: string } | null } | null}
       email={user.email ?? ''}
       userId={user.id}
+      role={profile?.role}
     />
   );
 }

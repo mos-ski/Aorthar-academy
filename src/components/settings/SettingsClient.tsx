@@ -32,9 +32,11 @@ interface SettingsClientProps {
   subscription: Subscription | null;
   email: string;
   userId: string;
+  role?: string;
 }
 
-export default function SettingsClient({ profile, subscription, email, userId }: SettingsClientProps) {
+export default function SettingsClient({ profile, subscription, email, userId, role }: SettingsClientProps) {
+  const isAdmin = role === 'admin';
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -260,7 +262,8 @@ export default function SettingsClient({ profile, subscription, email, userId }:
         </CardContent>
       </Card>
 
-      {/* Academic Profile */}
+      {/* Academic Profile — students only */}
+      {!isAdmin && (
       <Card>
         <CardHeader>
           <CardTitle>Academic Profile</CardTitle>
@@ -281,9 +284,10 @@ export default function SettingsClient({ profile, subscription, email, userId }:
           </div>
         </CardContent>
       </Card>
+      )}
 
-      {/* Subscription */}
-      <Card>
+      {/* Subscription — students only */}
+      {!isAdmin && <Card>
         <CardHeader>
           <CardTitle>Subscription</CardTitle>
         </CardHeader>
@@ -323,7 +327,7 @@ export default function SettingsClient({ profile, subscription, email, userId }:
             </div>
           )}
         </CardContent>
-      </Card>
+      </Card>}
 
       {/* Danger Zone */}
       <Card className="border-destructive/40">
