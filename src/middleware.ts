@@ -36,6 +36,8 @@ const PUBLIC_ROUTES = [
   '/courses-app',
   // internship public API routes (no Supabase auth — external applicants)
   '/api/internship',
+  // business.aorthar.com — public marketing site, no auth required
+  '/business',
   // marketplace public API routes (no Supabase auth — external buyers)
   '/api/marketplace',
 ];
@@ -50,7 +52,7 @@ const SUSPENDED_ROUTE = '/suspended';
 // ─────────────────────────────────────────────
 
 /** Products that skip the university onboarding gate */
-const SKIP_ONBOARDING_PRODUCTS = ['bootcamp', 'internship', 'admin', 'base'] as const;
+const SKIP_ONBOARDING_PRODUCTS = ['bootcamp', 'internship', 'admin', 'base', 'business'] as const;
 
 /** Auth routes that should pass through on every subdomain */
 const AUTH_PASSTHROUGH_PREFIXES = [
@@ -138,6 +140,16 @@ function getSubdomainRewrite(request: NextRequest): NextResponse | null {
       ? pathname.slice('/internship'.length) || '/'
       : pathname;
     url.pathname = cleanPath === '/' ? '/internship' : `/internship${cleanPath}`;
+    return NextResponse.rewrite(url);
+  }
+
+  // business.aorthar.com → /business/*
+  if (product === 'business') {
+    const url = request.nextUrl.clone();
+    const cleanPath = pathname.startsWith('/business')
+      ? pathname.slice('/business'.length) || '/'
+      : pathname;
+    url.pathname = cleanPath === '/' ? '/business' : `/business${cleanPath}`;
     return NextResponse.rewrite(url);
   }
 

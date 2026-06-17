@@ -18,6 +18,7 @@ const PRODUCTION_URLS = {
   bootcamp: process.env.NEXT_PUBLIC_BOOTCAMP_URL ?? 'https://bootcamp.aorthar.com',
   internship: process.env.NEXT_PUBLIC_INTERNSHIP_URL ?? 'https://internship.aorthar.com',
   admin: process.env.NEXT_PUBLIC_ADMIN_URL ?? 'https://admin.aorthar.com',
+  business: process.env.NEXT_PUBLIC_BUSINESS_URL ?? 'https://business.aorthar.com',
 } as const;
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -44,6 +45,7 @@ export const urls = {
   bootcamp: (path: string = '/') => productUrl('bootcamp', path),
   internship: (path: string = '/') => productUrl('internship', path),
   admin: (path: string = '/') => productUrl('admin', path),
+  business: (path: string = '/') => productUrl('business', path),
 } as const;
 
 /**
@@ -56,6 +58,7 @@ export function getProductFromHost(hostname: string): keyof typeof PRODUCTION_UR
   if (host === 'bootcamp.aorthar.com') return 'bootcamp';
   if (host === 'internship.aorthar.com') return 'internship';
   if (host === 'admin.aorthar.com') return 'admin';
+  if (host === 'business.aorthar.com') return 'business';
   if (host === 'aorthar.com' || host === 'localhost') return 'base';
   // Also support legacy courses.aorthar.com → bootcamp
   if (host === 'courses.aorthar.com') return 'bootcamp';
