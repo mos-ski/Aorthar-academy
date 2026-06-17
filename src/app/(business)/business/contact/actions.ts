@@ -33,7 +33,7 @@ export async function sendContactEmail(formData: FormData): Promise<ContactResul
   // Notify the team
   await resend.emails.send({
     from: 'Aorthar Agency <noreply@aorthar.com>',
-    to: process.env.CONTACT_EMAIL ?? 'adedamolamoses@gmail.com',
+    to: process.env.CONTACT_EMAIL ?? 'aorthardesignteam@gmail.com',
     replyTo: email,
     subject: `New agency inquiry from ${name}${service ? ` — ${service}` : ''}`,
     text: `Name: ${name}\nEmail: ${email}\nService: ${service || 'Not specified'}\n\n${message}`,
