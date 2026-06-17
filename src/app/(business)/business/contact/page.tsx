@@ -8,29 +8,44 @@ const muted = '#888';
 const border = '#1f1f1f';
 const surface = '#111';
 
-const serviceOptions = [
-  'Marketing — Content Strategy',
-  'Marketing — Content Creation',
-  'Marketing — UGC Network',
-  'Branding — Logo & Identity',
-  'Branding — Brand Guidelines',
-  'Product — Web App',
-  'Product — Mobile App',
-  'Product — Landing Page',
-  'Product — SaaS MVP',
-  'Product — E-commerce',
-  'Full Agency Retainer',
-  'Not sure yet',
+const serviceGroups = [
+  {
+    group: 'Marketing',
+    options: ['Content Strategy', 'Content Creation', 'UGC Network'],
+  },
+  {
+    group: 'Branding',
+    options: ['Logo & Identity', 'Brand Guidelines', 'Naming', 'Visual Systems'],
+  },
+  {
+    group: 'Product',
+    options: ['Web App', 'Mobile App', 'Landing Page', 'SaaS MVP', 'E-commerce'],
+  },
+  {
+    group: 'Other',
+    options: ['Full Agency Retainer', 'Not sure yet'],
+  },
 ];
 
 export default function ContactPage() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  function toggleService(value: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(value) ? next.delete(value) : next.add(value);
+      return next;
+    });
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus('loading');
-    const result: ContactResult = await sendContactEmail(new FormData(e.currentTarget));
+    const fd = new FormData(e.currentTarget);
+    fd.set('service', Array.from(selected).join(', ') || 'Not specified');
+    const result: ContactResult = await sendContactEmail(fd);
     if (result.success) {
       setStatus('done');
     } else {
@@ -106,11 +121,40 @@ export default function ContactPage() {
                 <input id="email" name="email" type="email" required placeholder="you@company.com" style={inputStyle} />
               </div>
               <div>
-                <label htmlFor="service" style={labelStyle}>Service interested in</label>
-                <select id="service" name="service" style={{ ...inputStyle, cursor: 'pointer' }}>
-                  <option value="">Select a service...</option>
-                  {serviceOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
+                <p style={labelStyle}>Services interested in</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {serviceGroups.map(({ group, options }) => (
+                    <div key={group}>
+                      <p style={{ fontSize: '0.7rem', color: lime, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '0.5rem' }}>{group}</p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        {options.map((opt) => {
+                          const val = `${group} — ${opt}`;
+                          const isOn = selected.has(val);
+                          return (
+                            <button
+                              key={val}
+                              type="button"
+                              onClick={() => toggleService(val)}
+                              style={{
+                                background: isOn ? lime : 'transparent',
+                                color: isOn ? '#000' : muted,
+                                border: `1px solid ${isOn ? lime : border}`,
+                                borderRadius: '2px',
+                                fontSize: '0.8rem',
+                                padding: '0.4rem 0.85rem',
+                                cursor: 'pointer',
+                                fontWeight: isOn ? 700 : 400,
+                                transition: 'all 0.1s',
+                              }}
+                            >
+                              {opt}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
               <div>
                 <label htmlFor="message" style={labelStyle}>Message *</label>
