@@ -24,9 +24,6 @@ export default function BusinessHome() {
     <>
       {/* Hero */}
       <section className="biz-hero">
-        <p style={{ color: lime, fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
-          Marketing · Branding · Product Development
-        </p>
         <h1 style={{ fontSize: 'clamp(3rem, 8vw, 6rem)', fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.02em', marginBottom: '2rem', maxWidth: 900 }}>
           We build brands<br />that <span style={{ color: lime }}>dominate.</span>
         </h1>
