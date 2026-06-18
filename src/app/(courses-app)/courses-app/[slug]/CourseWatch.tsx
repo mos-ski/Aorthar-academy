@@ -112,7 +112,7 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
       setAppliedCoupon({ code: data.code, discount_type: data.discount_type, discount_value: data.discount_value });
       setCouponError('');
       setUrlCouponNotice('');
-      if (fromUrl) setAutoApplied(true);
+      setAutoApplied(fromUrl);
     } catch (err) {
       console.error('[CourseWatch] Coupon validation error:', err);
       if (fromUrl) {
@@ -134,6 +134,8 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
     setAppliedCoupon(null);
     setCouponInput('');
     setCouponError('');
+    setAutoApplied(false);
+    setUrlCouponNotice('');
   }
 
   useEffect(() => {
