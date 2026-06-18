@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { buildCouponShareLink } from '@/utils/couponLink';
+import { urls } from '@/lib/urls';
 
 interface Coupon {
   id: string;
@@ -41,7 +42,7 @@ export default function CouponAdmin({ coupons: initialCoupons, courses }: { coup
   const [linkPickerFor, setLinkPickerFor] = useState<string | null>(null);
 
   async function copyLink(slug: string, code: string) {
-    const link = buildCouponShareLink(window.location.origin, slug, code);
+    const link = buildCouponShareLink(urls.bootcamp(), slug, code);
     try {
       await navigator.clipboard.writeText(link);
       toast.success('Link copied to clipboard');
