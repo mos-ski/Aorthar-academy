@@ -51,10 +51,8 @@ export default async function MyCoursesPage() {
   });
 
   const scheduledCountMap: Record<string, number> = {};
-  const scheduledLessonsMap: Record<string, { id: string; title: string; sortOrder: number }[]> = {};
   scheduledLessonCounts.forEach((l) => {
     scheduledCountMap[l.course_id] = (scheduledCountMap[l.course_id] ?? 0) + 1;
-    (scheduledLessonsMap[l.course_id] ??= []).push({ id: l.id, title: l.title, sortOrder: l.sort_order });
   });
 
   // ── Progress for purchased courses (published lessons only) ──
@@ -134,7 +132,6 @@ export default async function MyCoursesPage() {
               if (!course) return null;
               const total = totalMap[course.id] ?? 0;
               const completed = completedMap[course.id] ?? 0;
-              const scheduledLessons = scheduledLessonsMap[course.id] ?? [];
               const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
               const firstLesson = firstLessonMap[course.id];
 
@@ -173,27 +170,6 @@ export default async function MyCoursesPage() {
                       </span>
                     </div>
                   </Link>
-
-                  {scheduledLessons.length > 0 && (
-                    <div className="border-t px-5 py-3" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-white/30 mb-2">Coming up</p>
-                      <ul className="flex flex-col gap-1.5">
-                        {scheduledLessons.map((lesson) => (
-                          <li key={lesson.id} className="flex items-center justify-between gap-3">
-                            <span className="text-sm truncate" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                              {lesson.sortOrder}. {lesson.title}
-                            </span>
-                            <span
-                              className="text-[10px] font-semibold px-1.5 py-0.5 rounded shrink-0"
-                              style={{ backgroundColor: 'rgba(99,130,255,0.15)', color: 'rgba(130,160,255,0.8)' }}
-                            >
-                              Scheduled
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
                 </div>
               );
             })}
