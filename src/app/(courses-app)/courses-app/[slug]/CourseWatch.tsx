@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import YouTubePlayer from '@/components/standalone/YouTubePlayer';
 import DrivePlayer from '@/components/standalone/DrivePlayer';
 import BuyButton from '@/components/standalone/BuyButton';
 import UserAvatar from '@/components/standalone/UserAvatar';
+import { getCouponCodeFromSearch } from '@/utils/couponLink';
 
 type Lesson = { id: string; title: string; sort_order: number; youtube_url: string; content: string | null };
 type ScheduledLesson = { id: string; title: string; sort_order: number };
@@ -83,6 +84,8 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState('');
   const [showCouponInput, setShowCouponInput] = useState(false);
+  const [autoApplied, setAutoApplied] = useState(false);
+  const [urlCouponNotice, setUrlCouponNotice] = useState('');
 
   const discountedPrice = appliedCoupon
     ? appliedCoupon.discount_type === 'percentage'
@@ -90,27 +93,41 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
       : Math.max(0, appliedCoupon.discount_value)
     : course.price_ngn;
 
-  async function applyCoupon() {
-    if (!couponInput.trim()) return;
+  async function validateCoupon(code: string, fromUrl: boolean) {
+    if (!code.trim()) return;
     setCouponLoading(true);
     setCouponError('');
     try {
-      const res = await fetch(`/api/standalone/coupon?code=${encodeURIComponent(couponInput.trim())}&course_id=${course.id}`);
+      const res = await fetch(`/api/standalone/coupon?code=${encodeURIComponent(code.trim())}&course_id=${course.id}`);
       const data = await res.json();
       if (!res.ok) {
-        setCouponError(data.error ?? 'Invalid coupon code');
+        if (fromUrl) {
+          setUrlCouponNotice(data.error ?? 'This coupon code is no longer valid');
+        } else {
+          setCouponError(data.error ?? 'Invalid coupon code');
+        }
         setAppliedCoupon(null);
         return;
       }
       setAppliedCoupon({ code: data.code, discount_type: data.discount_type, discount_value: data.discount_value });
       setCouponError('');
+      setUrlCouponNotice('');
+      if (fromUrl) setAutoApplied(true);
     } catch (err) {
       console.error('[CourseWatch] Coupon validation error:', err);
-      setCouponError('Could not validate coupon. Please try again.');
+      if (fromUrl) {
+        setUrlCouponNotice('Could not validate coupon. Please try again.');
+      } else {
+        setCouponError('Could not validate coupon. Please try again.');
+      }
       setAppliedCoupon(null);
     } finally {
       setCouponLoading(false);
     }
+  }
+
+  async function applyCoupon() {
+    await validateCoupon(couponInput, false);
   }
 
   function removeCoupon() {
@@ -118,6 +135,17 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
     setCouponInput('');
     setCouponError('');
   }
+
+  useEffect(() => {
+    const code = getCouponCodeFromSearch(window.location.search);
+    if (code) {
+      setCouponInput(code);
+      validateCoupon(code, true);
+    }
+    // Intentionally run once on mount only — re-running on every render would
+    // re-fetch and could clobber a coupon the visitor entered manually.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const videoSource = activeLesson ? detectVideo(activeLesson.youtube_url) : null;
   const previewSeconds = !hasPurchased && videoSource ? 60 : undefined;
@@ -298,7 +326,7 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
               )}
 
               {appliedCoupon && (
-                <div className="flex items-center justify-between text-xs" style={{ color: '#a7d252' }}>
+                <div className={`flex items-center justify-between text-xs ${autoApplied ? 'coupon-pulse' : ''}`} style={{ color: '#a7d252' }}>
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-mono font-bold">{appliedCoupon.code}</span>
                     <span>applied</span>
@@ -308,6 +336,10 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
                   </div>
                   <button onClick={removeCoupon} className="text-white/40 hover:text-white/60 transition-colors">Remove</button>
                 </div>
+              )}
+
+              {urlCouponNotice && !appliedCoupon && (
+                <p className="text-xs text-amber-400">{urlCouponNotice}</p>
               )}
 
               {!appliedCoupon && (
@@ -593,7 +625,7 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
               )}
 
               {appliedCoupon && (
-                <div className="flex items-center justify-between text-xs" style={{ color: '#a7d252' }}>
+                <div className={`flex items-center justify-between text-xs ${autoApplied ? 'coupon-pulse' : ''}`} style={{ color: '#a7d252' }}>
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-mono font-bold">{appliedCoupon.code}</span>
                     <span>applied</span>
@@ -603,6 +635,10 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
                   </div>
                   <button onClick={removeCoupon} className="text-white/40 hover:text-white/60 transition-colors">Remove</button>
                 </div>
+              )}
+
+              {urlCouponNotice && !appliedCoupon && (
+                <p className="text-xs text-amber-400">{urlCouponNotice}</p>
               )}
 
               {!appliedCoupon && (
