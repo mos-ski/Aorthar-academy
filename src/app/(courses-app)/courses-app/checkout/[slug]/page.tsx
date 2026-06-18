@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { getCouponCodeFromSearch } from '@/utils/couponLink';
 
 export default function CheckoutPage() {
   const params = useParams<{ slug: string }>();
@@ -22,10 +23,11 @@ export default function CheckoutPage() {
     setError('');
 
     try {
+      const couponCode = getCouponCodeFromSearch(window.location.search);
       const res = await fetch('/api/standalone/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug }),
+        body: JSON.stringify(couponCode ? { slug, coupon_code: couponCode } : { slug }),
       });
       const data = await res.json();
 

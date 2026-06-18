@@ -93,6 +93,14 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
       : Math.max(0, appliedCoupon.discount_value)
     : course.price_ngn;
 
+  // Carry the applied coupon through registration/login so it survives the
+  // redirect to /courses-app/checkout/[slug] — without this, a new visitor
+  // who signs up from a coupon link gets charged full price.
+  const checkoutPath = `/courses-app/checkout/${course.slug}`;
+  const checkoutNext = appliedCoupon ? `${checkoutPath}?coupon=${encodeURIComponent(appliedCoupon.code)}` : checkoutPath;
+  const registerHref = `/register?next=${encodeURIComponent(checkoutNext)}`;
+  const loginHref = `/login?next=${encodeURIComponent(checkoutNext)}`;
+
   async function validateCoupon(code: string, fromUrl: boolean) {
     if (!code.trim()) return;
     setCouponLoading(true);
@@ -198,7 +206,7 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
             <>
               <Link href="/login" className="text-sm font-medium text-white/50 hover:text-white transition-colors">Sign in</Link>
               <Link
-                href={`/register?next=/courses-app/checkout/${course.slug}`}
+                href={registerHref}
                 className="text-sm font-semibold px-4 py-2 text-black transition-opacity hover:opacity-90"
                 style={{ backgroundColor: '#a7d252' }}
               >
@@ -319,7 +327,7 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
                 />
               ) : (
                 <Link
-                  href={`/register?next=/courses-app/checkout/${course.slug}`}
+                  href={registerHref}
                   className="block w-full py-2.5 font-bold text-black text-sm text-center transition-opacity hover:opacity-90 rounded-none"
                   style={{ backgroundColor: '#a7d252' }}
                 >
@@ -448,14 +456,14 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
                         ) : (
                           <>
                             <Link
-                              href={`/register?next=/courses-app/checkout/${course.slug}`}
+                              href={registerHref}
                               className="block w-full py-2.5 font-bold text-black text-sm text-center hover:opacity-90"
                               style={{ backgroundColor: '#a7d252' }}
                             >
                               Sign up & buy — ₦{course.price_ngn.toLocaleString()}
                             </Link>
                             <Link
-                              href={`/login?next=/courses-app/checkout/${course.slug}`}
+                              href={loginHref}
                               className="block text-sm text-white/30 hover:text-white/60 text-center transition-colors"
                             >
                               Already have an account?
@@ -506,7 +514,7 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
                   style={{ color: '#a7d252' }}
                 />
               ) : (
-                <Link href={`/register?next=/courses-app/checkout/${course.slug}`} className="font-medium underline" style={{ color: '#a7d252' }}>
+                <Link href={registerHref} className="font-medium underline" style={{ color: '#a7d252' }}>
                   Sign up to get full access →
                 </Link>
               )}
@@ -618,7 +626,7 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
                 />
               ) : (
                 <Link
-                  href={`/register?next=/courses-app/checkout/${course.slug}`}
+                  href={registerHref}
                   className="block w-full py-2.5 font-bold text-black text-sm text-center transition-opacity hover:opacity-90"
                   style={{ backgroundColor: '#a7d252' }}
                 >
