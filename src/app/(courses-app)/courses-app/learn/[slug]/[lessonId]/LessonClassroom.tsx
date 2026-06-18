@@ -6,7 +6,6 @@ import { useRouter, usePathname } from 'next/navigation';
 import YouTubePlayer from '@/components/standalone/YouTubePlayer';
 import DrivePlayer from '@/components/standalone/DrivePlayer';
 import UserAvatar from '@/components/standalone/UserAvatar';
-import { Loader2 } from 'lucide-react';
 
 function extractYouTubeId(url: string): string | null {
   const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
@@ -114,21 +113,6 @@ export default function LessonClassroom({ course, lessons, currentLessonId, user
   return (
     <div className="min-h-screen md:h-[100dvh] md:overflow-hidden flex flex-col" style={{ backgroundColor: '#0f1011', color: '#fff' }}>
 
-      {/* ── Loading overlay ── */}
-      {isLoading && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ backgroundColor: 'rgba(15,16,17,0.95)' }}
-          aria-busy="true"
-          aria-live="polite"
-        >
-          <div className="flex flex-col items-center gap-3 text-center px-4">
-            <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#a7d252' }} />
-            <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.8)' }}>Loading lesson…</span>
-          </div>
-        </div>
-      )}
-
       {/* ── Top nav (matches CourseWatch) ── */}
       <header
         className="h-13 px-6 sm:px-10 flex items-center justify-between border-b shrink-0 z-20"
@@ -230,37 +214,49 @@ export default function LessonClassroom({ course, lessons, currentLessonId, user
         {/* ── Right: video + info ── */}
         <div className="flex-1 flex flex-col gap-4 min-w-0 md:h-full md:overflow-y-auto self-start">
 
-          {/* Lesson title */}
-          <h1 className="text-base font-semibold text-white/90">{currentLesson.title}</h1>
+          {isLoading ? (
+            <>
+              {/* Lesson title skeleton */}
+              <div className="h-5 w-2/3 rounded animate-pulse" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }} />
 
-          {/* Video player */}
-          <div className="relative rounded-xl overflow-hidden bg-black w-full max-w-full shrink-0">
-            {youtubeId ? (
-              <YouTubePlayer
-                videoId={youtubeId}
-                onEnded={handleVideoEnded}
-                nextLesson={nextLesson ? {
-                  title: nextLesson.title,
-                  href: `/courses-app/learn/${course.slug}/${nextLesson.id}`,
-                } : undefined}
-                className="w-full"
-              />
-            ) : driveId ? (
-              <DrivePlayer
-                fileId={driveId}
-                onEnded={handleVideoEnded}
-                nextLesson={nextLesson ? {
-                  title: nextLesson.title,
-                  href: `/courses-app/learn/${course.slug}/${nextLesson.id}`,
-                } : undefined}
-                className="w-full"
-              />
-            ) : (
-              <div className="aspect-video flex items-center justify-center" style={{ backgroundColor: '#0d0e10' }}>
-                <p className="text-sm text-white/25">No video available for this lesson.</p>
+              {/* Video player skeleton */}
+              <div className="aspect-video w-full max-w-full shrink-0 rounded-xl animate-pulse" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+            </>
+          ) : (
+            <>
+              {/* Lesson title */}
+              <h1 className="text-base font-semibold text-white/90">{currentLesson.title}</h1>
+
+              {/* Video player */}
+              <div className="relative rounded-xl overflow-hidden bg-black w-full max-w-full shrink-0">
+                {youtubeId ? (
+                  <YouTubePlayer
+                    videoId={youtubeId}
+                    onEnded={handleVideoEnded}
+                    nextLesson={nextLesson ? {
+                      title: nextLesson.title,
+                      href: `/courses-app/learn/${course.slug}/${nextLesson.id}`,
+                    } : undefined}
+                    className="w-full"
+                  />
+                ) : driveId ? (
+                  <DrivePlayer
+                    fileId={driveId}
+                    onEnded={handleVideoEnded}
+                    nextLesson={nextLesson ? {
+                      title: nextLesson.title,
+                      href: `/courses-app/learn/${course.slug}/${nextLesson.id}`,
+                    } : undefined}
+                    className="w-full"
+                  />
+                ) : (
+                  <div className="aspect-video flex items-center justify-center" style={{ backgroundColor: '#0d0e10' }}>
+                    <p className="text-sm text-white/25">No video available for this lesson.</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
 
           {/* Actions row */}
           <div className="flex items-center justify-between gap-3">
