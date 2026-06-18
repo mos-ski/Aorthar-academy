@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { buildCouponShareLink } from '@/utils/couponLink';
 
 interface Coupon {
   id: string;
@@ -37,6 +38,18 @@ export default function CouponAdmin({ coupons: initialCoupons, courses }: { coup
     max_uses: '',
     expires_at: '',
   });
+  const [linkPickerFor, setLinkPickerFor] = useState<string | null>(null);
+
+  async function copyLink(slug: string, code: string) {
+    const link = buildCouponShareLink(window.location.origin, slug, code);
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success('Link copied to clipboard');
+    } catch (err) {
+      console.error('[CouponAdmin] Failed to copy link:', err);
+      toast.error('Could not copy link');
+    }
+  }
 
   function generateCode(): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -294,12 +307,52 @@ export default function CouponAdmin({ coupons: initialCoupons, courses }: { coup
                       </button>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => deleteCoupon(coupon)}
-                        className="text-xs text-red-500 hover:text-red-600"
-                      >
-                        Delete
-                      </button>
+                      <div className="flex items-center justify-end gap-3">
+                        {coupon.scope === 'specific' ? (
+                          <button
+                            onClick={() => coupon.standalone_courses && copyLink(coupon.standalone_courses.slug, coupon.code)}
+                            disabled={!coupon.standalone_courses}
+                            className="text-xs hover:underline disabled:opacity-40 disabled:no-underline"
+                          >
+                            Copy link
+                          </button>
+                        ) : (
+                          <div className="relative">
+                            <button
+                              onClick={() => setLinkPickerFor(linkPickerFor === coupon.id ? null : coupon.id)}
+                              className="text-xs hover:underline"
+                            >
+                              Copy link
+                            </button>
+                            {linkPickerFor === coupon.id && (
+                              <>
+                                <div className="fixed inset-0 z-10" onClick={() => setLinkPickerFor(null)} />
+                                <div className="absolute right-0 top-full mt-1 z-20 w-56 rounded-md border bg-card shadow-lg py-1 max-h-64 overflow-y-auto">
+                                  {courses.length === 0 ? (
+                                    <p className="px-3 py-2 text-xs text-muted-foreground">No bootcamps available</p>
+                                  ) : (
+                                    courses.map((c) => (
+                                      <button
+                                        key={c.id}
+                                        onClick={() => { copyLink(c.slug, coupon.code); setLinkPickerFor(null); }}
+                                        className="block w-full text-left px-3 py-2 text-xs hover:bg-muted"
+                                      >
+                                        {c.title}
+                                      </button>
+                                    ))
+                                  )}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => deleteCoupon(coupon)}
+                          className="text-xs text-red-500 hover:text-red-600"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
