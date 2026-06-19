@@ -31,8 +31,10 @@ export function getPermissionForPath(pathname: string): AdminPermission | null {
   if (
     pathname.startsWith('/admin/pricing')
     || pathname.startsWith('/admin/payments')
+    || pathname.startsWith('/admin/payment-plans')
     || pathname.startsWith('/api/admin/pricing')
     || pathname.startsWith('/api/admin/transactions')
+    || pathname.startsWith('/api/admin/payment-plans')
   ) {
     return 'finance';
   }

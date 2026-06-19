@@ -91,6 +91,7 @@ const adminUniversityNav: NavItem[] = [
 const adminExternalNav: NavItem[] = [
   { href: '/admin/standalone-courses', label: 'Catalog', icon: BookOpen },
   { href: '/admin/coupons', label: 'Coupons', icon: Tag },
+  { href: '/admin/payment-plans', label: 'Payment Plans', icon: CreditCard },
   { href: '/admin/instructors', label: 'Instructors', icon: Users },
   {
     href: '/admin/users?module=courses',
@@ -212,6 +213,7 @@ export default function Sidebar({
     moduleParam === 'courses'
     || pathname.startsWith('/admin/standalone-courses')
     || pathname.startsWith('/admin/coupons')
+    || pathname.startsWith('/admin/payment-plans')
     || pathname.startsWith('/admin/instructors')
     || (
       (pathname.startsWith('/admin/users')

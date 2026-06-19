@@ -61,6 +61,14 @@ export default async function LessonPage({ params }: Props) {
 
   const completedIds = new Set((progress ?? []).map((p) => p.lesson_id));
 
+  const { data: activePlan } = await supabase
+    .from('course_payment_plans')
+    .select('id, balance_ngn, deadline_at')
+    .eq('user_id', user.id)
+    .eq('course_id', course.id)
+    .eq('status', 'awaiting_balance')
+    .maybeSingle();
+
   return (
     <LessonClassroom
       course={{ id: course.id, slug: course.slug, title: course.title }}
@@ -77,6 +85,7 @@ export default async function LessonPage({ params }: Props) {
       userEmail={user.email ?? ''}
       userFullName={profile?.full_name}
       userAvatarUrl={profile?.avatar_url}
+      activePlan={activePlan}
     />
   );
 }

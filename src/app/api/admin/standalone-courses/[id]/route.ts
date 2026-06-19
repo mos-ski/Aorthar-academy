@@ -18,6 +18,7 @@ type CourseUpdate = {
   instructor_avatar_url: string | null;
   sale_type?: SaleType;
   status: string;
+  allow_payment_plan: boolean;
 };
 
 function isMissingSaleTypeColumn(error: { message?: string; code?: string } | null): boolean {
@@ -59,6 +60,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     instructor_avatar_url: body.instructor_avatar_url || null,
     sale_type: saleType,
     status: body.status,
+    allow_payment_plan: body.allow_payment_plan === true,
   };
 
   let saleTypePersisted = true;
@@ -88,7 +90,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     entityType: 'standalone_course',
     entityId: id,
     oldValue: existing,
-    newValue: { title: body.title, slug: body.slug, price_ngn: body.price_ngn, sale_type: saleType, sale_type_persisted: saleTypePersisted, status: body.status },
+    newValue: { title: body.title, slug: body.slug, price_ngn: body.price_ngn, sale_type: saleType, sale_type_persisted: saleTypePersisted, status: body.status, allow_payment_plan: updatePayload.allow_payment_plan },
     req: request,
   });
 

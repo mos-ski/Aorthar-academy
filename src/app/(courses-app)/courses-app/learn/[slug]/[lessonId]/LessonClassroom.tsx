@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import YouTubePlayer from '@/components/standalone/YouTubePlayer';
 import DrivePlayer from '@/components/standalone/DrivePlayer';
 import UserAvatar from '@/components/standalone/UserAvatar';
+import PaymentPlanBanner from '@/components/standalone/PaymentPlanBanner';
 
 function extractYouTubeId(url: string): string | null {
   const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
@@ -42,6 +43,12 @@ interface Course {
   title: string;
 }
 
+interface ActivePlan {
+  id: string;
+  balance_ngn: number;
+  deadline_at: string;
+}
+
 interface Props {
   course: Course;
   lessons: Lesson[];
@@ -49,9 +56,10 @@ interface Props {
   userEmail?: string;
   userFullName?: string | null;
   userAvatarUrl?: string | null;
+  activePlan?: ActivePlan | null;
 }
 
-export default function LessonClassroom({ course, lessons, currentLessonId, userEmail, userFullName, userAvatarUrl }: Props) {
+export default function LessonClassroom({ course, lessons, currentLessonId, userEmail, userFullName, userAvatarUrl, activePlan }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [completedIds, setCompletedIds] = useState<Set<string>>(
@@ -130,6 +138,10 @@ export default function LessonClassroom({ course, lessons, currentLessonId, user
           )}
         </div>
       </header>
+
+      {activePlan && (
+        <PaymentPlanBanner planId={activePlan.id} balanceNgn={activePlan.balance_ngn} deadlineAt={activePlan.deadline_at} />
+      )}
 
       {/* ── Body ── */}
       <div className="flex flex-1 md:min-h-0 md:overflow-hidden gap-4 md:gap-6 px-4 sm:px-6 md:px-10 py-4 md:py-7 max-w-[1280px] mx-auto w-full">

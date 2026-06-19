@@ -30,6 +30,7 @@ interface Course {
   instructor_avatar_url: string | null;
   sale_type?: SaleType | null;
   status: 'draft' | 'published';
+  allow_payment_plan?: boolean;
 }
 
 type SaleType = 'pre_sale' | 'live_class' | 'recorded_course';
@@ -52,6 +53,7 @@ type CourseFields = {
   instructor_avatar_url: string;
   sale_type: SaleType;
   status: 'draft' | 'published';
+  allow_payment_plan: boolean;
 };
 
 const saleTypeOptions: { value: SaleType; label: string; description: string }[] = [
@@ -99,6 +101,7 @@ export default function StandaloneCourseEditor({
     instructor_avatar_url: course.instructor_avatar_url ?? '',
     sale_type: course.sale_type ?? 'recorded_course',
     status: course.status,
+    allow_payment_plan: course.allow_payment_plan ?? false,
   });
 
   const [lessons, setLessons] = useState<Lesson[]>(initialLessons);
@@ -427,6 +430,19 @@ export default function StandaloneCourseEditor({
                 ))}
               </select>
               <p className="text-[11px] leading-4 text-muted-foreground">{selectedSaleType.description}</p>
+            </Field>
+            <Field label="Payment Plan">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={fields.allow_payment_plan}
+                  onChange={(e) => setFields((f) => ({ ...f, allow_payment_plan: e.target.checked }))}
+                />
+                Allow students to pay in two installments
+              </label>
+              <p className="text-[11px] leading-4 text-muted-foreground">
+                Global minimum first-payment % and balance deadline are set in Payment Plans settings.
+              </p>
             </Field>
             <Field label="Thumbnail" className="sm:col-span-2">
               <div className="flex flex-col gap-3 rounded-lg border border-dashed p-3 sm:flex-row sm:items-center">

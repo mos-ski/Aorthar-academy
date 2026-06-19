@@ -10,6 +10,15 @@ import {
   marketplaceDownloadHtml,
   marketplaceDownloadSubject,
 } from '@/lib/email/templates/marketplace-download';
+import {
+  paymentPlanStartedHtml,
+  paymentPlanStartedSubject,
+} from '@/lib/email/templates/payment-plan-started';
+import {
+  paymentPlanCompletedHtml,
+  paymentPlanCompletedSubject,
+} from '@/lib/email/templates/payment-plan-completed';
+import { calculateDeadline } from '@/lib/paymentPlans';
 
 // POST /api/webhooks/paystack
 // Handles both university subscription payments (via Edge Function) and
@@ -116,6 +125,188 @@ html: purchaseConfirmationHtml({
     })();
 
     return NextResponse.json({ ok: true, type: 'standalone_course' });
+  }
+
+  // Handle payment plan first installment — grants full access immediately
+  if (
+    event.event === 'charge.success' &&
+    event.data.metadata?.type === 'payment_plan_first'
+  ) {
+    const { reference, status, metadata } = event.data;
+
+    if (status !== 'success') {
+      return NextResponse.json({ ok: true, skipped: 'non-success status' });
+    }
+
+    const { course_id, user_id, percent, total_price_ngn, first_payment_ngn, deadline_days, terms_accepted_at } =
+      metadata ?? {};
+
+    if (!course_id || !user_id || !total_price_ngn || !first_payment_ngn || !deadline_days) {
+      return NextResponse.json({ error: 'Missing metadata fields' }, { status: 400 });
+    }
+
+    const adminSupabase = createAdminClient();
+    const totalPriceNgn = Number(total_price_ngn);
+    const firstPaymentNgn = Number(first_payment_ngn);
+    const deadlineAt = calculateDeadline(new Date(), Number(deadline_days)).toISOString();
+
+    const { error: planError } = await adminSupabase
+      .from('course_payment_plans')
+      .upsert(
+        {
+          user_id,
+          course_id,
+          total_price_ngn: totalPriceNgn,
+          first_payment_percent: Number(percent ?? 0),
+          first_payment_ngn: firstPaymentNgn,
+          balance_ngn: totalPriceNgn - firstPaymentNgn,
+          first_paystack_reference: reference,
+          status: 'awaiting_balance',
+          deadline_at: deadlineAt,
+          terms_accepted_at: terms_accepted_at ?? new Date().toISOString(),
+        },
+        { onConflict: 'first_paystack_reference' },
+      );
+
+    if (planError) {
+      console.error('[webhook/paystack] course_payment_plans upsert error:', planError);
+      return NextResponse.json({ error: 'DB insert failed' }, { status: 500 });
+    }
+
+    // Grant immediate full course access — same gate as a full purchase
+    const { error: purchaseError } = await adminSupabase
+      .from('standalone_purchases')
+      .upsert(
+        { user_id, course_id, paystack_reference: reference, amount_paid_ngn: firstPaymentNgn },
+        { onConflict: 'paystack_reference' },
+      );
+
+    if (purchaseError) {
+      console.error('[webhook/paystack] standalone_purchases upsert error:', purchaseError);
+      return NextResponse.json({ error: 'DB insert failed' }, { status: 500 });
+    }
+
+    void (async () => {
+      try {
+        const { data: course } = await adminSupabase
+          .from('standalone_courses')
+          .select('title')
+          .eq('id', course_id)
+          .single();
+        const { data: userRecord } = await adminSupabase.auth.admin.getUserById(user_id);
+        const userEmail = userRecord?.user?.email;
+        const { data: profileRecord } = await adminSupabase
+          .from('profiles')
+          .select('full_name')
+          .eq('user_id', user_id)
+          .maybeSingle();
+        const firstName = profileRecord?.full_name?.split(' ')[0] ?? 'there';
+        const courseName = course?.title ?? 'your course';
+
+        if (userEmail) {
+          await sendEmail({
+            to: userEmail,
+            subject: paymentPlanStartedSubject(courseName),
+            html: paymentPlanStartedHtml({
+              firstName,
+              courseName,
+              firstPaymentNgn,
+              balanceNgn: totalPriceNgn - firstPaymentNgn,
+              deadline: deadlineAt,
+              dashboardUrl: 'https://bootcamp.aorthar.com',
+            }),
+          });
+        }
+      } catch (emailErr) {
+        console.error('[webhook/paystack] payment plan started email failed:', emailErr);
+      }
+    })();
+
+    return NextResponse.json({ ok: true, type: 'payment_plan_first' });
+  }
+
+  // Handle payment plan balance payoff — true up amount_paid_ngn and complete the plan
+  if (
+    event.event === 'charge.success' &&
+    event.data.metadata?.type === 'payment_plan_balance'
+  ) {
+    const { reference, status, metadata } = event.data;
+
+    if (status !== 'success') {
+      return NextResponse.json({ ok: true, skipped: 'non-success status' });
+    }
+
+    const { plan_id } = metadata ?? {};
+    if (!plan_id) {
+      return NextResponse.json({ error: 'Missing metadata fields' }, { status: 400 });
+    }
+
+    const adminSupabase = createAdminClient();
+
+    const { data: plan } = await adminSupabase
+      .from('course_payment_plans')
+      .select('id, user_id, course_id, total_price_ngn, balance_ngn, status')
+      .eq('id', plan_id)
+      .single();
+
+    if (!plan) {
+      return NextResponse.json({ ok: true, skipped: 'plan not found' });
+    }
+
+    if (plan.status !== 'awaiting_balance') {
+      return NextResponse.json({ ok: true, skipped: 'plan already resolved' });
+    }
+
+    await adminSupabase
+      .from('course_payment_plans')
+      .update({
+        status: 'completed',
+        balance_paystack_reference: reference,
+        balance_paid_at: new Date().toISOString(),
+      })
+      .eq('id', plan_id);
+
+    await adminSupabase
+      .from('standalone_purchases')
+      .update({ amount_paid_ngn: plan.total_price_ngn })
+      .eq('user_id', plan.user_id)
+      .eq('course_id', plan.course_id);
+
+    void (async () => {
+      try {
+        const { data: course } = await adminSupabase
+          .from('standalone_courses')
+          .select('title')
+          .eq('id', plan.course_id)
+          .single();
+        const { data: userRecord } = await adminSupabase.auth.admin.getUserById(plan.user_id);
+        const userEmail = userRecord?.user?.email;
+        const { data: profileRecord } = await adminSupabase
+          .from('profiles')
+          .select('full_name')
+          .eq('user_id', plan.user_id)
+          .maybeSingle();
+        const firstName = profileRecord?.full_name?.split(' ')[0] ?? 'there';
+        const courseName = course?.title ?? 'your course';
+
+        if (userEmail) {
+          await sendEmail({
+            to: userEmail,
+            subject: paymentPlanCompletedSubject(courseName),
+            html: paymentPlanCompletedHtml({
+              firstName,
+              courseName,
+              balanceNgn: plan.balance_ngn,
+              dashboardUrl: 'https://bootcamp.aorthar.com',
+            }),
+          });
+        }
+      } catch (emailErr) {
+        console.error('[webhook/paystack] payment plan completed email failed:', emailErr);
+      }
+    })();
+
+    return NextResponse.json({ ok: true, type: 'payment_plan_balance' });
   }
 
   // Handle internship application payment
