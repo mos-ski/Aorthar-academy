@@ -308,89 +308,9 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
               </ul>
             )}
           </div>
-
-          {/* Buy CTA below menu if not purchased */}
-          {!hasPurchased && (
-            <div
-              className="rounded-xl border p-5 flex flex-col gap-3"
-              style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: '#18191a' }}
-            >
-              <p className="text-xs text-white/40">Lifetime access · {lessons.length} lessons</p>
-
-              {isLoggedIn ? (
-                <BuyButton
-                  slug={course.slug}
-                  label={appliedCoupon ? `Buy now — ₦${discountedPrice.toLocaleString()}` : `Buy this course — ₦${course.price_ngn.toLocaleString()}`}
-                  className="w-full py-2.5 font-bold text-black text-sm transition-opacity hover:opacity-90"
-                  style={{ backgroundColor: '#a7d252' }}
-                  couponCode={appliedCoupon?.code}
-                />
-              ) : (
-                <Link
-                  href={registerHref}
-                  className="block w-full py-2.5 font-bold text-black text-sm text-center transition-opacity hover:opacity-90 rounded-none"
-                  style={{ backgroundColor: '#a7d252' }}
-                >
-                  {appliedCoupon ? `Sign up & enroll — ₦${discountedPrice.toLocaleString()}` : `Sign up & enroll — ₦${course.price_ngn.toLocaleString()}`}
-                </Link>
-              )}
-
-              {appliedCoupon && (
-                <div className={`flex items-center justify-between text-xs ${autoApplied ? 'coupon-pulse' : ''}`} style={{ color: '#a7d252' }}>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="font-mono font-bold">{appliedCoupon.code}</span>
-                    <span>applied</span>
-                    <span className="px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(167,210,82,0.15)' }}>
-                      -{appliedCoupon.discount_type === 'percentage' ? `${appliedCoupon.discount_value}%` : `₦${appliedCoupon.discount_value.toLocaleString()}`}
-                    </span>
-                  </div>
-                  <button onClick={removeCoupon} className="text-white/40 hover:text-white/60 transition-colors">Remove</button>
-                </div>
-              )}
-
-              {urlCouponNotice && !appliedCoupon && (
-                <p className="text-xs text-amber-400">{urlCouponNotice}</p>
-              )}
-
-              {!appliedCoupon && (
-                <button
-                  onClick={() => { setShowCouponInput(!showCouponInput); setCouponError(''); }}
-                  className="text-xs transition-colors text-left"
-                  style={{ color: showCouponInput ? 'rgba(167,210,82,0.7)' : '#a7d252' }}
-                >
-                  {showCouponInput ? 'Close' : 'Do you have a coupon?'}
-                </button>
-              )}
-
-              {showCouponInput && !appliedCoupon && (
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex gap-1.5">
-                    <input
-                      type="text"
-                      value={couponInput}
-                      onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponError(''); }}
-                      onKeyDown={(e) => { if (e.key === 'Enter') applyCoupon(); }}
-                      placeholder="Enter coupon code"
-                      className="flex-1 px-3 py-1.5 text-sm bg-white/5 border rounded text-white placeholder-white/25"
-                      style={{ borderColor: 'rgba(255,255,255,0.1)' }}
-                    />
-                    <button
-                      onClick={applyCoupon}
-                      disabled={couponLoading || !couponInput.trim()}
-                      className="px-3 py-1.5 text-xs font-medium rounded border transition-colors disabled:opacity-40"
-                      style={{ borderColor: '#a7d252', color: '#a7d252' }}
-                    >
-                      {couponLoading ? '...' : 'Apply'}
-                    </button>
-                  </div>
-                  {couponError && <p className="text-xs text-red-400">{couponError}</p>}
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
-        {/* Right: Video + title */}
+        {/* Middle: Video + title */}
         <div className="flex-1 flex flex-col gap-4 min-w-0 md:h-full md:overflow-y-auto md:sticky md:top-0 self-start">
           <h1 className="text-base font-semibold text-white/90">
             {activeLesson?.title ?? course.title}
@@ -502,22 +422,25 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
             )}
           </div>
 
-          {/* Free preview notice */}
+          {/* Free preview notice — the inline CTA only shows on mobile;
+              desktop has the sticky price card on the right for that. */}
           {!hasPurchased && videoSource && !paywallVisible && (
             <p className="text-xs text-white/35">
               Free 1-minute preview.{' '}
-              {isLoggedIn ? (
-                <BuyButton
-                  slug={course.slug}
-                  label="Buy full course →"
-                  className="font-medium underline hover:opacity-70 transition-opacity"
-                  style={{ color: '#a7d252' }}
-                />
-              ) : (
-                <Link href={registerHref} className="font-medium underline" style={{ color: '#a7d252' }}>
-                  Sign up to get full access →
-                </Link>
-              )}
+              <span className="md:hidden">
+                {isLoggedIn ? (
+                  <BuyButton
+                    slug={course.slug}
+                    label="Buy full course →"
+                    className="font-medium underline hover:opacity-70 transition-opacity"
+                    style={{ color: '#a7d252' }}
+                  />
+                ) : (
+                  <Link href={registerHref} className="font-medium underline" style={{ color: '#a7d252' }}>
+                    Sign up to get full access →
+                  </Link>
+                )}
+              </span>
             </p>
           )}
 
@@ -537,6 +460,98 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
             </p>
           </div>
         </div>
+
+        {/* Right: sticky price card (desktop only — mobile has its own buy card below the lesson list) */}
+        {!hasPurchased && (
+          <div className="w-[300px] shrink-0 hidden md:flex md:flex-col md:sticky md:top-0 self-start">
+            <div
+              className="rounded-xl border p-5 flex flex-col gap-3"
+              style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: '#18191a' }}
+            >
+              <div>
+                {appliedCoupon ? (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold text-white">₦{discountedPrice.toLocaleString()}</span>
+                    <span className="text-sm text-white/30 line-through">₦{course.price_ngn.toLocaleString()}</span>
+                  </div>
+                ) : (
+                  <span className="text-2xl font-bold text-white">₦{course.price_ngn.toLocaleString()}</span>
+                )}
+                <p className="text-xs text-white/40 mt-1">Lifetime access · {lessons.length} lessons</p>
+              </div>
+
+              {isLoggedIn ? (
+                <BuyButton
+                  slug={course.slug}
+                  label="Buy this course"
+                  className="w-full py-2.5 font-bold text-black text-sm transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: '#a7d252' }}
+                  couponCode={appliedCoupon?.code}
+                />
+              ) : (
+                <Link
+                  href={registerHref}
+                  className="block w-full py-2.5 font-bold text-black text-sm text-center transition-opacity hover:opacity-90 rounded-none"
+                  style={{ backgroundColor: '#a7d252' }}
+                >
+                  Sign up &amp; enroll
+                </Link>
+              )}
+
+              {appliedCoupon && (
+                <div className={`flex items-center justify-between text-xs ${autoApplied ? 'coupon-pulse' : ''}`} style={{ color: '#a7d252' }}>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-mono font-bold">{appliedCoupon.code}</span>
+                    <span>applied</span>
+                    <span className="px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(167,210,82,0.15)' }}>
+                      -{appliedCoupon.discount_type === 'percentage' ? `${appliedCoupon.discount_value}%` : `₦${appliedCoupon.discount_value.toLocaleString()}`}
+                    </span>
+                  </div>
+                  <button onClick={removeCoupon} className="text-white/40 hover:text-white/60 transition-colors">Remove</button>
+                </div>
+              )}
+
+              {urlCouponNotice && !appliedCoupon && (
+                <p className="text-xs text-amber-400">{urlCouponNotice}</p>
+              )}
+
+              {!appliedCoupon && (
+                <button
+                  onClick={() => { setShowCouponInput(!showCouponInput); setCouponError(''); }}
+                  className="text-xs transition-colors text-left"
+                  style={{ color: showCouponInput ? 'rgba(167,210,82,0.7)' : '#a7d252' }}
+                >
+                  {showCouponInput ? 'Close' : 'Do you have a coupon?'}
+                </button>
+              )}
+
+              {showCouponInput && !appliedCoupon && (
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex gap-1.5">
+                    <input
+                      type="text"
+                      value={couponInput}
+                      onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponError(''); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') applyCoupon(); }}
+                      placeholder="Enter coupon code"
+                      className="flex-1 px-3 py-1.5 text-sm bg-white/5 border rounded text-white placeholder-white/25"
+                      style={{ borderColor: 'rgba(255,255,255,0.1)' }}
+                    />
+                    <button
+                      onClick={applyCoupon}
+                      disabled={couponLoading || !couponInput.trim()}
+                      className="px-3 py-1.5 text-xs font-medium rounded border transition-colors disabled:opacity-40"
+                      style={{ borderColor: '#a7d252', color: '#a7d252' }}
+                    >
+                      {couponLoading ? '...' : 'Apply'}
+                    </button>
+                  </div>
+                  {couponError && <p className="text-xs text-red-400">{couponError}</p>}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Mobile lesson list */}
