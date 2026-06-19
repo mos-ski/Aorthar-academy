@@ -46,6 +46,14 @@ export default async function CourseDetailPage({ params }: Props) {
 
   if (!course) notFound();
 
+  const { data: settingsRows } = await supabase
+    .from('site_settings')
+    .select('key, value')
+    .in('key', ['payment_plan_min_percent', 'payment_plan_deadline_days']);
+  const settings = Object.fromEntries((settingsRows ?? []).map((row) => [row.key, row.value]));
+  const paymentPlanMinPercent = Number(settings.payment_plan_min_percent ?? 50);
+  const paymentPlanDeadlineDays = Number(settings.payment_plan_deadline_days ?? 30);
+
   const { data: lessons } = await supabase
     .from('standalone_lessons')
     .select('id, title, sort_order, youtube_url, content, is_published, is_scheduled')
@@ -87,6 +95,8 @@ export default async function CourseDetailPage({ params }: Props) {
         userEmail={user?.email}
         userFullName={profile?.full_name}
         userAvatarUrl={profile?.avatar_url}
+        paymentPlanMinPercent={paymentPlanMinPercent}
+        paymentPlanDeadlineDays={paymentPlanDeadlineDays}
       />
     </>
   );
