@@ -23,7 +23,7 @@ export default function WorkPage() {
         <p style={{ color: muted, fontSize: '0.925rem', lineHeight: 1.6, marginBottom: '2rem' }}>
           Early clients get priority attention, founder pricing, and the full weight of our focus. Let&apos;s build something worth showing off.
         </p>
-        <Link href="/business/contact" style={{ background: lime, color: '#000', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '0.08em', padding: '0.875rem 2rem', borderRadius: '2px', textDecoration: 'none', textTransform: 'uppercase' }}>
+        <Link href="/studio/contact" style={{ background: lime, color: '#000', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '0.08em', padding: '0.875rem 2rem', borderRadius: '2px', textDecoration: 'none', textTransform: 'uppercase' }}>
           Start a Project
         </Link>
       </div>

@@ -100,7 +100,7 @@ export default function PackagesPage() {
                 </li>
               ))}
             </ul>
-            <Link href="/business/contact" style={{ display: 'block', textAlign: 'center', background: pkg.featured ? lime : 'transparent', color: pkg.featured ? '#000' : lime, border: pkg.featured ? 'none' : `1px solid ${lime}`, fontWeight: 800, fontSize: '0.8rem', letterSpacing: '0.06em', padding: '0.75rem', borderRadius: '2px', textDecoration: 'none', textTransform: 'uppercase', marginTop: 'auto' }}>
+            <Link href="/studio/contact" style={{ display: 'block', textAlign: 'center', background: pkg.featured ? lime : 'transparent', color: pkg.featured ? '#000' : lime, border: pkg.featured ? 'none' : `1px solid ${lime}`, fontWeight: 800, fontSize: '0.8rem', letterSpacing: '0.06em', padding: '0.75rem', borderRadius: '2px', textDecoration: 'none', textTransform: 'uppercase', marginTop: 'auto' }}>
               {pkg.cta}
             </Link>
           </div>
@@ -109,7 +109,7 @@ export default function PackagesPage() {
 
       <p style={{ textAlign: 'center', color: muted, fontSize: '0.85rem', marginTop: '3rem' }}>
         All prices in Nigerian Naira (NGN). Custom scopes available.{' '}
-        <Link href="/business/contact" style={{ color: lime, textDecoration: 'none' }}>Get a quote →</Link>
+        <Link href="/studio/contact" style={{ color: lime, textDecoration: 'none' }}>Get a quote →</Link>
       </p>
     </div>
   );

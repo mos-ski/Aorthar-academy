@@ -125,13 +125,13 @@ const adminMarketplaceNav: NavItem[] = [
   { href: '/admin/marketplace/transactions', label: 'Transactions', icon: ClipboardList },
 ];
 
-const adminBusinessNav: NavItem[] = [
-  { href: '/admin/business', label: 'Inquiries', icon: Inbox },
-  { href: '/admin/business/settings', label: 'Settings', icon: Settings },
+const adminStudioNav: NavItem[] = [
+  { href: '/admin/studio', label: 'Inquiries', icon: Inbox },
+  { href: '/admin/studio/settings', label: 'Settings', icon: Settings },
 ];
 
 const adminPrimaryModules: Array<{
-  key: 'overview' | 'university' | 'courses' | 'internship' | 'marketplace' | 'business' | 'admin_access' | 'audit_logs' | 'profile';
+  key: 'overview' | 'university' | 'courses' | 'internship' | 'marketplace' | 'studio' | 'admin_access' | 'audit_logs' | 'profile';
   label: string;
   icon: LucideIcon;
   href: string;
@@ -141,7 +141,7 @@ const adminPrimaryModules: Array<{
   { key: 'courses', label: 'Bootcamps', icon: BookOpen, href: '/admin/standalone-courses' },
   { key: 'internship', label: 'Internship', icon: BriefcaseBusiness, href: '/admin/internship' },
   { key: 'marketplace', label: 'Marketplace', icon: ShoppingBag, href: '/admin/marketplace' },
-  { key: 'business', label: 'Business', icon: Megaphone, href: '/admin/business' },
+  { key: 'studio', label: 'Studio', icon: Megaphone, href: '/admin/studio' },
   { key: 'admin_access', label: 'Admin Access', icon: ShieldCheck, href: '/admin/admin-access' },
   { key: 'audit_logs', label: 'Audit Logs', icon: ScrollText, href: '/admin/audit-logs' },
   { key: 'profile', label: 'Profile Settings', icon: CircleUser, href: '/admin/profile' },
@@ -230,16 +230,16 @@ export default function Sidebar({
   const inAuditLogsPath = pathname.startsWith('/admin/audit-logs');
   const inInternshipPath = pathname.startsWith('/admin/internship');
   const inMarketplacePath = pathname.startsWith('/admin/marketplace');
-  const inBusinessPath = pathname.startsWith('/admin/business');
+  const inStudioPath = pathname.startsWith('/admin/studio');
 
-  const activeModule: 'overview' | 'university' | 'courses' | 'internship' | 'marketplace' | 'business' | 'admin_access' | 'audit_logs' | 'profile' = inProfilePath
+  const activeModule: 'overview' | 'university' | 'courses' | 'internship' | 'marketplace' | 'studio' | 'admin_access' | 'audit_logs' | 'profile' = inProfilePath
     ? 'profile'
     : inAdminAccessPath
     ? 'admin_access'
     : inAuditLogsPath
     ? 'audit_logs'
-    : inBusinessPath
-    ? 'business'
+    : inStudioPath
+    ? 'studio'
     : inMarketplacePath
     ? 'marketplace'
     : inInternshipPath
@@ -259,8 +259,8 @@ export default function Sidebar({
       ? adminInternshipNav
       : activeModule === 'marketplace'
       ? adminMarketplaceNav
-      : activeModule === 'business'
-      ? adminBusinessNav
+      : activeModule === 'studio'
+      ? adminStudioNav
       : activeModule === 'admin_access'
       ? [{ href: '/admin/admin-access', label: 'Admin Access', icon: ShieldCheck }]
       : activeModule === 'audit_logs'
@@ -278,8 +278,8 @@ export default function Sidebar({
       ? 'Internship'
       : activeModule === 'marketplace'
       ? 'Marketplace'
-      : activeModule === 'business'
-      ? 'Business'
+      : activeModule === 'studio'
+      ? 'Studio'
       : activeModule === 'admin_access'
       ? 'Admin Access'
       : activeModule === 'audit_logs'
@@ -287,7 +287,7 @@ export default function Sidebar({
       : activeModule === 'profile'
       ? 'Profile Settings'
       : 'Admin';
-  const showSecondaryPane = activeModule === 'university' || activeModule === 'courses' || activeModule === 'internship' || activeModule === 'marketplace' || activeModule === 'business';
+  const showSecondaryPane = activeModule === 'university' || activeModule === 'courses' || activeModule === 'internship' || activeModule === 'marketplace' || activeModule === 'studio';
   const visiblePrimaryModules = adminPrimaryModules.filter((module) => {
     if (module.key === 'admin_access') return hasAdminPermission(adminLevel, 'admin_management');
     if (module.key === 'audit_logs') return hasAdminPermission(adminLevel, 'audit');

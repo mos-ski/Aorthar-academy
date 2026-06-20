@@ -30,11 +30,11 @@ const statusConfig = {
   archived: { label: 'Archived', variant: 'outline' as const },
 };
 
-export default async function BusinessContactsPage() {
+export default async function StudioContactsPage() {
   const supabase = await createClient();
 
   const { data: contacts } = await supabase
-    .from('business_contacts')
+    .from('studio_contacts')
     .select('*')
     .order('created_at', { ascending: false });
 
@@ -44,7 +44,7 @@ export default async function BusinessContactsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold">Business Inquiries</h2>
+        <h2 className="text-xl font-semibold">Studio Inquiries</h2>
         <p className="text-sm text-muted-foreground">
           {newCount > 0 ? `${newCount} new` : 'No new inquiries'} · {rows.length} total
         </p>
@@ -74,7 +74,7 @@ export default async function BusinessContactsPage() {
         <CardContent className="p-0">
           {rows.length === 0 ? (
             <div className="py-16 text-center text-sm text-muted-foreground">
-              No inquiries yet. They&apos;ll appear here once someone submits the contact form on business.aorthar.com.
+              No inquiries yet. They&apos;ll appear here once someone submits the contact form on studio.aorthar.com.
             </div>
           ) : (
             <Table>

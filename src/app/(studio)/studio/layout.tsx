@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getSettings } from '@/lib/settings';
-import './business.css';
+import './studio.css';
 
 export const metadata: Metadata = {
   title: 'Aorthar Agency — Marketing. Branding. Product.',
@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 };
 
 const navLinks = [
-  { href: '/business/services', label: 'Services' },
-  { href: '/business/packages', label: 'Packages' },
-  { href: '/business/work', label: 'Work' },
-  { href: '/business/about', label: 'About' },
+  { href: '/studio/services', label: 'Services' },
+  { href: '/studio/packages', label: 'Packages' },
+  { href: '/studio/work', label: 'Work' },
+  { href: '/studio/about', label: 'About' },
 ];
 
 function Nav() {
@@ -30,7 +30,7 @@ function Nav() {
           justifyContent: 'space-between',
         }}
       >
-        <Link href="/business" style={{ display: 'flex', alignItems: 'center' }}>
+        <Link href="/studio" style={{ display: 'flex', alignItems: 'center' }}>
           <Image
             src="/Aorthar Logo long complete.svg"
             alt="Aorthar"
@@ -59,7 +59,7 @@ function Nav() {
         </ul>
 
         <Link
-          href="/business/contact"
+          href="/studio/contact"
           style={{
             background: '#a7d252',
             color: '#000',
@@ -138,11 +138,11 @@ function Footer({ settings }: { settings: Record<string, string> }) {
 
         <nav style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' as const }}>
           {[
-            ['/business/services', 'Services'],
-            ['/business/packages', 'Packages'],
-            ['/business/work', 'Work'],
-            ['/business/about', 'About'],
-            ['/business/contact', 'Contact'],
+            ['/studio/services', 'Services'],
+            ['/studio/packages', 'Packages'],
+            ['/studio/work', 'Work'],
+            ['/studio/about', 'About'],
+            ['/studio/contact', 'Contact'],
           ].map(([href, label]) => (
             <Link
               key={href}
@@ -179,7 +179,7 @@ function Footer({ settings }: { settings: Record<string, string> }) {
   );
 }
 
-export default async function BusinessPagesLayout({ children }: { children: React.ReactNode }) {
+export default async function StudioPagesLayout({ children }: { children: React.ReactNode }) {
   const settings = await getSettings();
 
   return (

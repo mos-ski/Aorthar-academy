@@ -80,7 +80,7 @@ export default function ServicesPage() {
           <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Not sure which service you need?</h3>
           <p style={{ color: muted, fontSize: '0.925rem' }}>Tell us your goal. We&apos;ll recommend the right starting point.</p>
         </div>
-        <Link href="/business/contact" style={{ background: lime, color: '#000', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '0.08em', padding: '0.875rem 1.75rem', borderRadius: '2px', textDecoration: 'none', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+        <Link href="/studio/contact" style={{ background: lime, color: '#000', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '0.08em', padding: '0.875rem 1.75rem', borderRadius: '2px', textDecoration: 'none', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
           Talk to Us
         </Link>
       </div>

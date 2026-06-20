@@ -27,7 +27,7 @@ export async function updateSettings(formData: FormData) {
     ),
   );
 
-  revalidatePath('/admin/business/settings');
-  revalidatePath('/business');
-  redirect('/admin/business/settings?saved=1');
+  revalidatePath('/admin/studio/settings');
+  revalidatePath('/studio');
+  redirect('/admin/studio/settings?saved=1');
 }

@@ -23,7 +23,7 @@ export async function sendContactEmail(formData: FormData): Promise<ContactResul
 
   // Save to DB
   const supabase = await createClient();
-  await supabase.from('business_contacts').insert({
+  await supabase.from('studio_contacts').insert({
     name,
     email,
     services: service || null,
@@ -105,7 +105,7 @@ export async function sendContactEmail(formData: FormData): Promise<ContactResul
         <tr>
           <td style="padding-bottom:36px;">
             <p style="color:#aaaaaa;line-height:1.75;margin:0;font-family:-apple-system,system-ui,sans-serif;font-size:15px;">
-              In the meantime, feel free to browse our <a href="https://business.aorthar.com/packages" style="color:#a7d252;text-decoration:none;">packages</a> or learn more <a href="https://business.aorthar.com/about" style="color:#a7d252;text-decoration:none;">about us</a>.
+              In the meantime, feel free to browse our <a href="https://studio.aorthar.com/packages" style="color:#a7d252;text-decoration:none;">packages</a> or learn more <a href="https://studio.aorthar.com/about" style="color:#a7d252;text-decoration:none;">about us</a>.
             </p>
           </td>
         </tr>
@@ -115,7 +115,7 @@ export async function sendContactEmail(formData: FormData): Promise<ContactResul
           <td style="border-top:1px solid #1f1f1f;padding-top:24px;">
             <p style="color:#444444;font-size:12px;margin:0;font-family:-apple-system,system-ui,sans-serif;">
               Aorthar Agency &middot; Marketing. Branding. Product. &middot;
-              <a href="https://business.aorthar.com" style="color:#444444;text-decoration:none;">business.aorthar.com</a>
+              <a href="https://studio.aorthar.com" style="color:#444444;text-decoration:none;">studio.aorthar.com</a>
             </p>
           </td>
         </tr>

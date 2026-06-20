@@ -61,10 +61,10 @@ export default function AboutPage() {
       </div>
 
       <div style={{ marginTop: '6rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-        <Link href="/business/contact" style={{ background: lime, color: '#000', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '0.08em', padding: '0.875rem 2rem', borderRadius: '2px', textDecoration: 'none', textTransform: 'uppercase' }}>
+        <Link href="/studio/contact" style={{ background: lime, color: '#000', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '0.08em', padding: '0.875rem 2rem', borderRadius: '2px', textDecoration: 'none', textTransform: 'uppercase' }}>
           Work With Us
         </Link>
-        <Link href="/business/services" style={{ border: `1px solid ${border}`, color: muted, fontWeight: 600, fontSize: '0.8rem', letterSpacing: '0.04em', padding: '0.875rem 2rem', borderRadius: '2px', textDecoration: 'none' }}>
+        <Link href="/studio/services" style={{ border: `1px solid ${border}`, color: muted, fontWeight: 600, fontSize: '0.8rem', letterSpacing: '0.04em', padding: '0.875rem 2rem', borderRadius: '2px', textDecoration: 'none' }}>
           See Our Services
         </Link>
       </div>

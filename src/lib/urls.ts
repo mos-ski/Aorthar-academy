@@ -7,6 +7,7 @@
  *   - bootcamp.aorthar.com    → Bootcamps
  *   - internship.aorthar.com  → Internship
  *   - admin.aorthar.com       → Admin CMS
+ *   - studio.aorthar.com      → Studio (agency site)
  *
  * In development, everything runs on localhost:3000 and these helpers
  * return relative paths instead of full URLs.
@@ -18,7 +19,7 @@ const PRODUCTION_URLS = {
   bootcamp: process.env.NEXT_PUBLIC_BOOTCAMP_URL ?? 'https://bootcamp.aorthar.com',
   internship: process.env.NEXT_PUBLIC_INTERNSHIP_URL ?? 'https://internship.aorthar.com',
   admin: process.env.NEXT_PUBLIC_ADMIN_URL ?? 'https://admin.aorthar.com',
-  business: process.env.NEXT_PUBLIC_BUSINESS_URL ?? 'https://business.aorthar.com',
+  studio: process.env.NEXT_PUBLIC_STUDIO_URL ?? 'https://studio.aorthar.com',
 } as const;
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -45,7 +46,7 @@ export const urls = {
   bootcamp: (path: string = '/') => productUrl('bootcamp', path),
   internship: (path: string = '/') => productUrl('internship', path),
   admin: (path: string = '/') => productUrl('admin', path),
-  business: (path: string = '/') => productUrl('business', path),
+  studio: (path: string = '/') => productUrl('studio', path),
 } as const;
 
 /**
@@ -58,7 +59,7 @@ export function getProductFromHost(hostname: string): keyof typeof PRODUCTION_UR
   if (host === 'bootcamp.aorthar.com') return 'bootcamp';
   if (host === 'internship.aorthar.com') return 'internship';
   if (host === 'admin.aorthar.com') return 'admin';
-  if (host === 'business.aorthar.com') return 'business';
+  if (host === 'studio.aorthar.com') return 'studio';
   if (host === 'aorthar.com' || host === 'localhost') return 'base';
   // Also support legacy courses.aorthar.com → bootcamp
   if (host === 'courses.aorthar.com') return 'bootcamp';

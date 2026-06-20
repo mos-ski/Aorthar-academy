@@ -19,7 +19,7 @@ const lime = '#a7d252';
 const muted = '#888';
 const border = '#1f1f1f';
 
-export default function BusinessHome() {
+export default function StudioHome() {
   return (
     <>
       {/* Hero */}
@@ -31,10 +31,10 @@ export default function BusinessHome() {
           Aorthar Agency delivers marketing strategy, brand identity, and digital products for businesses at every stage — from day-one founders to established companies ready to scale.
         </p>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <Link href="/business/contact" style={{ background: lime, color: '#000', fontWeight: 800, fontSize: '0.85rem', letterSpacing: '0.08em', padding: '0.875rem 2rem', borderRadius: '2px', textDecoration: 'none', textTransform: 'uppercase' }}>
+          <Link href="/studio/contact" style={{ background: lime, color: '#000', fontWeight: 800, fontSize: '0.85rem', letterSpacing: '0.08em', padding: '0.875rem 2rem', borderRadius: '2px', textDecoration: 'none', textTransform: 'uppercase' }}>
             Start a Project
           </Link>
-          <Link href="/business/packages" style={{ border: `1px solid ${border}`, color: muted, fontWeight: 600, fontSize: '0.85rem', letterSpacing: '0.04em', padding: '0.875rem 2rem', borderRadius: '2px', textDecoration: 'none' }}>
+          <Link href="/studio/packages" style={{ border: `1px solid ${border}`, color: muted, fontWeight: 600, fontSize: '0.85rem', letterSpacing: '0.04em', padding: '0.875rem 2rem', borderRadius: '2px', textDecoration: 'none' }}>
             View Packages
           </Link>
         </div>
@@ -61,7 +61,7 @@ export default function BusinessHome() {
         <p style={{ color: muted, fontSize: '1rem', marginBottom: '2.5rem' }}>
           Tell us what you need. We&apos;ll tell you how to get there.
         </p>
-        <Link href="/business/contact" style={{ background: lime, color: '#000', fontWeight: 800, fontSize: '0.85rem', letterSpacing: '0.08em', padding: '0.875rem 2.5rem', borderRadius: '2px', textDecoration: 'none', textTransform: 'uppercase' }}>
+        <Link href="/studio/contact" style={{ background: lime, color: '#000', fontWeight: 800, fontSize: '0.85rem', letterSpacing: '0.08em', padding: '0.875rem 2.5rem', borderRadius: '2px', textDecoration: 'none', textTransform: 'uppercase' }}>
           Get in Touch
         </Link>
       </section>

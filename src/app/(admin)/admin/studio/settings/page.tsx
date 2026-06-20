@@ -6,7 +6,7 @@ import { updateSettings } from './actions';
 
 type Props = { searchParams: Promise<{ saved?: string }> };
 
-export default async function BusinessSettingsPage({ searchParams }: Props) {
+export default async function StudioSettingsPage({ searchParams }: Props) {
   const supabase = await createClient();
   const { data } = await supabase.from('site_settings').select('key, value');
   const s = Object.fromEntries((data ?? []).map((r) => [r.key, r.value ?? '']));
@@ -17,9 +17,9 @@ export default async function BusinessSettingsPage({ searchParams }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold">Business Settings</h2>
+        <h2 className="text-xl font-semibold">Studio Settings</h2>
         <p className="text-sm text-muted-foreground">
-          Manage contact details and social links for business.aorthar.com
+          Manage contact details and social links for studio.aorthar.com
         </p>
       </div>
 
