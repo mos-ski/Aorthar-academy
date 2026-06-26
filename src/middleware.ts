@@ -102,6 +102,7 @@ function isSuspendedRoute(pathname: string): boolean {
 function getSubdomainRewrite(request: NextRequest): NextResponse | null {
   const hostname = request.headers.get('host') || '';
   const pathname = request.nextUrl.pathname;
+  const normalizedPathname = pathname.replace(/\/{2,}/g, '/');
   const product = getProductFromHost(hostname);
 
   // bootcamp.aorthar.com (and legacy courses.aorthar.com) → /courses-app/*
@@ -157,11 +158,11 @@ function getSubdomainRewrite(request: NextRequest): NextResponse | null {
 
   // events.aorthar.com → /events/*
   if (product === 'events') {
-    if (isAuthPassthrough(pathname)) return null;
+    if (isAuthPassthrough(normalizedPathname)) return null;
     const url = request.nextUrl.clone();
-    const cleanPath = pathname.startsWith('/events')
-      ? pathname.slice('/events'.length) || '/'
-      : pathname;
+    const cleanPath = normalizedPathname.startsWith('/events')
+      ? normalizedPathname.slice('/events'.length) || '/'
+      : normalizedPathname;
     url.pathname = cleanPath === '/' ? '/events' : `/events${cleanPath}`;
     return NextResponse.rewrite(url);
   }

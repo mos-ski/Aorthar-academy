@@ -13,23 +13,31 @@ export default async function WebinarsAdminPage() {
 
   const { data: webinars } = await supabase
     .from('webinars')
-    .select('id, slug, title, scheduled_at, price_ngn, status, created_at')
+    .select('id, slug, title, scheduled_at, price_ngn, status, thumbnail_url, created_at')
     .order('scheduled_at', { ascending: false });
 
   const webinarIds = (webinars ?? []).map((w) => w.id);
   const { data: registrations } = await supabase
     .from('webinar_registrations')
-    .select('webinar_id')
+    .select('webinar_id, attended_at')
     .in('webinar_id', webinarIds.length ? webinarIds : ['00000000-0000-0000-0000-000000000000']);
 
   const registrationMap: Record<string, number> = {};
+  const attendedMap: Record<string, number> = {};
   (registrations ?? []).forEach((reg) => {
     registrationMap[reg.webinar_id] = (registrationMap[reg.webinar_id] ?? 0) + 1;
+    if (reg.attended_at) {
+      attendedMap[reg.webinar_id] = (attendedMap[reg.webinar_id] ?? 0) + 1;
+    }
   });
 
   return (
     <WebinarsAdmin
-      webinars={(webinars ?? []).map((w) => ({ ...w, registrationCount: registrationMap[w.id] ?? 0 }))}
+      webinars={(webinars ?? []).map((w) => ({
+        ...w,
+        registrationCount: registrationMap[w.id] ?? 0,
+        attendedCount: attendedMap[w.id] ?? 0,
+      }))}
     />
   );
 }

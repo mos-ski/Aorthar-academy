@@ -33,7 +33,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const { data: registrations } = await adminSupabase
     .from('webinar_registrations')
-    .select('user_id')
+    .select('user_id, email')
     .eq('webinar_id', id);
 
   if (!registrations || registrations.length === 0) {
@@ -43,16 +43,21 @@ export async function POST(request: NextRequest, { params }: Params) {
   const emails = (
     await Promise.all(
       registrations.map(async ({ user_id }) => {
+        if (!user_id) return null;
         const { data } = await adminSupabase.auth.admin.getUserById(user_id);
         return data?.user?.email ?? null;
       }),
     )
-  ).filter((email): email is string => Boolean(email));
+  )
+    .concat(registrations.map((registration) => registration.email))
+    .filter((email): email is string => Boolean(email));
+
+  const uniqueEmails = Array.from(new Set(emails));
 
   const html = webinarBroadcastHtml(body_html, webinar.title);
 
   const results = await Promise.allSettled(
-    emails.map((to) => sendEmail({ to, subject, html })),
+    uniqueEmails.map((to) => sendEmail({ to, subject, html })),
   );
   const sentCount = results.filter((r) => r.status === 'fulfilled').length;
 
@@ -73,5 +78,5 @@ export async function POST(request: NextRequest, { params }: Params) {
     req: request,
   });
 
-  return NextResponse.json({ ok: true, sent: sentCount, total: emails.length });
+  return NextResponse.json({ ok: true, sent: sentCount, total: uniqueEmails.length });
 }

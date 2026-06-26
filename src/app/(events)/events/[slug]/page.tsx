@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
+import Image from 'next/image';
 import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import RegisterButton from '@/components/events/RegisterButton';
@@ -16,25 +17,12 @@ export default async function EventDetailPage({ params }: Params) {
 
   const { data: webinar } = await supabase
     .from('webinars')
-    .select('id, slug, title, description, scheduled_at, duration_minutes, price_ngn, join_url')
+    .select('id, slug, title, description, scheduled_at, duration_minutes, price_ngn, thumbnail_url, whatsapp_community_url')
     .eq('slug', slug)
     .eq('status', 'published')
     .single();
 
   if (!webinar) notFound();
-
-  const { data: { user } } = await supabase.auth.getUser();
-  let alreadyRegistered = false;
-
-  if (user) {
-    const { data: registration } = await supabase
-      .from('webinar_registrations')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('webinar_id', webinar.id)
-      .maybeSingle();
-    alreadyRegistered = Boolean(registration);
-  }
 
   const when = new Date(webinar.scheduled_at).toLocaleString('en-NG', {
     dateStyle: 'full',
@@ -43,26 +31,43 @@ export default async function EventDetailPage({ params }: Params) {
   });
 
   return (
-    <div className="max-w-2xl">
+    <div>
       <Suspense fallback={null}>
         <VerifyPaymentOnReturn />
       </Suspense>
 
-      <p className="text-sm text-muted-foreground mb-2">{when} (WAT) · {webinar.duration_minutes} min</p>
-      <h1 className="text-3xl font-bold mb-4">{webinar.title}</h1>
-      <p className="text-base text-muted-foreground whitespace-pre-line mb-8">{webinar.description}</p>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+        <section>
+          <div className="relative mb-6 aspect-[16/9] overflow-hidden rounded-lg border bg-muted">
+            {webinar.thumbnail_url ? (
+              <Image src={webinar.thumbnail_url} alt="" fill className="object-cover" priority unoptimized />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-muted-foreground">
+                AORTHAR LIVE
+              </div>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground mb-2">{when} (WAT) · {webinar.duration_minutes} min</p>
+          <h1 className="text-4xl font-bold tracking-tight mb-4">{webinar.title}</h1>
+          <p className="text-base leading-7 text-muted-foreground whitespace-pre-line">{webinar.description}</p>
+        </section>
 
-      <div className="rounded-lg border p-5 max-w-sm">
-        <p className="text-2xl font-bold mb-4">
-          {webinar.price_ngn > 0 ? naira(webinar.price_ngn) : 'Free'}
-        </p>
-        <RegisterButton
-          slug={webinar.slug}
-          priceNgn={webinar.price_ngn}
-          isLoggedIn={Boolean(user)}
-          alreadyRegistered={alreadyRegistered}
-          joinUrl={webinar.join_url}
-        />
+        <aside className="rounded-lg border bg-card p-5 shadow-sm lg:sticky lg:top-6">
+          <p className="text-xs font-medium uppercase text-muted-foreground">Reserve your spot</p>
+          <p className="mt-2 text-3xl font-bold">
+            {webinar.price_ngn > 0 ? naira(webinar.price_ngn) : 'Free'}
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Enter your details and we&apos;ll email the event link with a calendar invite.
+          </p>
+          <div className="mt-5">
+            <RegisterButton
+              slug={webinar.slug}
+              priceNgn={webinar.price_ngn}
+              communityEnabled={Boolean(webinar.whatsapp_community_url)}
+            />
+          </div>
+        </aside>
       </div>
     </div>
   );

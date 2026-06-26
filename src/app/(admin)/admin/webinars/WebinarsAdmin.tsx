@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { urls } from '@/lib/urls';
+import { eventPublicUrl } from '@/lib/urls';
 
 interface Webinar {
   id: string;
@@ -13,11 +14,13 @@ interface Webinar {
   scheduled_at: string;
   price_ngn: number;
   status: 'draft' | 'published';
+  thumbnail_url: string | null;
   registrationCount: number;
+  attendedCount: number;
 }
 
 async function copyWebinarLink(slug: string) {
-  const link = `${urls.events()}/events/${slug}`;
+  const link = eventPublicUrl(slug);
   try {
     await navigator.clipboard.writeText(link);
     toast.success('Registration link copied to clipboard');
@@ -43,6 +46,34 @@ export default function WebinarsAdmin({ webinars }: { webinars: Webinar[] }) {
   function shortenSlug() {
     const shortened = newSlug.split('-').slice(0, 3).join('-');
     setNewSlug(shortened);
+  }
+
+  function getStatusLabel(webinar: Webinar): { label: string; className: string } {
+    if (webinar.status === 'draft') {
+      return {
+        label: 'Draft',
+        className: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300',
+      };
+    }
+    const startsAt = new Date(webinar.scheduled_at).getTime();
+    const endsAt = startsAt + 2 * 60 * 60 * 1000;
+    const now = Date.now();
+    if (now > endsAt) {
+      return {
+        label: 'Ended',
+        className: 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-800 dark:bg-slate-900/30 dark:text-slate-300',
+      };
+    }
+    if (now >= startsAt && now <= endsAt) {
+      return {
+        label: 'Live',
+        className: 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300',
+      };
+    }
+    return {
+      label: 'Published',
+      className: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300',
+    };
   }
 
   async function handleCreate(e: React.FormEvent) {
@@ -173,39 +204,53 @@ export default function WebinarsAdmin({ webinars }: { webinars: Webinar[] }) {
       ) : (
         <div className="overflow-hidden rounded-lg border">
           <div className="overflow-x-auto">
-            <table className="min-w-[760px] w-full text-sm">
+            <table className="min-w-[860px] w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Title</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Event</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">When</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Price</th>
                   <th className="text-center px-4 py-3 font-medium text-muted-foreground">Status</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Registrations</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Attendees</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {webinars.map((webinar) => (
+                {webinars.map((webinar) => {
+                  const status = getStatusLabel(webinar);
+                  return (
                   <tr key={webinar.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 font-medium">{webinar.title}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-12 w-16 overflow-hidden rounded-md border bg-muted">
+                          {webinar.thumbnail_url ? (
+                            <Image src={webinar.thumbnail_url} alt="" fill className="object-cover" unoptimized />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-[10px] font-medium text-muted-foreground">
+                              LIVE
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{webinar.title}</p>
+                          <p className="truncate font-mono text-xs text-muted-foreground">{eventPublicUrl(webinar.slug)}</p>
+                        </div>
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {new Date(webinar.scheduled_at).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' })}
                     </td>
                     <td className="px-4 py-3 text-right">{webinar.price_ngn > 0 ? `₦${webinar.price_ngn.toLocaleString()}` : 'Free'}</td>
                     <td className="px-4 py-3 text-center">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                          webinar.status === 'published'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                        }`}
+                        className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${status.className}`}
                       >
-                        {webinar.status}
+                        {status.label}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link href={`/admin/webinars/${webinar.id}/attendees`} className="text-muted-foreground hover:text-foreground hover:underline">
-                        {webinar.registrationCount}
+                        {webinar.attendedCount}/{webinar.registrationCount}
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
@@ -224,7 +269,8 @@ export default function WebinarsAdmin({ webinars }: { webinars: Webinar[] }) {
                       </Link>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

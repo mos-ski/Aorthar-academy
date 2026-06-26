@@ -4,6 +4,7 @@ export interface WebinarRegistrationData {
   scheduledAt: string;
   joinUrl: string;
   amountNgn: number;
+  calendarAttached?: boolean;
 }
 
 function formatScheduledAt(scheduledAt: string): string {
@@ -15,7 +16,7 @@ function formatScheduledAt(scheduledAt: string): string {
 }
 
 export function webinarRegistrationHtml(data: WebinarRegistrationData): string {
-  const { firstName, webinarTitle, scheduledAt, joinUrl, amountNgn } = data;
+  const { firstName, webinarTitle, scheduledAt, joinUrl, amountNgn, calendarAttached } = data;
   const when = formatScheduledAt(scheduledAt);
 
   const paymentLine = amountNgn > 0
@@ -55,6 +56,7 @@ export function webinarRegistrationHtml(data: WebinarRegistrationData): string {
               <p style="margin:0 0 8px 0;"><strong>${webinarTitle}</strong></p>
               <p style="margin:0 0 24px 0;color:#444;">${when} (WAT)</p>
               <p style="margin:0;">We'll send you a reminder before it starts. When it's time, just click the button below to join.</p>
+              ${calendarAttached ? '<p style="margin:18px 0 0 0;color:#444;">A calendar invite is attached so you can save the session easily.</p>' : ''}
             </td>
           </tr>
           <tr>

@@ -52,6 +52,11 @@ export const urls = {
   events: (path: string = '/') => productUrl('events', path),
 } as const;
 
+export function eventPublicUrl(slug: string): string {
+  const cleanSlug = slug.replace(/^\/+/, '');
+  return isDev ? `/events/${cleanSlug}` : productUrl('events', `/${cleanSlug}`);
+}
+
 /**
  * Extract the subdomain product name from a hostname.
  * Returns `'university' | 'bootcamp' | 'internship' | 'admin' | 'base' | null`

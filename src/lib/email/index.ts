@@ -11,12 +11,16 @@ export interface SendEmailOptions {
   subject: string;
   html: string;
   from?: string;
+  attachments?: Array<{
+    filename: string;
+    content: string;
+  }>;
 }
 
-export async function sendEmail({ to, subject, html, from }: SendEmailOptions) {
+export async function sendEmail({ to, subject, html, from, attachments }: SendEmailOptions) {
   const sender = from ?? 'Aorthar Academy <hello@aorthar.com>';
 
-  const { data, error } = await getResend().emails.send({ from: sender, to, subject, html });
+  const { data, error } = await getResend().emails.send({ from: sender, to, subject, html, attachments });
 
   if (error) {
     console.error('[email] Failed to send email:', error);

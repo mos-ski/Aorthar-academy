@@ -12,7 +12,13 @@ export default function VerifyPaymentOnReturn() {
     if (!reference) return;
     (async () => {
       try {
-        await fetch(`/api/events/verify-payment?reference=${encodeURIComponent(reference)}`);
+        const res = await fetch(`/api/events/verify-payment?reference=${encodeURIComponent(reference)}`);
+        const data = await res.json() as { whatsapp_url?: string | null };
+        if (data.whatsapp_url) {
+          window.setTimeout(() => {
+            window.location.href = data.whatsapp_url as string;
+          }, 1200);
+        }
       } finally {
         router.replace(window.location.pathname);
         router.refresh();

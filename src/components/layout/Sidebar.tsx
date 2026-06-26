@@ -18,6 +18,8 @@ import {
   Lightbulb,
   LayoutDashboard,
   LucideIcon,
+  Palette,
+  Radio,
   ShieldCheck,
   Settings,
   ScrollText,
@@ -28,7 +30,6 @@ import {
   Award,
   Building2,
   Inbox,
-  Megaphone,
 } from 'lucide-react';
 import type { Role } from '@/types';
 import { hasAdminPermission, type AdminLevel } from '@/lib/admin/permissions';
@@ -131,7 +132,7 @@ const adminStudioNav: NavItem[] = [
 ];
 
 const adminWebinarsNav: NavItem[] = [
-  { href: '/admin/webinars', label: 'Webinars', icon: Megaphone },
+  { href: '/admin/webinars', label: 'Events & Attendees', icon: Radio },
 ];
 
 const adminPrimaryModules: Array<{
@@ -145,8 +146,8 @@ const adminPrimaryModules: Array<{
   { key: 'courses', label: 'Bootcamps', icon: BookOpen, href: '/admin/standalone-courses' },
   { key: 'internship', label: 'Internship', icon: BriefcaseBusiness, href: '/admin/internship' },
   { key: 'marketplace', label: 'Marketplace', icon: ShoppingBag, href: '/admin/marketplace' },
-  { key: 'studio', label: 'Studio', icon: Megaphone, href: '/admin/studio' },
-  { key: 'webinars', label: 'Webinars', icon: Megaphone, href: '/admin/webinars' },
+  { key: 'studio', label: 'Studio', icon: Palette, href: '/admin/studio' },
+  { key: 'webinars', label: 'Webinars', icon: Radio, href: '/admin/webinars' },
   { key: 'admin_access', label: 'Admin Access', icon: ShieldCheck, href: '/admin/admin-access' },
   { key: 'audit_logs', label: 'Audit Logs', icon: ScrollText, href: '/admin/audit-logs' },
   { key: 'profile', label: 'Profile Settings', icon: CircleUser, href: '/admin/profile' },

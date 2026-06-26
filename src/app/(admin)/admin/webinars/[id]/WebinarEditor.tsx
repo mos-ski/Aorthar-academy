@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { urls } from '@/lib/urls';
+import { cn } from '@/lib/utils';
+import { eventPublicUrl } from '@/lib/urls';
 
 interface Webinar {
   id: string;
@@ -16,6 +18,8 @@ interface Webinar {
   capacity: number | null;
   price_ngn: number;
   join_url: string;
+  thumbnail_url: string | null;
+  whatsapp_community_url: string | null;
   status: 'draft' | 'published';
 }
 
@@ -35,6 +39,8 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
   const [capacity, setCapacity] = useState(webinar.capacity != null ? String(webinar.capacity) : '');
   const [priceNgn, setPriceNgn] = useState(String(webinar.price_ngn));
   const [joinUrl, setJoinUrl] = useState(webinar.join_url);
+  const [thumbnailUrl, setThumbnailUrl] = useState(webinar.thumbnail_url ?? '');
+  const [whatsappCommunityUrl, setWhatsappCommunityUrl] = useState(webinar.whatsapp_community_url ?? '');
   const [status, setStatus] = useState(webinar.status);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -55,6 +61,8 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
           capacity: capacity === '' ? null : capacity,
           price_ngn: priceNgn,
           join_url: joinUrl,
+          thumbnail_url: thumbnailUrl.trim() || null,
+          whatsapp_community_url: whatsappCommunityUrl.trim() || null,
           status,
         }),
       });
@@ -71,7 +79,7 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
   }
 
   async function copyLink() {
-    const link = `${urls.events()}/events/${slug}`;
+    const link = eventPublicUrl(slug);
     try {
       await navigator.clipboard.writeText(link);
       toast.success('Registration link copied to clipboard');
@@ -99,11 +107,17 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
   }
 
   return (
-    <form onSubmit={handleSave} className="w-full max-w-2xl flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Edit Webinar</h1>
-        <Link href={`/admin/webinars/${webinar.id}/attendees`} className="text-sm font-medium text-primary hover:underline">
-          {registrationCount} registered →
+    <form onSubmit={handleSave} className="w-full max-w-4xl flex flex-col gap-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Edit Webinar</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Publish the landing page, manage the join link, and track attendance.</p>
+        </div>
+        <Link
+          href={`/admin/webinars/${webinar.id}/attendees`}
+          className="inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+        >
+          Attendees · {registrationCount}
         </Link>
       </div>
 
@@ -118,7 +132,7 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
       </div>
 
       <div className="flex items-center justify-between gap-3 rounded-md border bg-muted/30 px-3 py-2">
-        <span className="truncate text-xs font-mono text-muted-foreground">{urls.events()}/events/{slug}</span>
+        <span className="truncate text-xs font-mono text-muted-foreground">{eventPublicUrl(slug)}</span>
         <button
           type="button"
           onClick={() => void copyLink()}
@@ -126,6 +140,28 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
         >
           Copy link
         </button>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_260px]">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-muted-foreground">Event image URL</label>
+          <input
+            className="border rounded px-3 py-2 text-sm bg-background"
+            value={thumbnailUrl}
+            onChange={(e) => setThumbnailUrl(e.target.value)}
+            placeholder="https://.../webinar-cover.jpg"
+          />
+          <p className="text-xs text-muted-foreground">Used as the public event thumbnail and landing-page image.</p>
+        </div>
+        <div className="relative aspect-[16/9] overflow-hidden rounded-lg border bg-muted">
+          {thumbnailUrl ? (
+            <Image src={thumbnailUrl} alt={title || 'Webinar image'} fill className="object-cover" unoptimized />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center px-4 text-center text-xs text-muted-foreground">
+              Add an event image URL to preview the thumbnail.
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col gap-1">
@@ -158,11 +194,39 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-muted-foreground">Status</label>
-        <select className="border rounded px-3 py-2 text-sm bg-background" value={status} onChange={(e) => setStatus(e.target.value as 'draft' | 'published')}>
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-        </select>
+        <label className="text-xs text-muted-foreground">WhatsApp community invite URL</label>
+        <input
+          className="border rounded px-3 py-2 text-sm bg-background"
+          value={whatsappCommunityUrl}
+          onChange={(e) => setWhatsappCommunityUrl(e.target.value)}
+          placeholder="https://chat.whatsapp.com/..."
+        />
+        <p className="text-xs text-muted-foreground">If set, registrants can opt in and will be redirected after registration.</p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="text-xs text-muted-foreground">Publishing status</label>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {([
+            { value: 'draft', title: 'Draft', description: 'Hidden from events.aorthar.com' },
+            { value: 'published', title: 'Published', description: 'Visible and open for registration' },
+          ] as const).map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setStatus(option.value)}
+              className={cn(
+                'rounded-lg border p-4 text-left transition-colors',
+                status === option.value
+                  ? 'border-primary bg-primary/5 text-foreground'
+                  : 'border-border hover:bg-muted/50',
+              )}
+            >
+              <span className="block text-sm font-semibold">{option.title}</span>
+              <span className="mt-1 block text-xs text-muted-foreground">{option.description}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
