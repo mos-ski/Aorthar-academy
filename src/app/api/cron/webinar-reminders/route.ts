@@ -3,6 +3,10 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { sendEmail } from '@/lib/email';
 import { webinarReminderHtml, webinarReminderSubject } from '@/lib/email/templates/webinar-reminder';
 
+// Runs once daily (Vercel Hobby plan only allows daily cron schedules), so
+// the 1-hour-out window below only fires reminders for webinars that happen
+// to start within an hour of this run — it's best-effort, not exact.
+
 interface RegistrationRow {
   user_id: string;
   webinar_id: string;
