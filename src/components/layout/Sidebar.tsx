@@ -90,7 +90,6 @@ const adminUniversityNav: NavItem[] = [
 
 const adminExternalNav: NavItem[] = [
   { href: '/admin/standalone-courses', label: 'Catalog', icon: BookOpen },
-  { href: '/admin/webinars', label: 'Webinars', icon: Megaphone },
   { href: '/admin/coupons', label: 'Coupons', icon: Tag },
   { href: '/admin/payment-plans', label: 'Payment Plans', icon: CreditCard },
   { href: '/admin/instructors', label: 'Instructors', icon: Users },
@@ -131,8 +130,12 @@ const adminStudioNav: NavItem[] = [
   { href: '/admin/studio/settings', label: 'Settings', icon: Settings },
 ];
 
+const adminWebinarsNav: NavItem[] = [
+  { href: '/admin/webinars', label: 'Webinars', icon: Megaphone },
+];
+
 const adminPrimaryModules: Array<{
-  key: 'overview' | 'university' | 'courses' | 'internship' | 'marketplace' | 'studio' | 'admin_access' | 'audit_logs' | 'profile';
+  key: 'overview' | 'university' | 'courses' | 'internship' | 'marketplace' | 'studio' | 'webinars' | 'admin_access' | 'audit_logs' | 'profile';
   label: string;
   icon: LucideIcon;
   href: string;
@@ -140,6 +143,7 @@ const adminPrimaryModules: Array<{
   { key: 'overview', label: 'Overview', icon: LayoutDashboard, href: '/admin' },
   { key: 'university', label: 'University', icon: Building2, href: '/admin/courses' },
   { key: 'courses', label: 'Bootcamps', icon: BookOpen, href: '/admin/standalone-courses' },
+  { key: 'webinars', label: 'Webinars', icon: Megaphone, href: '/admin/webinars' },
   { key: 'internship', label: 'Internship', icon: BriefcaseBusiness, href: '/admin/internship' },
   { key: 'marketplace', label: 'Marketplace', icon: ShoppingBag, href: '/admin/marketplace' },
   { key: 'studio', label: 'Studio', icon: Megaphone, href: '/admin/studio' },
@@ -216,7 +220,6 @@ export default function Sidebar({
     || pathname.startsWith('/admin/coupons')
     || pathname.startsWith('/admin/payment-plans')
     || pathname.startsWith('/admin/instructors')
-    || pathname.startsWith('/admin/webinars')
     || (
       (pathname.startsWith('/admin/users')
         || pathname.startsWith('/admin/pricing')
@@ -233,8 +236,9 @@ export default function Sidebar({
   const inInternshipPath = pathname.startsWith('/admin/internship');
   const inMarketplacePath = pathname.startsWith('/admin/marketplace');
   const inStudioPath = pathname.startsWith('/admin/studio');
+  const inWebinarsPath = pathname.startsWith('/admin/webinars');
 
-  const activeModule: 'overview' | 'university' | 'courses' | 'internship' | 'marketplace' | 'studio' | 'admin_access' | 'audit_logs' | 'profile' = inProfilePath
+  const activeModule: 'overview' | 'university' | 'courses' | 'internship' | 'marketplace' | 'studio' | 'webinars' | 'admin_access' | 'audit_logs' | 'profile' = inProfilePath
     ? 'profile'
     : inAdminAccessPath
     ? 'admin_access'
@@ -242,6 +246,8 @@ export default function Sidebar({
     ? 'audit_logs'
     : inStudioPath
     ? 'studio'
+    : inWebinarsPath
+    ? 'webinars'
     : inMarketplacePath
     ? 'marketplace'
     : inInternshipPath
@@ -257,6 +263,8 @@ export default function Sidebar({
       ? adminUniversityNav
       : activeModule === 'courses'
       ? adminExternalNav
+      : activeModule === 'webinars'
+      ? adminWebinarsNav
       : activeModule === 'internship'
       ? adminInternshipNav
       : activeModule === 'marketplace'
@@ -276,6 +284,8 @@ export default function Sidebar({
       ? 'University'
     : activeModule === 'courses'
       ? 'Bootcamps'
+      : activeModule === 'webinars'
+      ? 'Webinars'
       : activeModule === 'internship'
       ? 'Internship'
       : activeModule === 'marketplace'
@@ -289,11 +299,11 @@ export default function Sidebar({
       : activeModule === 'profile'
       ? 'Profile Settings'
       : 'Admin';
-  const showSecondaryPane = activeModule === 'university' || activeModule === 'courses' || activeModule === 'internship' || activeModule === 'marketplace' || activeModule === 'studio';
+  const showSecondaryPane = activeModule === 'university' || activeModule === 'courses' || activeModule === 'webinars' || activeModule === 'internship' || activeModule === 'marketplace' || activeModule === 'studio';
   const visiblePrimaryModules = adminPrimaryModules.filter((module) => {
     if (module.key === 'admin_access') return hasAdminPermission(adminLevel, 'admin_management');
     if (module.key === 'audit_logs') return hasAdminPermission(adminLevel, 'audit');
-    if (module.key === 'university' || module.key === 'courses') return hasAdminPermission(adminLevel, 'content') || hasAdminPermission(adminLevel, 'finance');
+    if (module.key === 'university' || module.key === 'courses' || module.key === 'webinars') return hasAdminPermission(adminLevel, 'content') || hasAdminPermission(adminLevel, 'finance');
     if (module.key === 'internship') return hasAdminPermission(adminLevel, 'internship');
     if (module.key === 'marketplace') return hasAdminPermission(adminLevel, 'content');
     return true;
