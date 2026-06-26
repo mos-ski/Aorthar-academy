@@ -216,6 +216,7 @@ export default function Sidebar({
     || pathname.startsWith('/admin/coupons')
     || pathname.startsWith('/admin/payment-plans')
     || pathname.startsWith('/admin/instructors')
+    || pathname.startsWith('/admin/webinars')
     || (
       (pathname.startsWith('/admin/users')
         || pathname.startsWith('/admin/pricing')
