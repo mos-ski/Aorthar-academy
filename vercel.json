@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/payment-plan-deadlines",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/webinar-reminders",
+      "schedule": "0 * * * *"
     }
   ]
 }

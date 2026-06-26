@@ -38,6 +38,8 @@ const PUBLIC_ROUTES = [
   '/api/internship',
   // studio.aorthar.com — public marketing site, no auth required
   '/studio',
+  // events.aorthar.com — public webinar listing/detail pages
+  '/events',
   // marketplace public API routes (no Supabase auth — external buyers)
   '/api/marketplace',
 ];
@@ -52,7 +54,7 @@ const SUSPENDED_ROUTE = '/suspended';
 // ─────────────────────────────────────────────
 
 /** Products that skip the university onboarding gate */
-const SKIP_ONBOARDING_PRODUCTS = ['bootcamp', 'internship', 'admin', 'base', 'studio'] as const;
+const SKIP_ONBOARDING_PRODUCTS = ['bootcamp', 'internship', 'admin', 'base', 'studio', 'events'] as const;
 
 /** Auth routes that should pass through on every subdomain */
 const AUTH_PASSTHROUGH_PREFIXES = [
@@ -153,6 +155,17 @@ function getSubdomainRewrite(request: NextRequest): NextResponse | null {
     return NextResponse.rewrite(url);
   }
 
+  // events.aorthar.com → /events/*
+  if (product === 'events') {
+    if (isAuthPassthrough(pathname)) return null;
+    const url = request.nextUrl.clone();
+    const cleanPath = pathname.startsWith('/events')
+      ? pathname.slice('/events'.length) || '/'
+      : pathname;
+    url.pathname = cleanPath === '/' ? '/events' : `/events${cleanPath}`;
+    return NextResponse.rewrite(url);
+  }
+
   // admin.aorthar.com → /admin/*
   if (product === 'admin') {
     if (isAuthPassthrough(pathname)) return null;
@@ -180,6 +193,11 @@ function getSubdomainRewrite(request: NextRequest): NextResponse | null {
     }
     if (pathname.startsWith('/admin')) {
       const url = new URL(`https://admin.aorthar.com${pathname}`);
+      url.search = request.nextUrl.search;
+      return NextResponse.redirect(url);
+    }
+    if (pathname.startsWith('/events')) {
+      const url = new URL(`https://events.aorthar.com${pathname}`);
       url.search = request.nextUrl.search;
       return NextResponse.redirect(url);
     }

@@ -90,6 +90,7 @@ const adminUniversityNav: NavItem[] = [
 
 const adminExternalNav: NavItem[] = [
   { href: '/admin/standalone-courses', label: 'Catalog', icon: BookOpen },
+  { href: '/admin/webinars', label: 'Webinars', icon: Megaphone },
   { href: '/admin/coupons', label: 'Coupons', icon: Tag },
   { href: '/admin/payment-plans', label: 'Payment Plans', icon: CreditCard },
   { href: '/admin/instructors', label: 'Instructors', icon: Users },
