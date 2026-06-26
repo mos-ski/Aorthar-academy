@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyWebhookSignature } from '@/lib/paystack';
+import { verifyWebhookSignature, verifyTransaction } from '@/lib/paystack';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendEmail } from '@/lib/email';
 import {
@@ -19,6 +19,20 @@ import {
   paymentPlanCompletedSubject,
 } from '@/lib/email/templates/payment-plan-completed';
 import { calculateDeadline } from '@/lib/paymentPlans';
+
+// The webhook signature proves the payload came from Paystack, but it can still
+// describe a charge that didn't fully complete (e.g. a stale/duplicated event).
+// Re-confirm directly against Paystack's API before granting access — the same
+// check the post-redirect verify routes already do.
+async function isReferenceActuallySuccessful(reference: string): Promise<boolean> {
+  try {
+    const result = await verifyTransaction(reference);
+    return result?.data?.status === 'success';
+  } catch (err) {
+    console.error('[webhook/paystack] verifyTransaction failed:', err);
+    return false;
+  }
+}
 
 // POST /api/webhooks/paystack
 // Handles both university subscription payments (via Edge Function) and
@@ -46,7 +60,7 @@ export async function POST(req: NextRequest) {
   ) {
     const { reference, status, metadata } = event.data;
 
-    if (status !== 'success') {
+    if (status !== 'success' || !(await isReferenceActuallySuccessful(reference))) {
       return NextResponse.json({ ok: true, skipped: 'non-success status' });
     }
 
@@ -134,7 +148,7 @@ html: purchaseConfirmationHtml({
   ) {
     const { reference, status, metadata } = event.data;
 
-    if (status !== 'success') {
+    if (status !== 'success' || !(await isReferenceActuallySuccessful(reference))) {
       return NextResponse.json({ ok: true, skipped: 'non-success status' });
     }
 
@@ -232,7 +246,7 @@ html: purchaseConfirmationHtml({
   ) {
     const { reference, status, metadata } = event.data;
 
-    if (status !== 'success') {
+    if (status !== 'success' || !(await isReferenceActuallySuccessful(reference))) {
       return NextResponse.json({ ok: true, skipped: 'non-success status' });
     }
 
@@ -314,7 +328,7 @@ html: purchaseConfirmationHtml({
     event.event === 'charge.success' &&
     event.data.metadata?.type === 'internship_application'
   ) {
-    if (event.data.status !== 'success') {
+    if (event.data.status !== 'success' || !(await isReferenceActuallySuccessful(event.data.reference))) {
       return NextResponse.json({ ok: true, skipped: 'non-success status' });
     }
 
@@ -341,7 +355,7 @@ html: purchaseConfirmationHtml({
     event.event === 'charge.success' &&
     event.data.metadata?.type === 'marketplace_product'
   ) {
-    if (event.data.status !== 'success') {
+    if (event.data.status !== 'success' || !(await isReferenceActuallySuccessful(event.data.reference))) {
       return NextResponse.json({ ok: true, skipped: 'non-success status' });
     }
 

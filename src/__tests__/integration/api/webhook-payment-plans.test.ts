@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 
 vi.mock('@/lib/paystack', () => ({
   verifyWebhookSignature: vi.fn().mockReturnValue(true),
+  verifyTransaction: vi.fn().mockResolvedValue({ data: { status: 'success' } }),
 }));
 vi.mock('@/lib/supabase/admin', () => ({ createAdminClient: vi.fn() }));
 vi.mock('@/lib/email', () => ({ sendEmail: vi.fn().mockResolvedValue({}) }));
