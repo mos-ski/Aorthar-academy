@@ -203,7 +203,11 @@ export default function WebinarsAdmin({ webinars }: { webinars: Webinar[] }) {
                         {webinar.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right text-muted-foreground">{webinar.registrationCount}</td>
+                    <td className="px-4 py-3 text-right">
+                      <Link href={`/admin/webinars/${webinar.id}/attendees`} className="text-muted-foreground hover:text-foreground hover:underline">
+                        {webinar.registrationCount}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
                       <button
                         type="button"

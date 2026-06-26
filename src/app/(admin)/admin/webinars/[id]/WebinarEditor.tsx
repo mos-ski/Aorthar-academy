@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { urls } from '@/lib/urls';
@@ -101,7 +102,9 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
     <form onSubmit={handleSave} className="w-full max-w-2xl flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Edit Webinar</h1>
-        <span className="text-sm text-muted-foreground">{registrationCount} registered</span>
+        <Link href={`/admin/webinars/${webinar.id}/attendees`} className="text-sm font-medium text-primary hover:underline">
+          {registrationCount} registered →
+        </Link>
       </div>
 
       <div className="flex flex-col gap-1">
