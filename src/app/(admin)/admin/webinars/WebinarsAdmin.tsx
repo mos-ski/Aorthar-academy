@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { urls } from '@/lib/urls';
 
 interface Webinar {
   id: string;
@@ -13,6 +14,17 @@ interface Webinar {
   price_ngn: number;
   status: 'draft' | 'published';
   registrationCount: number;
+}
+
+async function copyWebinarLink(slug: string) {
+  const link = `${urls.events()}/events/${slug}`;
+  try {
+    await navigator.clipboard.writeText(link);
+    toast.success('Registration link copied to clipboard');
+  } catch (err) {
+    console.error('[WebinarsAdmin] Failed to copy link:', err);
+    toast.error('Could not copy link');
+  }
 }
 
 export default function WebinarsAdmin({ webinars }: { webinars: Webinar[] }) {
@@ -26,6 +38,11 @@ export default function WebinarsAdmin({ webinars }: { webinars: Webinar[] }) {
 
   function slugify(title: string) {
     return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  function shortenSlug() {
+    const shortened = newSlug.split('-').slice(0, 3).join('-');
+    setNewSlug(shortened);
   }
 
   async function handleCreate(e: React.FormEvent) {
@@ -93,12 +110,22 @@ export default function WebinarsAdmin({ webinars }: { webinars: Webinar[] }) {
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs text-muted-foreground">Slug (URL)</label>
-              <input
-                className="border rounded px-3 py-2 text-sm bg-background font-mono"
-                value={newSlug}
-                onChange={(e) => setNewSlug(e.target.value)}
-                required
-              />
+              <div className="flex gap-1.5">
+                <input
+                  className="border rounded px-3 py-2 text-sm bg-background font-mono min-w-0 flex-1"
+                  value={newSlug}
+                  onChange={(e) => setNewSlug(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={shortenSlug}
+                  title="Trim to the first 3 words"
+                  className="shrink-0 rounded border px-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  Shorten
+                </button>
+              </div>
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs text-muted-foreground">Date & time</label>
@@ -177,7 +204,14 @@ export default function WebinarsAdmin({ webinars }: { webinars: Webinar[] }) {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right text-muted-foreground">{webinar.registrationCount}</td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <button
+                        type="button"
+                        onClick={() => void copyWebinarLink(webinar.slug)}
+                        className="text-xs font-medium text-muted-foreground hover:text-foreground hover:underline mr-4"
+                      >
+                        Copy link
+                      </button>
                       <Link
                         href={`/admin/webinars/${webinar.id}`}
                         className="text-xs font-medium text-primary hover:underline"

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { urls } from '@/lib/urls';
 
 interface Webinar {
   id: string;
@@ -68,6 +69,17 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
     }
   }
 
+  async function copyLink() {
+    const link = `${urls.events()}/events/${slug}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success('Registration link copied to clipboard');
+    } catch (err) {
+      console.error('[WebinarEditor] Failed to copy link:', err);
+      toast.error('Could not copy link');
+    }
+  }
+
   async function handleDelete() {
     if (!confirm('Delete this webinar? If it has registrations it will be unpublished instead.')) return;
     setDeleting(true);
@@ -100,6 +112,17 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
       <div className="flex flex-col gap-1">
         <label className="text-xs text-muted-foreground">Slug (URL)</label>
         <input className="border rounded px-3 py-2 text-sm bg-background font-mono" value={slug} onChange={(e) => setSlug(e.target.value)} required />
+      </div>
+
+      <div className="flex items-center justify-between gap-3 rounded-md border bg-muted/30 px-3 py-2">
+        <span className="truncate text-xs font-mono text-muted-foreground">{urls.events()}/events/{slug}</span>
+        <button
+          type="button"
+          onClick={() => void copyLink()}
+          className="shrink-0 rounded-md border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
+        >
+          Copy link
+        </button>
       </div>
 
       <div className="flex flex-col gap-1">
