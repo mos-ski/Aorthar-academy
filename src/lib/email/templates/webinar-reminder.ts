@@ -17,7 +17,7 @@ function formatScheduledAt(scheduledAt: string): string {
 export function webinarReminderHtml(data: WebinarReminderData): string {
   const { firstName, webinarTitle, scheduledAt, joinUrl, hoursUntil } = data;
   const when = formatScheduledAt(scheduledAt);
-  const timeframe = hoursUntil === 1 ? 'in about an hour' : 'tomorrow';
+  const timeframe = hoursUntil === 1 ? 'in about an hour' : 'soon';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -83,5 +83,5 @@ export function webinarReminderHtml(data: WebinarReminderData): string {
 export function webinarReminderSubject(webinarTitle: string, hoursUntil: 1 | 24): string {
   return hoursUntil === 1
     ? `Starting soon: "${webinarTitle}"`
-    : `Tomorrow: "${webinarTitle}"`;
+    : `Reminder: "${webinarTitle}"`;
 }

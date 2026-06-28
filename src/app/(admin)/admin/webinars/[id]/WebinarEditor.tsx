@@ -71,6 +71,10 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
         return;
       }
       toast.success(nextStatus === 'published' ? 'Webinar published' : 'Webinar saved as draft');
+      if (nextStatus === 'published') {
+        router.push('/admin/webinars');
+        return;
+      }
       router.refresh();
     } finally {
       setSaving(false);

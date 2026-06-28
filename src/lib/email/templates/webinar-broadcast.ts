@@ -12,8 +12,23 @@ export function webinarBroadcastHtml(bodyHtml: string, webinarTitle: string): st
       <td align="center">
         <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;">
           <tr>
-            <td style="padding:48px 48px 0 48px;font-size:16px;line-height:1.7;color:#000000;">
-              <div style="font-size:16px;line-height:1.7;color:#000000;">
+            <td style="padding:48px 48px 0 48px;">
+              <p style="margin:0 0 14px 0;color:#83b900;font-size:13px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;">Aorthar Live Update</p>
+              <h1 style="
+                margin:0;
+                font-family:Impact,'Arial Narrow',Arial,sans-serif;
+                font-size:54px;
+                font-weight:900;
+                line-height:0.95;
+                letter-spacing:-2px;
+                text-transform:uppercase;
+                color:#08694a;
+              ">${webinarTitle}</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:36px 48px 0 48px;font-size:17px;line-height:1.7;color:#000000;">
+              <div style="font-size:17px;line-height:1.7;color:#000000;">
                 ${bodyHtml}
               </div>
             </td>

@@ -61,13 +61,17 @@ export async function POST(request: NextRequest, { params }: Params) {
   );
   const sentCount = results.filter((r) => r.status === 'fulfilled').length;
 
-  await adminSupabase.from('webinar_broadcasts').insert({
+  const { data: broadcast, error: broadcastError } = await adminSupabase.from('webinar_broadcasts').insert({
     webinar_id: id,
     subject,
     body_html,
     recipient_count: sentCount,
     sent_by: user.id,
-  });
+  }).select('id, webinar_id, subject, body_html, recipient_count, sent_at').single();
+
+  if (broadcastError) {
+    console.error('[admin/webinars/broadcast] history insert error:', broadcastError);
+  }
 
   await writeAuditLog({
     action: 'webinar.broadcast',
@@ -78,5 +82,5 @@ export async function POST(request: NextRequest, { params }: Params) {
     req: request,
   });
 
-  return NextResponse.json({ ok: true, sent: sentCount, total: uniqueEmails.length });
+  return NextResponse.json({ ok: true, sent: sentCount, total: uniqueEmails.length, broadcast });
 }

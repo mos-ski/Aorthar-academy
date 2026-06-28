@@ -2,14 +2,18 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendEmail } from '@/lib/email';
 import { webinarReminderHtml, webinarReminderSubject } from '@/lib/email/templates/webinar-reminder';
+import { eventPublicUrl } from '@/lib/urls';
 
 // Runs once daily (Vercel Hobby plan only allows daily cron schedules), so
 // the 1-hour-out window below only fires reminders for webinars that happen
 // to start within an hour of this run — it's best-effort, not exact.
 
 interface RegistrationRow {
-  user_id: string;
+  id: string;
+  user_id: string | null;
   webinar_id: string;
+  first_name: string;
+  email: string;
   reminder_1d_sent_at: string | null;
   reminder_1h_sent_at: string | null;
 }
@@ -33,8 +37,8 @@ export async function GET(req: Request) {
   const adminSupabase = createAdminClient();
   const now = Date.now();
 
-  const oneDayWindowStart = new Date(now + 23 * 60 * 60 * 1000).toISOString();
-  const oneDayWindowEnd = new Date(now + 25 * 60 * 60 * 1000).toISOString();
+  const oneDayWindowStart = new Date(now).toISOString();
+  const oneDayWindowEnd = new Date(now + 24 * 60 * 60 * 1000).toISOString();
   const oneHourWindowStart = new Date(now + 50 * 60 * 1000).toISOString();
   const oneHourWindowEnd = new Date(now + 70 * 60 * 1000).toISOString();
 
@@ -56,7 +60,7 @@ export async function GET(req: Request) {
 
     const { data: registrations } = await adminSupabase
       .from('webinar_registrations')
-      .select('user_id, webinar_id, reminder_1d_sent_at, reminder_1h_sent_at')
+      .select('id, user_id, webinar_id, first_name, email, reminder_1d_sent_at, reminder_1h_sent_at')
       .eq('webinar_id', webinar.id);
 
     for (const reg of (registrations ?? []) as RegistrationRow[]) {
@@ -81,17 +85,23 @@ async function sendReminder(
   if (!webinar) return false;
 
   try {
-    const { data: userRecord } = await adminSupabase.auth.admin.getUserById(reg.user_id);
-    const { data: profile } = await adminSupabase
-      .from('profiles')
-      .select('full_name')
-      .eq('user_id', reg.user_id)
-      .maybeSingle();
+    let email = reg.email?.trim().toLowerCase();
+    let firstName = reg.first_name?.trim() || 'there';
 
-    const email = userRecord?.user?.email;
+    if (!email && reg.user_id) {
+      const { data: userRecord } = await adminSupabase.auth.admin.getUserById(reg.user_id);
+      const { data: profile } = await adminSupabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', reg.user_id)
+        .maybeSingle();
+
+      email = userRecord?.user?.email ?? '';
+      firstName = profile?.full_name?.split(' ')[0] ?? firstName;
+    }
+
     if (!email) return false;
-
-    const firstName = profile?.full_name?.split(' ')[0] ?? 'there';
+    const joinUrl = webinar.join_url || eventPublicUrl(webinar.slug);
 
     await sendEmail({
       to: email,
@@ -100,7 +110,7 @@ async function sendReminder(
         firstName,
         webinarTitle: webinar.title,
         scheduledAt: webinar.scheduled_at,
-        joinUrl: webinar.join_url,
+        joinUrl,
         hoursUntil,
       }),
     });
@@ -109,8 +119,7 @@ async function sendReminder(
     await adminSupabase
       .from('webinar_registrations')
       .update({ [field]: new Date().toISOString() })
-      .eq('user_id', reg.user_id)
-      .eq('webinar_id', reg.webinar_id);
+      .eq('id', reg.id);
 
     return true;
   } catch (err) {
