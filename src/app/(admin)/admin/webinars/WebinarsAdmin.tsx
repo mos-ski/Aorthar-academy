@@ -43,9 +43,13 @@ export default function WebinarsAdmin({ webinars }: { webinars: Webinar[] }) {
     return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   }
 
+  function makeEventCode(): string {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    return Array.from({ length: 5 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
+  }
+
   function shortenSlug() {
-    const shortened = newSlug.split('-').slice(0, 3).join('-');
-    setNewSlug(shortened);
+    setNewSlug(makeEventCode());
   }
 
   function getStatusLabel(webinar: Webinar): { label: string; className: string } {
@@ -151,10 +155,10 @@ export default function WebinarsAdmin({ webinars }: { webinars: Webinar[] }) {
                 <button
                   type="button"
                   onClick={shortenSlug}
-                  title="Trim to the first 3 words"
+                  title="Generate a short event code"
                   className="shrink-0 rounded border px-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
                 >
-                  Shorten
+                  Code
                 </button>
               </div>
             </div>

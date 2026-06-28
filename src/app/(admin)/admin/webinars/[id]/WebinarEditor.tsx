@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { ImagePlus, Upload } from 'lucide-react';
 import { eventPublicUrl } from '@/lib/urls';
 
 interface Webinar {
@@ -41,12 +41,11 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
   const [joinUrl, setJoinUrl] = useState(webinar.join_url);
   const [thumbnailUrl, setThumbnailUrl] = useState(webinar.thumbnail_url ?? '');
   const [whatsappCommunityUrl, setWhatsappCommunityUrl] = useState(webinar.whatsapp_community_url ?? '');
-  const [status, setStatus] = useState(webinar.status);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const thumbnailInputRef = useRef<HTMLInputElement | null>(null);
 
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
+  async function saveWebinar(nextStatus: 'draft' | 'published') {
     setSaving(true);
     try {
       const res = await fetch(`/api/admin/webinars/${webinar.id}`, {
@@ -63,7 +62,7 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
           join_url: joinUrl,
           thumbnail_url: thumbnailUrl.trim() || null,
           whatsapp_community_url: whatsappCommunityUrl.trim() || null,
-          status,
+          status: nextStatus,
         }),
       });
       if (!res.ok) {
@@ -71,10 +70,42 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
         toast.error(d.error ?? 'Failed to save');
         return;
       }
-      toast.success('Saved');
+      toast.success(nextStatus === 'published' ? 'Webinar published' : 'Webinar saved as draft');
       router.refresh();
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handlePublish(e: React.FormEvent) {
+    e.preventDefault();
+    await saveWebinar('published');
+  }
+
+  async function uploadThumbnail(event: React.ChangeEvent<HTMLInputElement>): Promise<void> {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setUploadingThumbnail(true);
+    try {
+      const body = new FormData();
+      body.append('thumbnail', file);
+      const res = await fetch(`/api/admin/webinars/${webinar.id}/thumbnail`, {
+        method: 'POST',
+        body,
+      });
+      const data = await res.json() as { thumbnail_url?: string; error?: string };
+      if (!res.ok || !data.thumbnail_url) {
+        toast.error(data.error ?? 'Failed to upload event image');
+        return;
+      }
+      setThumbnailUrl(data.thumbnail_url);
+      toast.success('Event image uploaded');
+      router.refresh();
+    } catch {
+      toast.error('Failed to upload event image');
+    } finally {
+      setUploadingThumbnail(false);
+      event.target.value = '';
     }
   }
 
@@ -89,25 +120,8 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
     }
   }
 
-  async function handleDelete() {
-    if (!confirm('Delete this webinar? If it has registrations it will be unpublished instead.')) return;
-    setDeleting(true);
-    try {
-      const res = await fetch(`/api/admin/webinars/${webinar.id}`, { method: 'DELETE' });
-      if (!res.ok) {
-        const d = await res.json();
-        toast.error(d.error ?? 'Failed to delete');
-        return;
-      }
-      toast.success('Deleted');
-      router.push('/admin/webinars');
-    } finally {
-      setDeleting(false);
-    }
-  }
-
   return (
-    <form onSubmit={handleSave} className="w-full max-w-4xl flex flex-col gap-6">
+    <form onSubmit={handlePublish} className="w-full max-w-4xl flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Edit Webinar</h1>
@@ -143,22 +157,32 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
       </div>
 
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_260px]">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-muted-foreground">Event image URL</label>
+        <div className="flex flex-col gap-2">
+          <label className="text-xs text-muted-foreground">Event image</label>
           <input
-            className="border rounded px-3 py-2 text-sm bg-background"
-            value={thumbnailUrl}
-            onChange={(e) => setThumbnailUrl(e.target.value)}
-            placeholder="https://.../webinar-cover.jpg"
+            ref={thumbnailInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={(event) => void uploadThumbnail(event)}
           />
-          <p className="text-xs text-muted-foreground">Used as the public event thumbnail and landing-page image.</p>
+          <button
+            type="button"
+            className="inline-flex min-h-10 w-fit items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+            disabled={uploadingThumbnail}
+            onClick={() => thumbnailInputRef.current?.click()}
+          >
+            <Upload className="h-4 w-4" />
+            {uploadingThumbnail ? 'Uploading...' : 'Upload event image'}
+          </button>
+          <p className="text-xs text-muted-foreground">JPG, PNG, or WebP. This image appears on the public event page.</p>
         </div>
         <div className="relative aspect-[16/9] overflow-hidden rounded-lg border bg-muted">
           {thumbnailUrl ? (
             <Image src={thumbnailUrl} alt={title || 'Webinar image'} fill className="object-cover" unoptimized />
           ) : (
             <div className="flex h-full w-full items-center justify-center px-4 text-center text-xs text-muted-foreground">
-              Add an event image URL to preview the thumbnail.
+              <ImagePlus className="h-6 w-6" />
             </div>
           )}
         </div>
@@ -204,37 +228,12 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
         <p className="text-xs text-muted-foreground">If set, registrants can opt in and will be redirected after registration.</p>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <label className="text-xs text-muted-foreground">Publishing status</label>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {([
-            { value: 'draft', title: 'Draft', description: 'Hidden from events.aorthar.com' },
-            { value: 'published', title: 'Published', description: 'Visible and open for registration' },
-          ] as const).map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => setStatus(option.value)}
-              className={cn(
-                'rounded-lg border p-4 text-left transition-colors',
-                status === option.value
-                  ? 'border-primary bg-primary/5 text-foreground'
-                  : 'border-border hover:bg-muted/50',
-              )}
-            >
-              <span className="block text-sm font-semibold">{option.title}</span>
-              <span className="mt-1 block text-xs text-muted-foreground">{option.description}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <button type="submit" disabled={saving} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
-          {saving ? 'Saving…' : 'Save changes'}
+        <button type="submit" disabled={saving} className="inline-flex min-h-10 items-center justify-center rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+          {saving ? 'Publishing...' : 'Publish'}
         </button>
-        <button type="button" onClick={() => void handleDelete()} disabled={deleting} className="rounded-md border border-red-300 px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:hover:bg-red-950/30">
-          {deleting ? 'Deleting…' : 'Delete'}
+        <button type="button" onClick={() => void saveWebinar('draft')} disabled={saving} className="inline-flex min-h-10 items-center justify-center rounded-md border px-5 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50">
+          Save as draft
         </button>
       </div>
     </form>

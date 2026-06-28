@@ -18,6 +18,7 @@ import {
   Lightbulb,
   LayoutDashboard,
   LucideIcon,
+  Megaphone,
   Palette,
   Radio,
   ShieldCheck,
@@ -132,7 +133,20 @@ const adminStudioNav: NavItem[] = [
 ];
 
 const adminWebinarsNav: NavItem[] = [
-  { href: '/admin/webinars', label: 'Events & Attendees', icon: Radio },
+  {
+    href: '/admin/webinars',
+    label: 'Webinars',
+    icon: Radio,
+    match: (pathname) =>
+      pathname === '/admin/webinars'
+      || (
+        /^\/admin\/webinars\/[^/]+$/.test(pathname)
+        && !pathname.endsWith('/attendees')
+        && !pathname.endsWith('/broadcast')
+      ),
+  },
+  { href: '/admin/webinars/attendees', label: 'Attendees', icon: Users },
+  { href: '/admin/webinars/broadcast', label: 'Broadcast', icon: Megaphone },
 ];
 
 const adminPrimaryModules: Array<{

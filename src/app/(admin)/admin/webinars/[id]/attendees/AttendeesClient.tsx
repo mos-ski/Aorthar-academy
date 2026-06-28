@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import RichTextEditor from '@/components/ui/RichTextEditor';
 
 interface Attendee {
   id: string;
@@ -25,10 +24,6 @@ interface Webinar {
 
 export default function AttendeesClient({ webinar, attendees }: { webinar: Webinar; attendees: Attendee[] }) {
   const [rows, setRows] = useState(attendees);
-  const [composing, setComposing] = useState(false);
-  const [subject, setSubject] = useState('');
-  const [bodyHtml, setBodyHtml] = useState('');
-  const [sending, setSending] = useState(false);
 
   const attendedCount = rows.filter((attendee) => attendee.attendedAt).length;
 
@@ -85,36 +80,6 @@ export default function AttendeesClient({ webinar, attendees }: { webinar: Webin
     }
   }
 
-  async function handleSend() {
-    if (!subject.trim() || !bodyHtml.trim() || bodyHtml === '<p></p>') {
-      toast.error('Write a subject and a message first');
-      return;
-    }
-    if (!confirm(`Send this email to all ${rows.length} registered attendees? This can't be undone.`)) return;
-
-    setSending(true);
-    try {
-      const res = await fetch(`/api/admin/webinars/${webinar.id}/broadcast`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject, body_html: bodyHtml }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error ?? 'Failed to send broadcast');
-        return;
-      }
-      toast.success(`Sent to ${data.sent} of ${data.total} attendees`);
-      setSubject('');
-      setBodyHtml('');
-      setComposing(false);
-    } catch {
-      toast.error('Network error. Please try again.');
-    } finally {
-      setSending(false);
-    }
-  }
-
   return (
     <div className="w-full max-w-3xl">
       <div className="mb-2">
@@ -132,47 +97,12 @@ export default function AttendeesClient({ webinar, attendees }: { webinar: Webin
           <button
             onClick={exportCsv}
             disabled={rows.length === 0}
-            className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+            className="inline-flex min-h-10 items-center justify-center rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
           >
             Export CSV
           </button>
-          <button
-            onClick={() => setComposing((c) => !c)}
-            disabled={rows.length === 0}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {composing ? 'Cancel broadcast' : 'New broadcast'}
-          </button>
         </div>
       </div>
-
-      {composing && (
-        <div className="mb-8 p-5 rounded-lg border bg-card flex flex-col gap-4">
-          <h2 className="font-semibold">Broadcast to all {rows.length} registered attendees</h2>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground">Subject</label>
-            <input
-              className="border rounded px-3 py-2 text-sm bg-background"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="Important update about tomorrow's session"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground">Message</label>
-            <RichTextEditor content={bodyHtml} onChange={setBodyHtml} placeholder="Write your update…" minHeight="200px" />
-          </div>
-          <div>
-            <button
-              onClick={() => void handleSend()}
-              disabled={sending}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            >
-              {sending ? 'Sending…' : `Send to ${rows.length} attendees`}
-            </button>
-          </div>
-        </div>
-      )}
 
       {rows.length === 0 ? (
         <p className="text-muted-foreground text-sm py-10 text-center">No one has registered yet.</p>
