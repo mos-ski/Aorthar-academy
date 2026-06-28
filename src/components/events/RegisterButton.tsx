@@ -27,8 +27,6 @@ export default function RegisterButton({ slug, priceNgn, communityEnabled }: Pro
   const [wantsCommunity, setWantsCommunity] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  const [redirecting, setRedirecting] = useState(false);
 
   async function handleRegister(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -60,28 +58,13 @@ export default function RegisterButton({ slug, priceNgn, communityEnabled }: Pro
         return;
       }
 
-      setSuccess(true);
-      if (data.whatsapp_url) {
-        setRedirecting(true);
-        window.setTimeout(() => {
-          window.location.href = data.whatsapp_url as string;
-        }, 1200);
-      }
+      const community = data.whatsapp_url ? '?community=1' : '';
+      window.location.href = `/events/${encodeURIComponent(slug)}/success${community}`;
     } catch {
       setError('Network error. Please try again.');
     } finally {
       setSubmitting(false);
     }
-  }
-
-  if (success) {
-    return (
-      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200">
-        <p className="font-semibold">You&apos;re registered.</p>
-        <p className="mt-1">Check your email for the event link and calendar invite.</p>
-        {redirecting && <p className="mt-3 text-xs">Opening the WhatsApp community...</p>}
-      </div>
-    );
   }
 
   return (

@@ -78,7 +78,7 @@ export default async function EventDetailPage({ params }: Params) {
   return (
     <div>
       <Suspense fallback={null}>
-        <VerifyPaymentOnReturn />
+        <VerifyPaymentOnReturn slug={slug} />
       </Suspense>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">

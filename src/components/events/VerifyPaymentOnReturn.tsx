@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function VerifyPaymentOnReturn() {
+export default function VerifyPaymentOnReturn({ slug }: { slug: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const reference = searchParams.get('reference');
@@ -14,17 +14,13 @@ export default function VerifyPaymentOnReturn() {
       try {
         const res = await fetch(`/api/events/verify-payment?reference=${encodeURIComponent(reference)}`);
         const data = await res.json() as { whatsapp_url?: string | null };
-        if (data.whatsapp_url) {
-          window.setTimeout(() => {
-            window.location.href = data.whatsapp_url as string;
-          }, 1200);
-        }
+        const community = data.whatsapp_url ? '?community=1' : '';
+        router.replace(`/events/${encodeURIComponent(slug)}/success${community}`);
       } finally {
-        router.replace(window.location.pathname);
         router.refresh();
       }
     })();
-  }, [reference, router]);
+  }, [reference, router, slug]);
 
   return null;
 }
