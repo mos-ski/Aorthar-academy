@@ -40,6 +40,8 @@ const PUBLIC_ROUTES = [
   '/studio',
   // events.aorthar.com — public webinar listing/detail pages
   '/events',
+  // public webinar registration/payment APIs (no Supabase auth — external registrants)
+  '/api/events',
   // marketplace public API routes (no Supabase auth — external buyers)
   '/api/marketplace',
 ];
