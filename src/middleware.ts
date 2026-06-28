@@ -32,6 +32,8 @@ const PUBLIC_ROUTES = [
   '/api/auth/callback',
   '/api/standalone/coupon',
   '/api/standalone/stream',
+  // cron endpoints protect themselves with CRON_SECRET
+  '/api/cron',
   // courses-app / bootcamp public routes
   '/courses-app',
   // internship public API routes (no Supabase auth — external applicants)
