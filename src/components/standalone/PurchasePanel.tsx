@@ -11,6 +11,8 @@ interface Props {
   slug: string;
   priceNgn: number;
   thumbnailUrl: string | null;
+  courseTitle?: string;
+  courseDescription?: string;
   lessonsCount: number;
   allowPaymentPlan: boolean;
   minPercent: number;
@@ -36,6 +38,8 @@ export default function PurchasePanel({
   slug,
   priceNgn,
   thumbnailUrl,
+  courseTitle,
+  courseDescription,
   lessonsCount,
   allowPaymentPlan,
   minPercent,
@@ -55,6 +59,7 @@ export default function PurchasePanel({
   const [method, setMethod] = useState<'full' | 'plan'>('full');
   const [percent, setPercent] = useState(minPercent);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [aboutExpanded, setAboutExpanded] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
@@ -117,12 +122,34 @@ export default function PurchasePanel({
       ? isLoggedIn ? 'Buy this course' : 'Sign up & enroll'
       : isLoggedIn ? 'Continue to payment' : 'Sign up to continue';
   const ctaDisabled = method === 'plan' && (!percentValid || !termsAccepted);
+  const aboutText = courseDescription?.trim();
 
   return (
     <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: '#18191a' }}>
-      {thumbnailUrl && (
-        <div className="relative aspect-video w-full">
-          <Image src={thumbnailUrl} alt="" fill className="object-cover" unoptimized />
+      {(thumbnailUrl || aboutText) && (
+        <div className="border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+          {thumbnailUrl && (
+            <div className="relative aspect-video w-full">
+              <Image src={thumbnailUrl} alt={courseTitle ?? 'Course thumbnail'} fill className="object-cover" unoptimized />
+            </div>
+          )}
+
+          {aboutText && (
+            <div className="px-5 py-4">
+              <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">About this course</h3>
+              <p className={`text-xs leading-relaxed text-white/55 whitespace-pre-wrap ${aboutExpanded ? '' : 'line-clamp-3'}`}>
+                {aboutText}
+              </p>
+              <button
+                type="button"
+                onClick={() => setAboutExpanded((current) => !current)}
+                className="mt-2 text-xs font-bold transition-opacity hover:opacity-75"
+                style={{ color: '#a7d252' }}
+              >
+                {aboutExpanded ? 'See less' : 'See more'}
+              </button>
+            </div>
+          )}
         </div>
       )}
 

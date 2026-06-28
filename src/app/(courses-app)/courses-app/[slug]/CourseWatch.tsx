@@ -456,13 +456,6 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
             </div>
           )}
 
-          {/* About section */}
-          <div className="pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
-            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-3">About this course</h3>
-            <p className="text-sm text-white/55 leading-relaxed whitespace-pre-wrap">
-              {course.long_description || course.description}
-            </p>
-          </div>
         </div>
 
         {/* Right: sticky price card (desktop only — mobile has its own buy card below the lesson list) */}
@@ -472,6 +465,8 @@ export default function CourseWatch({ course, lessons, scheduledLessons = [], fi
               slug={course.slug}
               priceNgn={course.price_ngn}
               thumbnailUrl={course.thumbnail_url}
+              courseTitle={course.title}
+              courseDescription={course.long_description || course.description}
               lessonsCount={lessons.length}
               allowPaymentPlan={course.allow_payment_plan}
               minPercent={paymentPlanMinPercent}
