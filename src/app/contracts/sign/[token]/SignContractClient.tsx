@@ -27,6 +27,7 @@ export default function SignContractClient({ token, paymentRef }: { token: strin
   const [signerName, setSignerName] = useState('');
   const [consent, setConsent] = useState(false);
   const [signed, setSigned] = useState(false);
+  const [showSignaturePanel, setShowSignaturePanel] = useState(false);
   const [paying, setPaying] = useState(false);
   const [paymentVerified, setPaymentVerified] = useState(false);
 
@@ -102,18 +103,28 @@ export default function SignContractClient({ token, paymentRef }: { token: strin
   const paymentRequired = contract.mode === 'client' && contract.payment_status === 'pending' && !paymentVerified;
 
   return (
-    <main className="min-h-screen bg-[#f7f8f4] px-4 py-8">
+    <main className="min-h-screen bg-[#f4f4ef] px-4 py-8" style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}>
       <div className="mx-auto max-w-4xl space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">{contract.title}</CardTitle>
-            <p className="text-sm text-muted-foreground">For {contract.recipient_name || contract.recipient_email}</p>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-lg border bg-white p-6 text-sm leading-7 text-black sm:p-10" dangerouslySetInnerHTML={{ __html: contract.rendered_html }} />
-          </CardContent>
-        </Card>
+        <section className="rounded-md border bg-white shadow-sm">
+          <div className="border-b px-6 py-5 sm:px-10">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Agreement for review</p>
+            <h1 className="mt-2 text-2xl font-semibold text-black">{contract.title}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">For {contract.recipient_name || contract.recipient_email}</p>
+          </div>
+          <div className="px-6 py-8 sm:px-10">
+            <div className="contract-document text-sm leading-7 text-black" dangerouslySetInnerHTML={{ __html: contract.rendered_html }} />
+          </div>
+        </section>
 
+        {!signed && !showSignaturePanel && (
+          <div className="flex justify-end">
+            <Button onClick={() => setShowSignaturePanel(true)}>
+              <PenLine className="h-4 w-4" /> Proceed to Signature
+            </Button>
+          </div>
+        )}
+
+        {(signed || showSignaturePanel) && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -135,7 +146,7 @@ export default function SignContractClient({ token, paymentRef }: { token: strin
                 {signerName.trim() && (
                   <div className="rounded-lg border bg-muted/30 p-4">
                     <p className="text-xs text-muted-foreground">Signature preview</p>
-                    <p className="mt-2 text-4xl italic tracking-wide text-foreground" style={{ fontFamily: 'Georgia, serif' }}>{signerName}</p>
+                    <p className="mt-2 text-4xl text-foreground" style={{ fontFamily: '"Brush Script MT", "Segoe Script", "Lucida Handwriting", cursive' }}>{signerName}</p>
                   </div>
                 )}
                 <label className="flex items-start gap-3 text-sm">
@@ -171,6 +182,7 @@ export default function SignContractClient({ token, paymentRef }: { token: strin
             )}
           </CardContent>
         </Card>
+        )}
       </div>
     </main>
   );

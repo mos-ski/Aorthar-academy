@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
   extractPlaceholderKeys,
+  findMissingContractFields,
   findMissingRequiredFields,
   renderContractHtml,
 } from '@/lib/contracts/placeholders';
+import {
+  getContractFieldSuggestions,
+  shouldUseRichContractInput,
+  suggestContractFieldType,
+} from '@/lib/contracts/field-suggestions';
 import { createTokenExpiry, isTokenExpired } from '@/lib/contracts/tokens';
 import { nextPaymentStatus } from '@/lib/contracts/payments';
 import type { ContractTemplateField } from '@/lib/contracts/types';
@@ -58,6 +64,72 @@ describe('contract placeholders', () => {
     });
 
     expect(missing.map((field) => field.key)).toEqual(['deliverables']);
+  });
+
+  it('blocks unfilled placeholders even when the template field row is missing', () => {
+    const html = '<p>{{client_name}}</p><p>{{date_to_commence}}</p>';
+
+    const missing = findMissingContractFields(html, fields, {
+      client_name: 'Ada Lovelace',
+    });
+
+    expect(missing).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        key: 'date_to_commence',
+        label: 'Date To Commence',
+        required: true,
+      }),
+    ]));
+  });
+
+  it('escapes normal text fields and preserves rich long-text fields', () => {
+    const html = '<p>{{client_name}}</p><section>{{deliverables}}</section>';
+
+    expect(
+      renderContractHtml(
+        html,
+        {
+          client_name: '<script>alert("x")</script>',
+          deliverables: '<ul><li>Landing page</li><li>Dashboard</li></ul>',
+        },
+        fields,
+      ),
+    ).toBe(
+      '<p>&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;</p><section><ul><li>Landing page</li><li>Dashboard</li></ul></section>',
+    );
+  });
+});
+
+describe('contract smart field suggestions', () => {
+  it('offers duration options with complete wording', () => {
+    expect(
+      getContractFieldSuggestions({
+        key: 'notice_period',
+        label: 'Notice Period',
+        fieldType: 'text',
+      }),
+    ).toEqual(expect.arrayContaining(['7 days', '30 days', '3 months', '6 months', '1 year']));
+  });
+
+  it('offers Aorthar defaults for provider details', () => {
+    expect(
+      getContractFieldSuggestions({
+        key: 'provider_email',
+        label: 'Provider Email',
+        fieldType: 'email',
+      }),
+    ).toContain('aorthardesignteam@gmail.com');
+  });
+
+  it('detects rich contract input fields', () => {
+    expect(shouldUseRichContractInput({ key: 'responsibilities', label: 'Responsibilities', fieldType: 'text' })).toBe(true);
+    expect(shouldUseRichContractInput({ key: 'client_phone', label: 'Client Phone', fieldType: 'phone' })).toBe(false);
+  });
+
+  it('suggests useful field types from missing placeholder names', () => {
+    expect(suggestContractFieldType('date_to_commence', 'Date To Commence')).toBe('date');
+    expect(suggestContractFieldType('company_address', 'Company Address')).toBe('address');
+    expect(suggestContractFieldType('deliverables', 'Deliverables')).toBe('long_text');
   });
 });
 

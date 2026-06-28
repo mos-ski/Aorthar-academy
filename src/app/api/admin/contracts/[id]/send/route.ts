@@ -6,7 +6,7 @@ import {
   contractSigningRequestSubject,
 } from '@/lib/email/templates/contracts';
 import { sendEmail } from '@/lib/email';
-import { findMissingRequiredFields, renderContractHtml } from '@/lib/contracts/placeholders';
+import { findMissingContractFields, renderContractHtml } from '@/lib/contracts/placeholders';
 import { createTokenExpiry } from '@/lib/contracts/tokens';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { contractSigningUrl } from '@/lib/urls';
@@ -131,7 +131,7 @@ async function prepareContractForSending(
     (contract.contract_field_values ?? []).map((row: { field_key: string; value: string }) => [row.field_key, row.value]),
   ) as Record<string, string>;
 
-  const missing = findMissingRequiredFields(fields, values);
+  const missing = findMissingContractFields(template.content_html, fields, values);
   if (missing.length > 0) {
     return {
       response: NextResponse.json({
@@ -149,6 +149,6 @@ async function prepareContractForSending(
       recipient_name: contract.recipient_name,
       recipient_email: contract.recipient_email,
     },
-    renderedHtml: renderContractHtml(template.content_html, values),
+    renderedHtml: renderContractHtml(template.content_html, values, fields),
   };
 }

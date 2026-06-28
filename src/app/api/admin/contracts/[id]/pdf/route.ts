@@ -63,13 +63,13 @@ function printableContractHtml({
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${escapeHtml(title)}</title>
   <style>
-    body { margin: 0; background: #f6f6f1; color: #111; font-family: Georgia, 'Times New Roman', serif; }
+    body { margin: 0; background: #f6f6f1; color: #111; font-family: Helvetica, Arial, sans-serif; }
     main { max-width: 820px; margin: 32px auto; background: #fff; padding: 56px; border: 1px solid #ddd; }
-    h1 { margin: 0 0 8px; font-family: Arial, sans-serif; color: #08694a; }
-    .meta { margin-bottom: 32px; color: #555; font-family: Arial, sans-serif; font-size: 13px; }
+    h1 { margin: 0 0 8px; color: #08694a; }
+    .meta { margin-bottom: 32px; color: #555; font-size: 13px; }
     .contract { font-size: 14px; line-height: 1.75; }
-    .proof { margin-top: 48px; padding-top: 24px; border-top: 1px solid #ddd; font-family: Arial, sans-serif; font-size: 13px; }
-    .signature { margin-top: 12px; font-family: Georgia, serif; font-size: 32px; font-style: italic; }
+    .proof { margin-top: 48px; padding-top: 24px; border-top: 1px solid #ddd; font-size: 13px; }
+    .signature { margin-top: 12px; font-family: "Brush Script MT", "Segoe Script", "Lucida Handwriting", cursive; font-size: 32px; }
     @media print {
       body { background: #fff; }
       main { margin: 0; border: 0; padding: 0; max-width: none; }
