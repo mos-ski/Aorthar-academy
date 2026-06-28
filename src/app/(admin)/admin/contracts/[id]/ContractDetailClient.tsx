@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Download, RefreshCcw, WalletCards } from 'lucide-react';
+import { Copy, Download, Eye, RefreshCcw, Trash2, WalletCards } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,9 @@ export default function ContractDetailClient({ contract }: { contract: Contract 
   const [manualAmount, setManualAmount] = useState(String(contract.payment_amount_ngn ?? ''));
   const [manualReference, setManualReference] = useState('');
   const [manualNote, setManualNote] = useState('');
+  const [duplicating, setDuplicating] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   async function resend(): Promise<void> {
     setResending(true);
@@ -78,6 +81,40 @@ export default function ContractDetailClient({ contract }: { contract: Contract 
     router.refresh();
   }
 
+  async function duplicateContract(): Promise<void> {
+    setDuplicating(true);
+    try {
+      const res = await fetch(`/api/admin/contracts/${contract.id}/duplicate`, { method: 'POST' });
+      const data = await res.json() as { contract?: { id: string }; error?: string };
+      if (!res.ok || !data.contract) {
+        toast.error(data.error ?? 'Failed to duplicate contract');
+        return;
+      }
+
+      toast.success('Draft copy created');
+      router.push(`/admin/contracts/${data.contract.id}`);
+    } finally {
+      setDuplicating(false);
+    }
+  }
+
+  async function deleteContract(): Promise<void> {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/contracts/${contract.id}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({})) as { error?: string };
+      if (!res.ok) {
+        toast.error(data.error ?? 'Failed to delete contract');
+        return;
+      }
+
+      toast.success('Contract deleted');
+      router.push('/admin/contracts');
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   const latestToken = [...(contract.contract_signing_tokens ?? [])].sort((a, b) => Date.parse(b.sent_at) - Date.parse(a.sent_at))[0];
   const signature = contract.contract_signatures?.[0];
   const html = contract.signed_snapshot_html ?? contract.rendered_html;
@@ -91,6 +128,14 @@ export default function ContractDetailClient({ contract }: { contract: Contract 
           <p className="text-sm text-muted-foreground">{contract.recipient_name} · {contract.recipient_email}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button variant="outline" asChild>
+            <a href={`/api/admin/contracts/${contract.id}/pdf`} target="_blank" rel="noreferrer">
+              <Eye className="h-4 w-4" /> Preview
+            </a>
+          </Button>
+          <Button variant="outline" disabled={duplicating} onClick={duplicateContract}>
+            <Copy className="h-4 w-4" /> Duplicate
+          </Button>
           <Button variant="outline" disabled={resending || contract.status === 'signed'} onClick={resend}>
             <RefreshCcw className="h-4 w-4" /> Resend Link
           </Button>
@@ -103,6 +148,9 @@ export default function ContractDetailClient({ contract }: { contract: Contract 
             <a href={`/api/admin/contracts/${contract.id}/pdf`} target="_blank" rel="noreferrer">
               <Download className="h-4 w-4" /> PDF
             </a>
+          </Button>
+          <Button variant="destructive" disabled={deleting} onClick={() => setDeleteOpen(true)}>
+            <Trash2 className="h-4 w-4" /> Delete
           </Button>
         </div>
       </div>
@@ -184,6 +232,21 @@ export default function ContractDetailClient({ contract }: { contract: Contract 
           </div>
           <DialogFooter>
             <Button onClick={markManualPaid}>Save Payment</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Contract</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            This will permanently delete this contract, its signing links, field values, payments, and signature proof.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" disabled={deleting} onClick={() => setDeleteOpen(false)}>Cancel</Button>
+            <Button variant="destructive" disabled={deleting} onClick={deleteContract}>Delete Contract</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

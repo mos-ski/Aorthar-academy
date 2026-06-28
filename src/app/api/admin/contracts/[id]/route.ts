@@ -59,3 +59,19 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: mapped.message }, { status: mapped.status });
   }
 }
+
+export async function DELETE(_request: NextRequest, { params }: Params) {
+  try {
+    await requireAdminApi('finance');
+    const { id } = await params;
+    const admin = createAdminClient();
+
+    const { error } = await admin.from('contracts').delete().eq('id', id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    const mapped = mapAdminApiError(error);
+    return NextResponse.json({ error: mapped.message }, { status: mapped.status });
+  }
+}
