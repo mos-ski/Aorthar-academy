@@ -14,8 +14,8 @@ export default function EventsLayout({ children }: { children: React.ReactNode }
           <Link href="/events" className="font-bold text-lg">
             Aorthar Live
           </Link>
-          <Link href="/events/my-tickets" className="text-sm text-muted-foreground hover:text-foreground">
-            My tickets
+          <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
+            aorthar.com
           </Link>
         </nav>
       </header>

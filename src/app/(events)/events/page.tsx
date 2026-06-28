@@ -16,19 +16,27 @@ export default async function EventsListPage() {
     .order('scheduled_at', { ascending: true });
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-2">Upcoming live classes</h1>
-      <p className="text-muted-foreground mb-8">Register for a free or paid live session and get a join link in your inbox.</p>
+    <div className="pb-10">
+      <div className="mb-10 max-w-3xl">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Events</p>
+        <h1 className="text-4xl font-bold tracking-tight mb-3">Upcoming Aorthar live sessions</h1>
+        <p className="text-base leading-7 text-muted-foreground">
+          Browse public webinars, live classes, and community sessions. Pick an event, register with your details, and get the join link in your email.
+        </p>
+      </div>
 
       {(!webinars || webinars.length === 0) ? (
-        <p className="text-muted-foreground text-sm py-10 text-center">No upcoming classes right now — check back soon.</p>
+        <div className="rounded-lg border bg-card px-6 py-12 text-center">
+          <h2 className="text-xl font-semibold">No upcoming events right now</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">Check back soon. New webinars and live classes will appear here once they are published.</p>
+        </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2">
           {webinars.map((webinar) => (
             <Link
               key={webinar.id}
               href={`/events/${webinar.slug}`}
-              className="group overflow-hidden rounded-lg border bg-card transition-colors hover:bg-muted/30"
+              className="group overflow-hidden rounded-lg border bg-card transition-colors hover:border-foreground/30 hover:bg-muted/30"
             >
               <div className="relative aspect-[16/9] bg-muted">
                 {webinar.thumbnail_url ? (
@@ -49,9 +57,12 @@ export default async function EventsListPage() {
                 </p>
                 <h2 className="font-semibold text-lg mb-1">{webinar.title}</h2>
                 <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{webinar.description}</p>
-                <span className="text-sm font-medium">
-                  {webinar.price_ngn > 0 ? naira(webinar.price_ngn) : 'Free'}
-                </span>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-medium">
+                    {webinar.price_ngn > 0 ? naira(webinar.price_ngn) : 'Free'}
+                  </span>
+                  <span className="text-sm font-semibold text-primary">Register</span>
+                </div>
               </div>
             </Link>
           ))}
