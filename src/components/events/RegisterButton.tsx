@@ -24,7 +24,7 @@ export default function RegisterButton({ slug, priceNgn, communityEnabled }: Pro
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
-  const [wantsCommunity, setWantsCommunity] = useState(false);
+  const [wantsCommunity, setWantsCommunity] = useState(communityEnabled);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
