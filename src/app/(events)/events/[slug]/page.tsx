@@ -3,13 +3,58 @@ export const dynamic = 'force-dynamic';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import RegisterButton from '@/components/events/RegisterButton';
 import VerifyPaymentOnReturn from '@/components/events/VerifyPaymentOnReturn';
+import { eventPublicUrl } from '@/lib/urls';
 
 const naira = (n: number) => `₦${n.toLocaleString('en-NG')}`;
 
 type Params = { params: Promise<{ slug: string }> };
+
+function eventDescription(description: string): string {
+  const clean = description.replace(/\s+/g, ' ').trim();
+  return clean.length > 180 ? `${clean.slice(0, 177)}...` : clean;
+}
+
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createClient();
+
+  const { data: webinar } = await supabase
+    .from('webinars')
+    .select('slug, title, description, thumbnail_url')
+    .eq('slug', slug)
+    .eq('status', 'published')
+    .single();
+
+  if (!webinar) return { title: 'Event Not Found' };
+
+  const title = `${webinar.title} — Aorthar Live`;
+  const description = eventDescription(webinar.description || 'Reserve your spot for this Aorthar live session.');
+  const url = eventPublicUrl(webinar.slug);
+  const image = webinar.thumbnail_url ? [{ url: webinar.thumbnail_url, alt: webinar.title }] : undefined;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: 'website',
+      images: image,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: webinar.thumbnail_url ? [webinar.thumbnail_url] : undefined,
+    },
+  };
+}
 
 export default async function EventDetailPage({ params }: Params) {
   const { slug } = await params;
