@@ -7,6 +7,7 @@ import {
   webinarRegistrationHtml,
   webinarRegistrationSubject,
 } from '@/lib/email/templates/webinar-registration-confirmation';
+import { eventPublicUrl } from '@/lib/urls';
 
 type WebinarRow = {
   id: string;
@@ -35,7 +36,7 @@ function cleanText(value: unknown): string {
 }
 
 async function sendRegistrationEmail(webinar: WebinarRow, firstName: string, email: string, amountNgn: number): Promise<void> {
-  if (!webinar.join_url) return;
+  const joinUrl = webinar.join_url || eventPublicUrl(webinar.slug);
 
   const ics = buildWebinarIcs({
     id: webinar.id,
@@ -43,7 +44,7 @@ async function sendRegistrationEmail(webinar: WebinarRow, firstName: string, ema
     description: webinar.description,
     scheduledAt: webinar.scheduled_at,
     durationMinutes: webinar.duration_minutes,
-    joinUrl: webinar.join_url,
+    joinUrl,
   });
 
   await sendEmail({
@@ -53,7 +54,7 @@ async function sendRegistrationEmail(webinar: WebinarRow, firstName: string, ema
       firstName,
       webinarTitle: webinar.title,
       scheduledAt: webinar.scheduled_at,
-      joinUrl: webinar.join_url,
+      joinUrl,
       amountNgn,
       calendarAttached: true,
     }),
