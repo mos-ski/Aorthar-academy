@@ -35,6 +35,9 @@ export function getPermissionForPath(pathname: string): AdminPermission | null {
     || pathname.startsWith('/api/admin/pricing')
     || pathname.startsWith('/api/admin/transactions')
     || pathname.startsWith('/api/admin/payment-plans')
+    || pathname.startsWith('/admin/contracts')
+    || pathname.startsWith('/api/admin/contracts')
+    || pathname.startsWith('/api/admin/contract-templates')
   ) {
     return 'finance';
   }
