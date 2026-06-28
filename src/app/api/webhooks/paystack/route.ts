@@ -353,6 +353,38 @@ html: purchaseConfirmationHtml({
   // Handle marketplace product purchase
   if (
     event.event === 'charge.success' &&
+    event.data.metadata?.type === 'contract_payment'
+  ) {
+    if (event.data.status !== 'success' || !(await isReferenceActuallySuccessful(event.data.reference))) {
+      return NextResponse.json({ ok: true, skipped: 'non-success status' });
+    }
+
+    const { reference } = event.data;
+    const adminSupabase = createAdminClient();
+    const amountNgn = Math.round(((event.data as { amount?: number }).amount ?? 0) / 100);
+    const paidAt = new Date().toISOString();
+
+    const { data: payment } = await adminSupabase
+      .from('contract_payments')
+      .update({ status: 'paid', amount_ngn: amountNgn, paid_at: paidAt })
+      .eq('paystack_reference', reference)
+      .eq('status', 'pending')
+      .select('contract_id')
+      .maybeSingle();
+
+    if (payment) {
+      await adminSupabase
+        .from('contracts')
+        .update({ payment_status: 'paid' })
+        .eq('id', payment.contract_id);
+    }
+
+    return NextResponse.json({ ok: true, type: 'contract_payment' });
+  }
+
+  // Handle marketplace product purchase
+  if (
+    event.event === 'charge.success' &&
     event.data.metadata?.type === 'marketplace_product'
   ) {
     if (event.data.status !== 'success' || !(await isReferenceActuallySuccessful(event.data.reference))) {
