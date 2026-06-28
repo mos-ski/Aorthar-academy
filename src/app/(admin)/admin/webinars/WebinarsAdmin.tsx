@@ -32,12 +32,14 @@ async function copyWebinarLink(slug: string) {
 
 export default function WebinarsAdmin({ webinars }: { webinars: Webinar[] }) {
   const router = useRouter();
+  const [webinarRows, setWebinarRows] = useState(webinars);
   const [creating, setCreating] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newSlug, setNewSlug] = useState('');
   const [newScheduledAt, setNewScheduledAt] = useState('');
   const [newPrice, setNewPrice] = useState('0');
   const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   function slugify(title: string) {
     return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -105,6 +107,39 @@ export default function WebinarsAdmin({ webinars }: { webinars: Webinar[] }) {
       router.refresh();
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function deleteWebinar(webinar: Webinar): Promise<void> {
+    const message = webinar.registrationCount > 0
+      ? 'This event has registrations, so it will be moved back to draft to preserve attendee records. Continue?'
+      : 'Delete this event permanently? This cannot be undone.';
+
+    if (!confirm(message)) return;
+
+    setDeletingId(webinar.id);
+    try {
+      const res = await fetch(`/api/admin/webinars/${webinar.id}`, { method: 'DELETE' });
+      const data = await res.json() as { soft_deleted?: boolean; error?: string };
+
+      if (!res.ok) {
+        toast.error(data.error ?? 'Failed to delete event');
+        return;
+      }
+
+      if (data.soft_deleted) {
+        setWebinarRows((current) => current.map((row) => row.id === webinar.id ? { ...row, status: 'draft' } : row));
+        toast.success('Event moved to draft');
+      } else {
+        setWebinarRows((current) => current.filter((row) => row.id !== webinar.id));
+        toast.success('Event deleted');
+      }
+
+      router.refresh();
+    } catch {
+      toast.error('Failed to delete event');
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -203,7 +238,7 @@ export default function WebinarsAdmin({ webinars }: { webinars: Webinar[] }) {
         </form>
       )}
 
-      {webinars.length === 0 ? (
+      {webinarRows.length === 0 ? (
         <p className="text-muted-foreground text-sm py-10 text-center">No webinars yet. Create one above.</p>
       ) : (
         <div className="overflow-hidden rounded-lg border">
@@ -220,7 +255,7 @@ export default function WebinarsAdmin({ webinars }: { webinars: Webinar[] }) {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {webinars.map((webinar) => {
+                {webinarRows.map((webinar) => {
                   const status = getStatusLabel(webinar);
                   return (
                   <tr key={webinar.id} className="hover:bg-muted/30 transition-colors">
@@ -271,6 +306,14 @@ export default function WebinarsAdmin({ webinars }: { webinars: Webinar[] }) {
                       >
                         Edit →
                       </Link>
+                      <button
+                        type="button"
+                        onClick={() => void deleteWebinar(webinar)}
+                        disabled={deletingId === webinar.id}
+                        className="ml-4 text-xs font-medium text-destructive hover:underline disabled:opacity-50"
+                      >
+                        {deletingId === webinar.id ? 'Deleting...' : 'Delete'}
+                      </button>
                     </td>
                   </tr>
                   );

@@ -42,6 +42,7 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
   const [thumbnailUrl, setThumbnailUrl] = useState(webinar.thumbnail_url ?? '');
   const [whatsappCommunityUrl, setWhatsappCommunityUrl] = useState(webinar.whatsapp_community_url ?? '');
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const thumbnailInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -84,6 +85,32 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
   async function handlePublish(e: React.FormEvent) {
     e.preventDefault();
     await saveWebinar('published');
+  }
+
+  async function deleteWebinar(): Promise<void> {
+    const message = registrationCount > 0
+      ? 'This event has registrations, so it will be moved back to draft to preserve attendee records. Continue?'
+      : 'Delete this event permanently? This cannot be undone.';
+
+    if (!confirm(message)) return;
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/webinars/${webinar.id}`, { method: 'DELETE' });
+      const data = await res.json() as { soft_deleted?: boolean; error?: string };
+
+      if (!res.ok) {
+        toast.error(data.error ?? 'Failed to delete event');
+        return;
+      }
+
+      toast.success(data.soft_deleted ? 'Event moved to draft' : 'Event deleted');
+      router.push('/admin/webinars');
+    } catch {
+      toast.error('Failed to delete event');
+    } finally {
+      setDeleting(false);
+    }
   }
 
   async function uploadThumbnail(event: React.ChangeEvent<HTMLInputElement>): Promise<void> {
@@ -238,6 +265,21 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
         </button>
         <button type="button" onClick={() => void saveWebinar('draft')} disabled={saving} className="inline-flex min-h-10 items-center justify-center rounded-md border px-5 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50">
           Save as draft
+        </button>
+      </div>
+
+      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+        <p className="text-sm font-medium text-destructive">Delete event</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Events with registrations are moved to draft so attendee records are preserved.
+        </p>
+        <button
+          type="button"
+          onClick={() => void deleteWebinar()}
+          disabled={deleting || saving}
+          className="mt-3 inline-flex min-h-10 items-center justify-center rounded-md border border-destructive/40 px-4 py-2 text-sm font-semibold text-destructive hover:bg-destructive/10 disabled:opacity-50"
+        >
+          {deleting ? 'Deleting...' : 'Delete event'}
         </button>
       </div>
     </form>
