@@ -11,6 +11,7 @@ import {
   suggestContractFieldType,
 } from '@/lib/contracts/field-suggestions';
 import { createTokenExpiry, isTokenExpired } from '@/lib/contracts/tokens';
+import { getContractPlaceholderState, hasMeaningfulContractValue } from '@/lib/contracts/field-state';
 import { nextPaymentStatus } from '@/lib/contracts/payments';
 import type { ContractTemplateField } from '@/lib/contracts/types';
 
@@ -150,6 +151,20 @@ describe('contract smart field suggestions', () => {
     expect(suggestContractFieldType('date_to_commence', 'Date To Commence')).toBe('date');
     expect(suggestContractFieldType('company_address', 'Company Address')).toBe('address');
     expect(suggestContractFieldType('deliverables', 'Deliverables')).toBe('long_text');
+  });
+});
+
+describe('contract field state', () => {
+  it('treats empty optional placeholders as unfilled until a value is entered', () => {
+    expect(getContractPlaceholderState(undefined)).toBe('empty');
+    expect(getContractPlaceholderState('')).toBe('empty');
+    expect(getContractPlaceholderState('<p></p>')).toBe('empty');
+    expect(getContractPlaceholderState('https://aorthar.com')).toBe('filled');
+  });
+
+  it('detects meaningful rich text content', () => {
+    expect(hasMeaningfulContractValue('<ul><li>&nbsp;</li></ul>')).toBe(false);
+    expect(hasMeaningfulContractValue('<ul><li>Lead design reviews</li></ul>')).toBe(true);
   });
 });
 

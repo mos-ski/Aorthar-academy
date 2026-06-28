@@ -18,6 +18,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  getContractPlaceholderState,
+  hasMeaningfulContractValue,
+  readableContractValue,
+} from '@/lib/contracts/field-state';
 import { extractPlaceholderKeys } from '@/lib/contracts/placeholders';
 import {
   getContractFieldSuggestions,
@@ -393,9 +398,9 @@ function interactiveHtml(html: string, fields: TemplateField[], values: Record<s
     const field = fields.find((candidate) => candidate.key === key);
     const label = field?.label ?? key;
     const value = values[key]?.trim();
-    const hasValue = hasMeaningfulContractValue(value);
-    const text = hasValue ? readablePreviewValue(value) : label;
-    const missingClass = field?.is_required && !hasValue ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800';
+    const state = getContractPlaceholderState(value);
+    const text = state === 'filled' ? readableContractValue(value ?? '') : label;
+    const missingClass = state === 'empty' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800';
 
     return `<button type="button" data-field-key="${escapeAttr(key)}" class="mx-1 inline-flex rounded-md border px-2 py-0.5 text-xs font-semibold ${missingClass}">${escapeHtml(text)}</button>`;
   });
@@ -490,20 +495,6 @@ function sanitizePreviewRichHtml(value: string): string {
     .replace(/\son[a-z]+\s*=\s*(".*?"|'.*?'|[^\s>]+)/gi, '')
     .replace(/\s(href|src)\s*=\s*(['"])\s*javascript:[\s\S]*?\2/gi, '')
     .replace(/\n/g, '');
-}
-
-function hasMeaningfulContractValue(value: string | undefined): boolean {
-  if (!value) return false;
-
-  return readablePreviewValue(value).length > 0;
-}
-
-function readablePreviewValue(value: string): string {
-  return value
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
 }
 
 function escapeHtml(value: string): string {

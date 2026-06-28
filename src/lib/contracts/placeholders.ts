@@ -1,5 +1,6 @@
 import type { ContractTemplateField } from '@/lib/contracts/types';
 import { humanizeContractFieldKey } from '@/lib/contracts/field-suggestions';
+import { hasMeaningfulContractValue } from '@/lib/contracts/field-state';
 
 const PLACEHOLDER_PATTERN = /\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g;
 
@@ -85,18 +86,6 @@ function escapeHtml(value: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
-}
-
-function hasMeaningfulContractValue(value: string | undefined): boolean {
-  if (!value) return false;
-
-  const text = value
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  return text.length > 0;
 }
 
 function sanitizeRichHtml(value: string): string {
