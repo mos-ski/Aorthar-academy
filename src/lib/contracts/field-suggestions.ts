@@ -45,6 +45,16 @@ const TERM_SUGGESTIONS = ['1 month', '3 months', '6 months', '12 months', '1 yea
 const REVISION_SUGGESTIONS = ['1 round', '2 rounds', '3 rounds'];
 const REPORTING_SUGGESTIONS = ['Adewale Adedamola', 'The Principal', 'Aorthar Management'];
 const CHANNEL_SUGGESTIONS = ['Email and WhatsApp', 'Email, WhatsApp, and Google Meet', 'Slack, email, and weekly calls'];
+const NAME_SUGGESTIONS = ['Aorthar Design Studio', 'Adewale Adedamola', 'Aorthar Academy'];
+const EMAIL_SUGGESTIONS = ['aorthardesignteam@gmail.com', 'hello@aorthar.com'];
+const PHONE_SUGGESTIONS = ['09058653400'];
+const ADDRESS_SUGGESTIONS = ['33 Adeshina Street, Fagba, Lagos State', '14 Dipo Abe Street, Ojodu Berger'];
+const MONEY_SUGGESTIONS = ['50000', '100000', '150000', '250000', '500000'];
+const URL_SUGGESTIONS = ['https://www.aorthar.com', 'https://aorthar.com'];
+const LONG_TEXT_SUGGESTIONS = [
+  '<ul><li>Deliver the agreed scope professionally and on time.</li><li>Communicate progress clearly throughout the engagement.</li><li>Maintain confidentiality for all shared business information.</li></ul>',
+  '<ul><li>Provide updates at agreed milestones.</li><li>Request approvals before making major changes.</li><li>Submit final deliverables in the agreed format.</li></ul>',
+];
 
 const RICH_FIELD_PATTERNS = [
   'responsibil',
@@ -66,6 +76,10 @@ const RICH_FIELD_PATTERNS = [
 export function getContractFieldSuggestions(field: SuggestionField): string[] {
   const normalized = normalizeFieldText(field);
   const suggestions = new Set<string>(AORTHAR_DEFAULTS[field.key] ?? []);
+
+  if (field.fieldType === 'date' || matchesAny(normalized, ['date', 'issued', 'commence', 'start'])) {
+    getDateSuggestions().forEach((value) => suggestions.add(value));
+  }
 
   if (matchesAny(normalized, ['day', 'days', 'period', 'duration', 'deadline', 'notice', 'window', 'response'])) {
     DURATION_SUGGESTIONS.forEach((value) => suggestions.add(value));
@@ -89,6 +103,23 @@ export function getContractFieldSuggestions(field: SuggestionField): string[] {
 
   if (matchesAny(normalized, ['communication', 'channel'])) {
     CHANNEL_SUGGESTIONS.forEach((value) => suggestions.add(value));
+  }
+
+  if (field.fieldType === 'email') EMAIL_SUGGESTIONS.forEach((value) => suggestions.add(value));
+  if (field.fieldType === 'phone') PHONE_SUGGESTIONS.forEach((value) => suggestions.add(value));
+  if (field.fieldType === 'address') ADDRESS_SUGGESTIONS.forEach((value) => suggestions.add(value));
+  if (field.fieldType === 'money') MONEY_SUGGESTIONS.forEach((value) => suggestions.add(value));
+  if (field.fieldType === 'url') URL_SUGGESTIONS.forEach((value) => suggestions.add(value));
+  if (field.fieldType === 'long_text' || shouldUseRichContractInput(field)) {
+    LONG_TEXT_SUGGESTIONS.forEach((value) => suggestions.add(value));
+  }
+
+  if (suggestions.size === 0 && matchesAny(normalized, ['name', 'principal', 'provider', 'company', 'client'])) {
+    NAME_SUGGESTIONS.forEach((value) => suggestions.add(value));
+  }
+
+  if (suggestions.size === 0) {
+    getGenericSuggestions(field).forEach((value) => suggestions.add(value));
   }
 
   return Array.from(suggestions).slice(0, 12);
@@ -128,4 +159,29 @@ function normalizeFieldText(field: SuggestionField): string {
 
 function matchesAny(value: string, patterns: string[]): boolean {
   return patterns.some((pattern) => value.includes(pattern));
+}
+
+function getDateSuggestions(): string[] {
+  const today = new Date();
+  return [
+    formatDateInput(today),
+    formatDateInput(addDays(today, 1)),
+    formatDateInput(addDays(today, 7)),
+    formatDateInput(addDays(today, 30)),
+  ];
+}
+
+function getGenericSuggestions(field: SuggestionField): string[] {
+  if (field.fieldType === 'checkbox') return ['Yes', 'No'];
+  return ['To be confirmed', 'As agreed by both parties', 'Not applicable'];
+}
+
+function addDays(date: Date, days: number): Date {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + days);
+  return nextDate;
+}
+
+function formatDateInput(date: Date): string {
+  return date.toISOString().slice(0, 10);
 }

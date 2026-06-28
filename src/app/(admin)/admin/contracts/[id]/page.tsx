@@ -15,12 +15,20 @@ export default async function ContractDetailPage({ params }: Props) {
 
   const { id } = await params;
   const admin = createAdminClient();
-  const { data: contract } = await admin
-    .from('contracts')
-    .select('*, contract_field_values(*), contract_signing_tokens(*), contract_signatures(*), contract_payments(*)')
-    .eq('id', id)
-    .single();
+  const [{ data: contract }, { data: signatures }] = await Promise.all([
+    admin
+      .from('contracts')
+      .select('*, contract_field_values(*), contract_signing_tokens(*), contract_signatures(*), contract_payments(*)')
+      .eq('id', id)
+      .single(),
+    admin
+      .from('contract_signatures')
+      .select('*')
+      .eq('contract_id', id)
+      .order('signed_at', { ascending: false })
+      .limit(1),
+  ]);
 
   if (!contract) notFound();
-  return <ContractDetailClient contract={contract} />;
+  return <ContractDetailClient contract={{ ...contract, contract_signatures: signatures?.length ? signatures : contract.contract_signatures }} />;
 }

@@ -6,14 +6,14 @@ import {
 import { sendEmail } from '@/lib/email';
 import { isTokenExpired } from '@/lib/contracts/tokens';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { urls } from '@/lib/urls';
+import { contractSigningUrl } from '@/lib/urls';
 
 type Params = { params: Promise<{ token: string }> };
 
 export async function GET(_request: NextRequest, { params }: Params) {
   const { token } = await params;
   const admin = createAdminClient();
-  const result = await loadSigningContract(admin, token);
+  const result = await loadSigningContract(admin, token, { allowSigned: true });
 
   if ('response' in result) return result.response;
   await markViewed(admin, result.token.id, result.contract.id);
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   const admin = createAdminClient();
-  const result = await loadSigningContract(admin, token);
+  const result = await loadSigningContract(admin, token, { allowSigned: false });
   if ('response' in result) return result.response;
 
   const signedAt = new Date().toISOString();
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         signerName,
         signerEmail: result.contract.recipient_email,
         signedAt,
-        adminUrl: urls.admin(`/admin/contracts/${result.contract.id}`),
+        signedContractUrl: contractSigningUrl(token),
       }),
     }).catch((emailErr: unknown) => {
       console.error('[contracts/sign] signed notification failed:', emailErr);
@@ -114,7 +114,11 @@ export async function POST(request: NextRequest, { params }: Params) {
   });
 }
 
-async function loadSigningContract(admin: ReturnType<typeof createAdminClient>, token: string) {
+async function loadSigningContract(
+  admin: ReturnType<typeof createAdminClient>,
+  token: string,
+  options: { allowSigned: boolean },
+) {
   const { data: tokenRow, error } = await admin
     .from('contract_signing_tokens')
     .select('id, token, status, expires_at, contract_id, contracts(id, title, mode, recipient_name, recipient_email, status, rendered_html, payment_status, payment_amount_ngn, payment_description, signed_at)')
@@ -125,7 +129,16 @@ async function loadSigningContract(admin: ReturnType<typeof createAdminClient>, 
     return { response: NextResponse.json({ error: 'Signing link not found' }, { status: 404 }) };
   }
 
+  const contract = Array.isArray(tokenRow.contracts) ? tokenRow.contracts[0] : tokenRow.contracts;
+  if (!contract) {
+    return { response: NextResponse.json({ error: 'Contract not found' }, { status: 404 }) };
+  }
+
   if (tokenRow.status !== 'active') {
+    if (options.allowSigned && tokenRow.status === 'used' && contract.status === 'signed') {
+      return { token: tokenRow, contract };
+    }
+
     return { response: NextResponse.json({ error: 'This signing link is no longer active' }, { status: 410 }) };
   }
 
@@ -142,12 +155,8 @@ async function loadSigningContract(admin: ReturnType<typeof createAdminClient>, 
     return { response: NextResponse.json({ error: 'This signing link has expired' }, { status: 410 }) };
   }
 
-  const contract = Array.isArray(tokenRow.contracts) ? tokenRow.contracts[0] : tokenRow.contracts;
-  if (!contract) {
-    return { response: NextResponse.json({ error: 'Contract not found' }, { status: 404 }) };
-  }
-
   if (contract.status === 'signed') {
+    if (options.allowSigned) return { token: tokenRow, contract };
     return { response: NextResponse.json({ error: 'This contract has already been signed' }, { status: 409 }) };
   }
 

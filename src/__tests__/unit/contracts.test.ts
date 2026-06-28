@@ -121,6 +121,26 @@ describe('contract smart field suggestions', () => {
     ).toContain('aorthardesignteam@gmail.com');
   });
 
+  it('offers date input values for issued date fields', () => {
+    const suggestions = getContractFieldSuggestions({
+      key: 'date_issued',
+      label: 'Date Issued',
+      fieldType: 'date',
+    });
+
+    expect(suggestions[0]).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('offers fallback suggestions for plain fields', () => {
+    expect(
+      getContractFieldSuggestions({
+        key: 'custom_clause',
+        label: 'Custom Clause',
+        fieldType: 'text',
+      }),
+    ).toEqual(expect.arrayContaining(['To be confirmed', 'As agreed by both parties']));
+  });
+
   it('detects rich contract input fields', () => {
     expect(shouldUseRichContractInput({ key: 'responsibilities', label: 'Responsibilities', fieldType: 'text' })).toBe(true);
     expect(shouldUseRichContractInput({ key: 'client_phone', label: 'Client Phone', fieldType: 'phone' })).toBe(false);

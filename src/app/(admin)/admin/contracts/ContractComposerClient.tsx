@@ -192,7 +192,7 @@ export default function ContractComposerClient({ templates }: { templates: Templ
     setActiveField(null);
   }
 
-  function openPreview(): void {
+  async function openPreview(): Promise<void> {
     if (!selectedTemplate) {
       toast.error('Choose a template first');
       return;
@@ -205,13 +205,31 @@ export default function ContractComposerClient({ templates }: { templates: Templ
     }
 
     previewWindow.opener = null;
-    previewWindow.document.open();
-    previewWindow.document.write(clientPreviewHtml({
-      title: title.trim() || `${selectedTemplate.name} Preview`,
-      recipient: recipientName || recipientEmail || 'Recipient',
-      html: renderPreviewHtml(selectedTemplate.content_html, fields, values),
-    }));
-    previewWindow.document.close();
+    previewWindow.document.write('<p style="font-family:Helvetica,Arial,sans-serif;padding:24px;">Preparing PDF preview...</p>');
+
+    const previewTitle = title.trim() || `${selectedTemplate.name} Preview`;
+    const res = await fetch('/api/admin/contracts/preview-pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: previewTitle,
+        recipient_name: recipientName,
+        recipient_email: recipientEmail,
+        contract_html: renderPreviewHtml(selectedTemplate.content_html, fields, values),
+      }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({})) as { error?: string };
+      previewWindow.close();
+      toast.error(data.error ?? 'Could not open PDF preview');
+      return;
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    previewWindow.location.href = url;
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
   }
 
   return (
@@ -428,7 +446,7 @@ function QuickFillButton({ value, onClick }: { value: string; onClick: (value: s
     <button
       type="button"
       onClick={() => onClick(value)}
-      className="text-left text-xs font-medium text-emerald-700 underline-offset-2 hover:text-emerald-900 hover:underline"
+      className="text-left text-xs font-medium text-[#a7d252] underline-offset-2 hover:text-[#c7ef63] hover:underline"
     >
       {value}
     </button>
@@ -462,40 +480,6 @@ function renderPreviewHtml(html: string, fields: TemplateField[], values: Record
 
     return escapeHtml(value).replace(/\n/g, '<br>');
   });
-}
-
-function clientPreviewHtml({ title, recipient, html }: { title: string; recipient: string; html: string }): string {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${escapeHtml(title)}</title>
-  <style>
-    body { margin: 0; background: #f4f4ef; color: #111; font-family: Helvetica, Arial, sans-serif; }
-    main { max-width: 880px; margin: 32px auto; background: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.06); }
-    header { border-bottom: 1px solid #e5e5e5; padding: 28px 40px 22px; }
-    .eyebrow { margin: 0 0 8px; color: #6b7280; font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
-    h1 { margin: 0; font-size: 26px; line-height: 1.2; }
-    .recipient { margin: 6px 0 0; color: #666; font-size: 14px; }
-    article { padding: 34px 40px 44px; font-size: 14px; line-height: 1.75; }
-    @media (max-width: 720px) {
-      main { margin: 0; min-height: 100vh; border: 0; border-radius: 0; }
-      header, article { padding-left: 22px; padding-right: 22px; }
-    }
-  </style>
-</head>
-<body>
-  <main>
-    <header>
-      <p class="eyebrow">Client preview</p>
-      <h1>${escapeHtml(title)}</h1>
-      <p class="recipient">For ${escapeHtml(recipient)}</p>
-    </header>
-    <article>${html}</article>
-  </main>
-</body>
-</html>`;
 }
 
 function sanitizePreviewRichHtml(value: string): string {
