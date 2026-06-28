@@ -7,6 +7,22 @@ type Params = { params: Promise<{ id: string }> };
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const BUCKET = 'course-thumbnails';
+
+function getObjectPathFromPublicUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+
+  try {
+    const parsed = new URL(url);
+    const marker = `/storage/v1/object/public/${BUCKET}/`;
+    const markerIndex = parsed.pathname.indexOf(marker);
+    if (markerIndex === -1) return null;
+
+    return decodeURIComponent(parsed.pathname.slice(markerIndex + marker.length));
+  } catch {
+    return null;
+  }
+}
 
 export async function POST(request: NextRequest, { params }: Params): Promise<NextResponse> {
   const { userId } = await requireAdminApi('content');
@@ -28,7 +44,7 @@ export async function POST(request: NextRequest, { params }: Params): Promise<Ne
 
   const admin = createAdminClient();
   const extension = file.name.split('.').pop()?.toLowerCase() ?? 'webp';
-  const path = `webinars/${id}/thumbnail.${extension}`;
+  const path = `webinars/${id}/thumbnail-${Date.now()}.${extension}`;
 
   const { data: existing } = await admin
     .from('webinars')
@@ -37,10 +53,10 @@ export async function POST(request: NextRequest, { params }: Params): Promise<Ne
     .single();
 
   const { error: uploadError } = await admin.storage
-    .from('course-thumbnails')
+    .from(BUCKET)
     .upload(path, file, {
       contentType: file.type,
-      upsert: true,
+      upsert: false,
     });
 
   if (uploadError) {
@@ -49,7 +65,7 @@ export async function POST(request: NextRequest, { params }: Params): Promise<Ne
 
   const {
     data: { publicUrl },
-  } = admin.storage.from('course-thumbnails').getPublicUrl(path);
+  } = admin.storage.from(BUCKET).getPublicUrl(path);
 
   const { error: updateError } = await admin
     .from('webinars')
@@ -58,6 +74,11 @@ export async function POST(request: NextRequest, { params }: Params): Promise<Ne
 
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 400 });
+  }
+
+  const oldPath = getObjectPathFromPublicUrl(existing?.thumbnail_url);
+  if (oldPath && oldPath.startsWith(`webinars/${id}/`) && oldPath !== path) {
+    await admin.storage.from(BUCKET).remove([oldPath]);
   }
 
   await writeAuditLog({
