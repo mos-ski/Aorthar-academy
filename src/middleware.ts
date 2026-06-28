@@ -197,11 +197,6 @@ function getSubdomainRewrite(request: NextRequest): NextResponse | null {
       url.search = request.nextUrl.search;
       return NextResponse.redirect(url);
     }
-    if (pathname.startsWith('/events')) {
-      const url = new URL(`https://events.aorthar.com${pathname}`);
-      url.search = request.nextUrl.search;
-      return NextResponse.redirect(url);
-    }
   }
 
   return null;

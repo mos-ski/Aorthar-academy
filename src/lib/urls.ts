@@ -21,7 +21,7 @@ const PRODUCTION_URLS = {
   internship: process.env.NEXT_PUBLIC_INTERNSHIP_URL ?? 'https://internship.aorthar.com',
   admin: process.env.NEXT_PUBLIC_ADMIN_URL ?? 'https://admin.aorthar.com',
   studio: process.env.NEXT_PUBLIC_STUDIO_URL ?? 'https://studio.aorthar.com',
-  events: process.env.NEXT_PUBLIC_EVENTS_URL ?? 'https://events.aorthar.com',
+  events: process.env.NEXT_PUBLIC_EVENTS_URL ?? `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://aorthar.com'}/events`,
 } as const;
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -54,7 +54,9 @@ export const urls = {
 
 export function eventPublicUrl(slug: string): string {
   const cleanSlug = slug.replace(/^\/+/, '');
-  return isDev ? `/events/${cleanSlug}` : productUrl('events', `/${cleanSlug}`);
+  if (isDev) return `/events/${cleanSlug}`;
+  const base = (process.env.NEXT_PUBLIC_BASE_URL ?? 'https://aorthar.com').replace(/\/$/, '');
+  return `${base}/events/${cleanSlug}`;
 }
 
 /**

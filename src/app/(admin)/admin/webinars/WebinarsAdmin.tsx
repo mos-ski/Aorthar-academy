@@ -113,7 +113,7 @@ export default function WebinarsAdmin({ webinars }: { webinars: Webinar[] }) {
       <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Webinars</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage live classes for events.aorthar.com</p>
+          <p className="text-sm text-muted-foreground mt-1">Manage live classes and registration links.</p>
         </div>
         <button
           onClick={() => setCreating(true)}
