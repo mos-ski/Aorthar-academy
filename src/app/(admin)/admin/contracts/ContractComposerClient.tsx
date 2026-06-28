@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BriefcaseBusiness, FileSignature, Send, UserRound } from 'lucide-react';
+import { BriefcaseBusiness, Eye, FileSignature, Send, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -81,7 +81,7 @@ export default function ContractComposerClient({ templates }: { templates: Templ
   const activeSuggestions = activeField ? getContractFieldSuggestions(toSuggestionField(activeField)) : [];
   const activeSavedValues = activeField ? (savedFieldValues[activeField.key] ?? []) : [];
   const activeIsRich = activeField ? shouldUseRichContractInput(toSuggestionField(activeField)) : false;
-  const activeHasChoices = Boolean(activeField && activeSuggestions.length > 0 && !activeIsRich);
+  const activeQuickValues = uniqueValues([...activeSavedValues, ...activeSuggestions]);
 
   useEffect(() => {
     if (!activeField || savedFieldValues[activeField.key]) return;
@@ -192,6 +192,28 @@ export default function ContractComposerClient({ templates }: { templates: Templ
     setActiveField(null);
   }
 
+  function openPreview(): void {
+    if (!selectedTemplate) {
+      toast.error('Choose a template first');
+      return;
+    }
+
+    const previewWindow = window.open('', '_blank');
+    if (!previewWindow) {
+      toast.error('Allow popups to open the preview');
+      return;
+    }
+
+    previewWindow.opener = null;
+    previewWindow.document.open();
+    previewWindow.document.write(clientPreviewHtml({
+      title: title.trim() || `${selectedTemplate.name} Preview`,
+      recipient: recipientName || recipientEmail || 'Recipient',
+      html: renderPreviewHtml(selectedTemplate.content_html, fields, values),
+    }));
+    previewWindow.document.close();
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -254,6 +276,9 @@ export default function ContractComposerClient({ templates }: { templates: Templ
             </div>
             <div className="flex gap-2">
               <Button variant="outline" disabled={saving} onClick={() => createContract(false)}>Save Draft</Button>
+              <Button variant="outline" disabled={saving || !selectedTemplate} onClick={openPreview}>
+                <Eye className="h-4 w-4" /> Preview
+              </Button>
               <Button disabled={saving || !canSend} onClick={() => createContract(true)}>
                 <Send className="h-4 w-4" /> Send
               </Button>
@@ -285,44 +310,12 @@ export default function ContractComposerClient({ templates }: { templates: Templ
       </div>
 
       <Dialog open={Boolean(activeField)} onOpenChange={(open) => !open && setActiveField(null)}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>{activeField?.label}</DialogTitle>
             <DialogDescription>{activeField?.help_text ?? fieldHelpText(activeField)}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {(activeSavedValues.length > 0 || activeSuggestions.length > 0) && (
-              <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
-                {activeSavedValues.length > 0 && (
-                  <QuickFillGroup label="Saved">
-                    {activeSavedValues.map((value) => (
-                      <QuickFillButton key={value} value={value} onClick={setFieldDraft} />
-                    ))}
-                  </QuickFillGroup>
-                )}
-                {activeSuggestions.length > 0 && (
-                  <QuickFillGroup label="Suggestions">
-                    {activeSuggestions.map((value) => (
-                      <QuickFillButton key={value} value={value} onClick={setFieldDraft} />
-                    ))}
-                  </QuickFillGroup>
-                )}
-              </div>
-            )}
-
-            {activeHasChoices && (
-              <select
-                className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-                value={activeSuggestions.includes(fieldDraft) ? fieldDraft : ''}
-                onChange={(event) => setFieldDraft(event.target.value)}
-              >
-                <option value="">Choose a suggested value...</option>
-                {activeSuggestions.map((value) => (
-                  <option key={value} value={value}>{value}</option>
-                ))}
-              </select>
-            )}
-
             {activeIsRich ? (
               <RichTextEditor
                 key={activeField?.key}
@@ -339,6 +332,14 @@ export default function ContractComposerClient({ templates }: { templates: Templ
                 value={fieldDraft}
                 onChange={(event) => setFieldDraft(event.target.value)}
               />
+            )}
+
+            {activeQuickValues.length > 0 && (
+              <div className="flex flex-wrap gap-x-3 gap-y-1">
+                {activeQuickValues.map((value) => (
+                  <QuickFillButton key={value} value={value} onClick={setFieldDraft} />
+                ))}
+              </div>
             )}
 
             <label className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -422,25 +423,89 @@ function fieldHelpText(field: TemplateField | null): string {
   return 'Enter the value that should appear in the agreement.';
 }
 
-function QuickFillGroup({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div>
-      <p className="mb-1 text-xs font-medium text-muted-foreground">{label}</p>
-      <div className="flex flex-wrap gap-2">{children}</div>
-    </div>
-  );
-}
-
 function QuickFillButton({ value, onClick }: { value: string; onClick: (value: string) => void }) {
   return (
     <button
       type="button"
       onClick={() => onClick(value)}
-      className="rounded-md border bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted"
+      className="text-left text-xs font-medium text-emerald-700 underline-offset-2 hover:text-emerald-900 hover:underline"
     >
       {value}
     </button>
   );
+}
+
+function uniqueValues(values: string[]): string[] {
+  const seen = new Set<string>();
+
+  return values.filter((value) => {
+    const normalized = value.trim().toLowerCase();
+    if (!normalized || seen.has(normalized)) return false;
+    seen.add(normalized);
+    return true;
+  });
+}
+
+function renderPreviewHtml(html: string, fields: TemplateField[], values: Record<string, string>): string {
+  return html.replace(/\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g, (_match, rawKey: string) => {
+    const key = rawKey.trim();
+    const field = fields.find((candidate) => candidate.key === key);
+    const value = values[key]?.trim();
+
+    if (!hasMeaningfulContractValue(value)) {
+      return `<span style="background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:4px;padding:1px 5px;">${escapeHtml(field?.label ?? key)}</span>`;
+    }
+
+    if (field?.field_type === 'long_text' || (field && shouldUseRichContractInput(toSuggestionField(field)))) {
+      return sanitizePreviewRichHtml(value);
+    }
+
+    return escapeHtml(value).replace(/\n/g, '<br>');
+  });
+}
+
+function clientPreviewHtml({ title, recipient, html }: { title: string; recipient: string; html: string }): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeHtml(title)}</title>
+  <style>
+    body { margin: 0; background: #f4f4ef; color: #111; font-family: Helvetica, Arial, sans-serif; }
+    main { max-width: 880px; margin: 32px auto; background: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.06); }
+    header { border-bottom: 1px solid #e5e5e5; padding: 28px 40px 22px; }
+    .eyebrow { margin: 0 0 8px; color: #6b7280; font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: 26px; line-height: 1.2; }
+    .recipient { margin: 6px 0 0; color: #666; font-size: 14px; }
+    article { padding: 34px 40px 44px; font-size: 14px; line-height: 1.75; }
+    @media (max-width: 720px) {
+      main { margin: 0; min-height: 100vh; border: 0; border-radius: 0; }
+      header, article { padding-left: 22px; padding-right: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">Client preview</p>
+      <h1>${escapeHtml(title)}</h1>
+      <p class="recipient">For ${escapeHtml(recipient)}</p>
+    </header>
+    <article>${html}</article>
+  </main>
+</body>
+</html>`;
+}
+
+function sanitizePreviewRichHtml(value: string): string {
+  return value
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, '')
+    .replace(/<\/?(iframe|object|embed|form|input|button|textarea|select|option|link|meta)[^>]*>/gi, '')
+    .replace(/\son[a-z]+\s*=\s*(".*?"|'.*?'|[^\s>]+)/gi, '')
+    .replace(/\s(href|src)\s*=\s*(['"])\s*javascript:[\s\S]*?\2/gi, '')
+    .replace(/\n/g, '');
 }
 
 function hasMeaningfulContractValue(value: string | undefined): boolean {
