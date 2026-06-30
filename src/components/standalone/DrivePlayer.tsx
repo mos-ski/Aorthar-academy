@@ -23,17 +23,10 @@ export default function DrivePlayer({ fileId, onEnded, nextLesson, className, pr
   // Check if fileId is a YouTube URL or ID
   const youtubeId = extractYouTubeId(fileId) ?? (fileId.length === 11 ? fileId : null);
 
-  if (!youtubeId) {
-    return (
-      <div className={`relative w-full aspect-video flex items-center justify-center rounded-xl bg-black ${className ?? ''}`}>
-        <p className="text-white/50 text-sm">Video source not configured.</p>
-      </div>
-    );
-  }
-
   return (
     <PlyrPlayer
-      youtubeId={youtubeId}
+      youtubeId={youtubeId ?? undefined}
+      src={youtubeId ? undefined : `/api/standalone/stream?id=${encodeURIComponent(fileId)}`}
       onEnded={onEnded}
       nextLesson={nextLesson}
       className={className}
