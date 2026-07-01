@@ -157,12 +157,13 @@ const adminContractsNav: NavItem[] = [
 ];
 
 const adminPrimaryModules: Array<{
-  key: 'overview' | 'university' | 'courses' | 'internship' | 'marketplace' | 'studio' | 'webinars' | 'contracts' | 'admin_access' | 'audit_logs' | 'profile';
+  key: 'overview' | 'contacts' | 'university' | 'courses' | 'internship' | 'marketplace' | 'studio' | 'webinars' | 'contracts' | 'admin_access' | 'audit_logs' | 'profile';
   label: string;
   icon: LucideIcon;
   href: string;
 }> = [
   { key: 'overview', label: 'Overview', icon: LayoutDashboard, href: '/admin' },
+  { key: 'contacts', label: 'Contacts', icon: Users, href: '/admin/contacts' },
   { key: 'university', label: 'University', icon: Building2, href: '/admin/courses' },
   { key: 'courses', label: 'Bootcamps', icon: BookOpen, href: '/admin/standalone-courses' },
   { key: 'internship', label: 'Internship', icon: BriefcaseBusiness, href: '/admin/internship' },
@@ -256,18 +257,21 @@ export default function Sidebar({
 
   const inAdminAccessPath = pathname.startsWith('/admin/admin-access');
   const inAuditLogsPath = pathname.startsWith('/admin/audit-logs');
+  const inContactsPath = pathname.startsWith('/admin/contacts');
   const inInternshipPath = pathname.startsWith('/admin/internship');
   const inMarketplacePath = pathname.startsWith('/admin/marketplace');
   const inStudioPath = pathname.startsWith('/admin/studio');
   const inWebinarsPath = pathname.startsWith('/admin/webinars');
   const inContractsPath = pathname.startsWith('/admin/contracts');
 
-  const activeModule: 'overview' | 'university' | 'courses' | 'internship' | 'marketplace' | 'studio' | 'webinars' | 'contracts' | 'admin_access' | 'audit_logs' | 'profile' = inProfilePath
+  const activeModule: 'overview' | 'contacts' | 'university' | 'courses' | 'internship' | 'marketplace' | 'studio' | 'webinars' | 'contracts' | 'admin_access' | 'audit_logs' | 'profile' = inProfilePath
     ? 'profile'
     : inAdminAccessPath
     ? 'admin_access'
     : inAuditLogsPath
     ? 'audit_logs'
+    : inContactsPath
+    ? 'contacts'
     : inStudioPath
     ? 'studio'
     : inWebinarsPath
