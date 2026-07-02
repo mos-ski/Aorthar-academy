@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getEventAccessState } from '@/lib/events/status';
+import { getEventAccessState, getSeededEventReplayUrl, normalizeEventUrl } from '@/lib/events/status';
 
 describe('getEventAccessState', () => {
   const scheduledAt = '2026-07-02T10:00:00.000Z';
@@ -36,5 +36,16 @@ describe('getEventAccessState', () => {
       now: new Date('2026-07-02T11:00:00.000Z'),
       hasJoinUrl: true,
     })).toBe('replay');
+  });
+
+  it('normalizes event URLs for external destinations', () => {
+    expect(normalizeEventUrl('youtu.be/5boUdgMli64')).toBe('https://youtu.be/5boUdgMli64');
+    expect(normalizeEventUrl(' https://meet.google.com/uid-wxhn-gbb ')).toBe('https://meet.google.com/uid-wxhn-gbb');
+    expect(normalizeEventUrl(null)).toBe('');
+  });
+
+  it('keeps the seeded replay URL for the existing completed event', () => {
+    expect(getSeededEventReplayUrl('SLTWX')).toBe('https://youtu.be/5boUdgMli64');
+    expect(getSeededEventReplayUrl('future-event')).toBe('');
   });
 });

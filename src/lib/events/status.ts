@@ -2,6 +2,20 @@ export type EventAccessState = 'registration' | 'live' | 'replay';
 
 export const LIVE_JOIN_WINDOW_MS = 3 * 60 * 60 * 1000;
 
+export function normalizeEventUrl(url?: string | null): string {
+  const trimmed = url?.trim() ?? '';
+  if (!trimmed) return '';
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
+export function getSeededEventReplayUrl(slug: string): string {
+  const replayUrls: Record<string, string> = {
+    SLTWX: 'https://youtu.be/5boUdgMli64',
+  };
+
+  return replayUrls[slug] ?? '';
+}
+
 export function getEventAccessState({
   scheduledAt,
   durationMinutes,
@@ -21,12 +35,4 @@ export function getEventAccessState({
   if (nowMs >= endsAtMs) return 'replay';
   if (hasJoinUrl && nowMs >= startsAtMs - LIVE_JOIN_WINDOW_MS) return 'live';
   return 'registration';
-}
-
-export function getEventReplayUrl(slug: string): string {
-  const replayOverrides: Record<string, string> = {
-    SLTWX: 'https://youtu.be/5boUdgMli64',
-  };
-
-  return replayOverrides[slug] ?? '';
 }

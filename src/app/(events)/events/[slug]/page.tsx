@@ -7,21 +7,32 @@ import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import RegisterButton from '@/components/events/RegisterButton';
 import VerifyPaymentOnReturn from '@/components/events/VerifyPaymentOnReturn';
-import { getEventAccessState, getEventReplayUrl } from '@/lib/events/status';
+import { getEventAccessState, getSeededEventReplayUrl, normalizeEventUrl } from '@/lib/events/status';
 import { eventPublicUrl } from '@/lib/urls';
 
 const naira = (n: number) => `₦${n.toLocaleString('en-NG')}`;
 
 type Params = { params: Promise<{ slug: string }> };
+type EventDetail = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  scheduled_at: string;
+  duration_minutes: number;
+  price_ngn: number;
+  thumbnail_url: string | null;
+  whatsapp_community_url: string | null;
+  join_url: string;
+  replay_url?: string | null;
+};
+
+const eventDetailSelect = 'id, slug, title, description, scheduled_at, duration_minutes, price_ngn, thumbnail_url, whatsapp_community_url, join_url, replay_url';
+const eventDetailSelectWithoutReplay = 'id, slug, title, description, scheduled_at, duration_minutes, price_ngn, thumbnail_url, whatsapp_community_url, join_url';
 
 function eventDescription(description: string): string {
   const clean = description.replace(/\s+/g, ' ').trim();
   return clean.length > 180 ? `${clean.slice(0, 177)}...` : clean;
-}
-
-function normalizeJoinUrl(url: string): string {
-  if (!url) return '';
-  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
@@ -66,22 +77,33 @@ export default async function EventDetailPage({ params }: Params) {
   const { slug } = await params;
   const supabase = await createClient();
 
-  const { data: webinar } = await supabase
+  let { data: webinar, error } = await supabase
     .from('webinars')
-    .select('id, slug, title, description, scheduled_at, duration_minutes, price_ngn, thumbnail_url, whatsapp_community_url, join_url')
+    .select(eventDetailSelect)
     .eq('slug', slug)
     .eq('status', 'published')
-    .single();
+    .single<EventDetail>();
 
-  if (!webinar) notFound();
+  if (error && error.message.toLowerCase().includes('replay_url')) {
+    const fallback = await supabase
+      .from('webinars')
+      .select(eventDetailSelectWithoutReplay)
+      .eq('slug', slug)
+      .eq('status', 'published')
+      .single<EventDetail>();
+    webinar = fallback.data;
+    error = fallback.error;
+  }
 
-  const joinUrl = normalizeJoinUrl(webinar.join_url);
+  if (error || !webinar) notFound();
+
+  const joinUrl = normalizeEventUrl(webinar.join_url);
+  const replayUrl = normalizeEventUrl(webinar.replay_url) || getSeededEventReplayUrl(webinar.slug);
   const accessState = getEventAccessState({
     scheduledAt: webinar.scheduled_at,
     durationMinutes: webinar.duration_minutes,
     hasJoinUrl: Boolean(joinUrl),
   });
-  const replayUrl = getEventReplayUrl(webinar.slug);
   if (accessState === 'replay' && replayUrl) {
     redirect(replayUrl);
   }
@@ -114,24 +136,30 @@ export default async function EventDetailPage({ params }: Params) {
         </section>
 
         <aside className="rounded-lg border bg-card p-5 shadow-sm lg:sticky lg:top-6">
-          {accessState === 'replay' && replayUrl ? (
+          {accessState === 'replay' ? (
             <div>
               <p className="inline-flex rounded-full bg-red-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-red-800">
-                Replay available
+                {replayUrl ? 'Replay available' : 'Class ended'}
               </p>
               <h2 className="mt-4 text-3xl font-bold tracking-tight">Class has ended</h2>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                The live class is over. Watch the replay now on YouTube.
+                {replayUrl
+                  ? 'The live class is over. Watch the replay now.'
+                  : 'The live class is over. The replay will appear here once it is available.'}
               </p>
-              <a
-                href={replayUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-5 flex min-h-12 w-full items-center justify-center rounded-md bg-red-600 px-4 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-red-700"
-              >
-                Watch now
-              </a>
-              <p className="mt-3 break-all text-xs text-muted-foreground">{replayUrl}</p>
+              {replayUrl ? (
+                <>
+                  <a
+                    href={replayUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-5 flex min-h-12 w-full items-center justify-center rounded-md bg-red-600 px-4 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-red-700"
+                  >
+                    Watch now
+                  </a>
+                  <p className="mt-3 break-all text-xs text-muted-foreground">{replayUrl}</p>
+                </>
+              ) : null}
             </div>
           ) : accessState === 'live' ? (
             <div>
