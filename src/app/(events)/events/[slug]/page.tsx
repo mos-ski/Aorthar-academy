@@ -1,16 +1,16 @@
 export const dynamic = 'force-dynamic';
 
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Image from 'next/image';
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import RegisterButton from '@/components/events/RegisterButton';
 import VerifyPaymentOnReturn from '@/components/events/VerifyPaymentOnReturn';
+import { getEventAccessState, getEventReplayUrl } from '@/lib/events/status';
 import { eventPublicUrl } from '@/lib/urls';
 
 const naira = (n: number) => `₦${n.toLocaleString('en-NG')}`;
-const LIVE_JOIN_WINDOW_MS = 3 * 60 * 60 * 1000;
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -75,9 +75,16 @@ export default async function EventDetailPage({ params }: Params) {
 
   if (!webinar) notFound();
 
-  const startsAt = new Date(webinar.scheduled_at);
   const joinUrl = normalizeJoinUrl(webinar.join_url);
-  const showJoinLink = Boolean(joinUrl) && Date.now() >= startsAt.getTime() - LIVE_JOIN_WINDOW_MS;
+  const accessState = getEventAccessState({
+    scheduledAt: webinar.scheduled_at,
+    durationMinutes: webinar.duration_minutes,
+    hasJoinUrl: Boolean(joinUrl),
+  });
+  const replayUrl = getEventReplayUrl(webinar.slug);
+  if (accessState === 'replay' && replayUrl) {
+    redirect(replayUrl);
+  }
   const when = new Date(webinar.scheduled_at).toLocaleString('en-NG', {
     dateStyle: 'full',
     timeStyle: 'short',
@@ -107,7 +114,26 @@ export default async function EventDetailPage({ params }: Params) {
         </section>
 
         <aside className="rounded-lg border bg-card p-5 shadow-sm lg:sticky lg:top-6">
-          {showJoinLink ? (
+          {accessState === 'replay' && replayUrl ? (
+            <div>
+              <p className="inline-flex rounded-full bg-red-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-red-800">
+                Replay available
+              </p>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight">Class has ended</h2>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                The live class is over. Watch the replay now on YouTube.
+              </p>
+              <a
+                href={replayUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-5 flex min-h-12 w-full items-center justify-center rounded-md bg-red-600 px-4 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-red-700"
+              >
+                Watch now
+              </a>
+              <p className="mt-3 break-all text-xs text-muted-foreground">{replayUrl}</p>
+            </div>
+          ) : accessState === 'live' ? (
             <div>
               <p className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-emerald-800">
                 Class in session
