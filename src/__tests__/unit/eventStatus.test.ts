@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getEventAccessState, getSeededEventReplayUrl, normalizeEventUrl } from '@/lib/events/status';
+import { getEventAccessState, getSeededEventReplayUrl, getYouTubeEmbedUrl, normalizeEventUrl } from '@/lib/events/status';
 
 describe('getEventAccessState', () => {
   const scheduledAt = '2026-07-02T10:00:00.000Z';
@@ -47,5 +47,11 @@ describe('getEventAccessState', () => {
   it('keeps the seeded replay URL for the existing completed event', () => {
     expect(getSeededEventReplayUrl('SLTWX')).toBe('https://youtu.be/5boUdgMli64');
     expect(getSeededEventReplayUrl('future-event')).toBe('');
+  });
+
+  it('builds YouTube embed URLs for replay players', () => {
+    expect(getYouTubeEmbedUrl('https://youtu.be/5boUdgMli64')).toBe('https://www.youtube.com/embed/5boUdgMli64');
+    expect(getYouTubeEmbedUrl('https://www.youtube.com/watch?v=5boUdgMli64')).toBe('https://www.youtube.com/embed/5boUdgMli64');
+    expect(getYouTubeEmbedUrl('https://vimeo.com/123')).toBe('');
   });
 });

@@ -16,6 +16,30 @@ export function getSeededEventReplayUrl(slug: string): string {
   return replayUrls[slug] ?? '';
 }
 
+export function getYouTubeEmbedUrl(url?: string | null): string {
+  const normalizedUrl = normalizeEventUrl(url);
+  if (!normalizedUrl) return '';
+
+  try {
+    const parsedUrl = new URL(normalizedUrl);
+    const host = parsedUrl.hostname.replace(/^www\./, '').toLowerCase();
+
+    if (host === 'youtu.be') {
+      const videoId = parsedUrl.pathname.split('/').filter(Boolean)[0];
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
+    }
+
+    if (host === 'youtube.com' || host === 'm.youtube.com') {
+      const videoId = parsedUrl.searchParams.get('v') || parsedUrl.pathname.match(/^\/embed\/([^/?#]+)/)?.[1];
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
+    }
+  } catch {
+    return '';
+  }
+
+  return '';
+}
+
 export function getEventAccessState({
   scheduledAt,
   durationMinutes,

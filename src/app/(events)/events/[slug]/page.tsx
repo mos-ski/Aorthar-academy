@@ -1,13 +1,13 @@
 export const dynamic = 'force-dynamic';
 
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import RegisterButton from '@/components/events/RegisterButton';
 import VerifyPaymentOnReturn from '@/components/events/VerifyPaymentOnReturn';
-import { getEventAccessState, getSeededEventReplayUrl, normalizeEventUrl } from '@/lib/events/status';
+import { getEventAccessState, getSeededEventReplayUrl, getYouTubeEmbedUrl, normalizeEventUrl } from '@/lib/events/status';
 import { eventPublicUrl } from '@/lib/urls';
 
 const naira = (n: number) => `₦${n.toLocaleString('en-NG')}`;
@@ -99,14 +99,12 @@ export default async function EventDetailPage({ params }: Params) {
 
   const joinUrl = normalizeEventUrl(webinar.join_url);
   const replayUrl = normalizeEventUrl(webinar.replay_url) || getSeededEventReplayUrl(webinar.slug);
+  const replayEmbedUrl = getYouTubeEmbedUrl(replayUrl);
   const accessState = getEventAccessState({
     scheduledAt: webinar.scheduled_at,
     durationMinutes: webinar.duration_minutes,
     hasJoinUrl: Boolean(joinUrl),
   });
-  if (accessState === 'replay' && replayUrl) {
-    redirect(replayUrl);
-  }
   const when = new Date(webinar.scheduled_at).toLocaleString('en-NG', {
     dateStyle: 'full',
     timeStyle: 'short',
@@ -149,14 +147,26 @@ export default async function EventDetailPage({ params }: Params) {
               </p>
               {replayUrl ? (
                 <>
-                  <a
-                    href={replayUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-5 flex min-h-12 w-full items-center justify-center rounded-md bg-red-600 px-4 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-red-700"
-                  >
-                    Watch now
-                  </a>
+                  {replayEmbedUrl ? (
+                    <div className="mt-5 overflow-hidden rounded-md border bg-black shadow-sm">
+                      <iframe
+                        className="aspect-video w-full"
+                        src={replayEmbedUrl}
+                        title={`${webinar.title} replay`}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    </div>
+                  ) : (
+                    <a
+                      href={replayUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-5 flex min-h-12 w-full items-center justify-center rounded-md bg-red-600 px-4 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-red-700"
+                    >
+                      Watch replay
+                    </a>
+                  )}
                   <p className="mt-3 break-all text-xs text-muted-foreground">{replayUrl}</p>
                 </>
               ) : null}
