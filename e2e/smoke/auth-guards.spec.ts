@@ -16,8 +16,9 @@ test.describe('SMOKE: auth guards', () => {
   }
 });
 
-test('Admin path redirects to the admin subdomain', async ({ page }) => {
-  await page.goto('/admin');
+test('Admin path redirects to the admin subdomain', async ({ request }) => {
+  const response = await request.get('/admin', { maxRedirects: 0 });
 
-  await expect(page).toHaveURL('https://admin.aorthar.com/admin');
+  expect(response.status()).toBe(307);
+  expect(response.headers().location).toBe('https://admin.aorthar.com/admin');
 });
