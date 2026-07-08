@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }));
+vi.mock('@/lib/auth', () => ({ requireApiAuthNotSuspended: vi.fn() }));
 vi.mock('@/lib/paystack', () => ({
   generateReference: vi.fn().mockReturnValue('aa-550e8400-1234567890-abcdef'),
   initiatePayment: vi.fn().mockResolvedValue({
@@ -16,6 +17,7 @@ vi.mock('@/lib/paystack', () => ({
 }));
 
 import { createClient } from '@/lib/supabase/server';
+import { requireApiAuthNotSuspended } from '@/lib/auth';
 import { initiatePayment } from '@/lib/paystack';
 import { POST } from '@/app/api/payments/checkout/route';
 
@@ -57,9 +59,13 @@ function makeRequest(body: Record<string, unknown>) {
 }
 
 describe('POST /api/payments/checkout', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (requireApiAuthNotSuspended as ReturnType<typeof vi.fn>).mockResolvedValue({ userId: USER_ID });
+  });
 
   it('returns 401 when unauthenticated', async () => {
+    (requireApiAuthNotSuspended as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('UNAUTHORIZED'));
     (createClient as ReturnType<typeof vi.fn>).mockResolvedValue(makeSupabase({ user: null }));
 
     const res = await POST(makeRequest({ plan_id: PLAN_ID }));
