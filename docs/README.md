@@ -107,7 +107,8 @@ Product strategy and planning:
 
 ## QA
 
-- [Test Cases](./qa/test-cases.md) — 93 detailed test cases + 7 regression scenarios
+- [Test Cases](./qa/test_cases.md) — detailed manual test cases + regression scenarios
+- [Automation Guide](./qa/automation.md) — how manual QA maps to automated tests
 
 ---
 
