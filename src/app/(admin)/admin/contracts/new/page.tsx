@@ -8,7 +8,9 @@ import ContractComposerClient from '../ContractComposerClient';
 
 export const metadata = { title: 'New Contract — Admin' };
 
-export default async function NewContractPage() {
+type Props = { searchParams: Promise<{ type?: string }> };
+
+export default async function NewContractPage({ searchParams }: Props) {
   const { profile } = await requireRole('admin');
   const adminLevel = normalizeAdminLevel((profile as { admin_level?: string | null }).admin_level);
   if (!hasAdminPermission(adminLevel, 'finance')) redirect('/unauthorized');
@@ -20,5 +22,8 @@ export default async function NewContractPage() {
     .eq('status', 'active')
     .order('created_at', { ascending: false });
 
-  return <ContractComposerClient templates={templates ?? []} />;
+  const query = await searchParams;
+  const initialMode = query.type === 'nda' ? 'nda' : 'employee';
+
+  return <ContractComposerClient templates={templates ?? []} initialMode={initialMode} />;
 }

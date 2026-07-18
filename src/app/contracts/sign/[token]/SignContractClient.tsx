@@ -10,9 +10,11 @@ import { Input } from '@/components/ui/input';
 type PublicContract = {
   id: string;
   title: string;
-  mode: 'employee' | 'contractor' | 'client';
+  document_type: 'agreement' | 'nda';
+  mode: 'employee' | 'contractor' | 'client' | 'nda';
   recipient_name: string;
   recipient_email: string;
+  project_name: string | null;
   rendered_html: string;
   payment_status: 'not_required' | 'pending' | 'paid' | 'manual_paid' | 'failed';
   payment_amount_ngn: number | null;
@@ -70,7 +72,7 @@ export default function SignContractClient({ token, paymentRef }: { token: strin
       return;
     }
     setSigned(true);
-    toast.success('Agreement signed');
+    toast.success(contract?.document_type === 'nda' ? 'NDA signed' : 'Agreement signed');
   }
 
   async function payNow(): Promise<void> {
@@ -100,16 +102,20 @@ export default function SignContractClient({ token, paymentRef }: { token: strin
     return <main className="mx-auto max-w-3xl px-6 py-16 text-sm text-muted-foreground">{error || 'Agreement not found.'}</main>;
   }
 
-  const paymentRequired = contract.mode === 'client' && contract.payment_status === 'pending' && !paymentVerified;
+  const isNda = contract.document_type === 'nda';
+  const paymentRequired = !isNda && contract.mode === 'client' && contract.payment_status === 'pending' && !paymentVerified;
 
   return (
     <main className="min-h-screen bg-[#f4f4ef] px-4 py-8" style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}>
       <div className="mx-auto max-w-4xl space-y-6">
         <section className="rounded-md border bg-white shadow-sm">
           <div className="border-b px-6 py-5 sm:px-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Agreement for review</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              {isNda ? 'Non-Disclosure Agreement for review' : 'Agreement for review'}
+            </p>
             <h1 className="mt-2 text-2xl font-semibold text-black">{contract.title}</h1>
             <p className="mt-1 text-sm text-muted-foreground">For {contract.recipient_name || contract.recipient_email}</p>
+            {isNda && contract.project_name ? <p className="mt-1 text-sm text-muted-foreground">Project: {contract.project_name}</p> : null}
           </div>
           <div className="px-6 py-8 sm:px-10">
             <div className="contract-document text-sm leading-7 text-black" dangerouslySetInnerHTML={{ __html: contract.rendered_html }} />
@@ -135,7 +141,7 @@ export default function SignContractClient({ token, paymentRef }: { token: strin
           <CardContent className="space-y-4">
             {signed ? (
               <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-                Agreement signed. Thank you.
+                {isNda ? 'NDA signed. A completed copy has been emailed to you.' : 'Agreement signed. Thank you.'}
               </div>
             ) : (
               <>
@@ -153,7 +159,9 @@ export default function SignContractClient({ token, paymentRef }: { token: strin
                   <input className="mt-1" type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} />
                   <span>I have read this agreement and consent to sign it electronically by typing my full name.</span>
                 </label>
-                <Button disabled={!signerName.trim() || !consent} onClick={signContract}>Submit Signature</Button>
+                <Button disabled={!signerName.trim() || !consent} onClick={signContract}>
+                  {isNda ? 'Submit NDA Signature' : 'Submit Signature'}
+                </Button>
               </>
             )}
 

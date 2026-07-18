@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { ReactNode } from 'react';
 
-type ContractMode = 'employee' | 'contractor' | 'client';
+type ContractMode = 'employee' | 'contractor' | 'client' | 'nda';
 type FieldType = 'text' | 'long_text' | 'money' | 'date' | 'email' | 'phone' | 'address' | 'url' | 'checkbox';
 
 type TemplateField = {
@@ -28,6 +28,7 @@ type TemplateField = {
 type Template = {
   id: string;
   mode: ContractMode;
+  document_type: 'agreement' | 'nda';
   name: string;
   description: string | null;
   content_html: string;
@@ -38,6 +39,7 @@ type Template = {
 const emptyTemplate = (): Template => ({
   id: 'new',
   mode: 'client',
+  document_type: 'agreement',
   name: '',
   description: '',
   content_html: '<h2>Agreement</h2><p>This agreement is between Aorthar and {{client_name}}.</p>',
@@ -98,6 +100,7 @@ export default function TemplatesClient({ initialTemplates }: { initialTemplates
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mode: draft.mode,
+          document_type: draft.document_type,
           name: draft.name,
           description: draft.description,
           content_html: draft.content_html,
@@ -147,7 +150,7 @@ export default function TemplatesClient({ initialTemplates }: { initialTemplates
                 className={`w-full rounded-md border px-3 py-2 text-left text-sm ${selectedId === template.id ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'}`}
               >
                 <span className="block font-medium">{template.name}</span>
-                <span className="block text-xs capitalize text-muted-foreground">{template.mode} · {template.status}</span>
+                <span className="block text-xs capitalize text-muted-foreground">{template.document_type === 'nda' ? 'NDA' : template.mode} · {template.status}</span>
               </button>
             ))}
           </CardContent>
@@ -163,10 +166,22 @@ export default function TemplatesClient({ initialTemplates }: { initialTemplates
                 <Input value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} />
               </Field>
               <Field label="Mode">
-                <select className="h-9 rounded-md border bg-background px-3 text-sm" value={draft.mode} onChange={(event) => setDraft((current) => ({ ...current, mode: event.target.value as ContractMode }))}>
+                <select
+                  className="h-9 rounded-md border bg-background px-3 text-sm"
+                  value={draft.mode}
+                  onChange={(event) => {
+                    const mode = event.target.value as ContractMode;
+                    setDraft((current) => ({
+                      ...current,
+                      mode,
+                      document_type: mode === 'nda' ? 'nda' : 'agreement',
+                    }));
+                  }}
+                >
                   <option value="employee">Employee</option>
                   <option value="contractor">Contractor</option>
                   <option value="client">Client</option>
+                  <option value="nda">NDA</option>
                 </select>
               </Field>
               <Field label="Status">
@@ -180,6 +195,11 @@ export default function TemplatesClient({ initialTemplates }: { initialTemplates
                 <Input value={draft.description ?? ''} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} />
               </Field>
             </CardContent>
+            {draft.document_type === 'nda' && draft.status === 'draft' ? (
+              <div className="mx-6 mb-6 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                This NDA template is intentionally a draft. Have qualified Nigerian counsel review it before changing the status to active.
+              </div>
+            ) : null}
           </Card>
 
           <Card>

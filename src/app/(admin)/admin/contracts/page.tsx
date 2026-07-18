@@ -16,7 +16,7 @@ export default async function ContractsAdminPage() {
   const admin = createAdminClient();
   const { data: contracts } = await admin
     .from('contracts')
-    .select('id, title, mode, recipient_name, recipient_email, status, payment_status, payment_amount_ngn, sent_at, signed_at, created_at')
+    .select('id, title, document_type, mode, recipient_name, recipient_email, recipient_phone, recipient_relationship, project_name, status, payment_status, payment_amount_ngn, sent_at, signed_at, created_at')
     .order('created_at', { ascending: false });
 
   return <ContractsAdminClient contracts={contracts ?? []} />;

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BriefcaseBusiness, Eye, FileSignature, Send, UserRound } from 'lucide-react';
+import { BriefcaseBusiness, Copy, Eye, FileSignature, MessageCircle, Send, ShieldCheck, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,9 +30,11 @@ import {
   shouldUseRichContractInput,
   suggestContractFieldType,
 } from '@/lib/contracts/field-suggestions';
+import { buildNdaWhatsAppUrl } from '@/lib/contracts/nda';
+import type { NdaRecipientRelationship } from '@/lib/contracts/types';
 import type { ReactNode } from 'react';
 
-type ContractMode = 'employee' | 'contractor' | 'client';
+type ContractMode = 'employee' | 'contractor' | 'client' | 'nda';
 
 type TemplateField = {
   id: string;
@@ -47,6 +49,7 @@ type TemplateField = {
 type Template = {
   id: string;
   mode: ContractMode;
+  document_type?: 'agreement' | 'nda';
   name: string;
   description: string | null;
   content_html: string;
@@ -57,17 +60,34 @@ const modes = [
   { key: 'employee', label: 'Employee', icon: UserRound },
   { key: 'contractor', label: 'Contractor', icon: BriefcaseBusiness },
   { key: 'client', label: 'Client', icon: FileSignature },
+  { key: 'nda', label: 'NDA', icon: ShieldCheck },
 ] as const;
 
-export default function ContractComposerClient({ templates }: { templates: Template[] }) {
+type ShareResult = {
+  contractId: string;
+  signingUrl: string;
+  emailSent: boolean;
+};
+
+export default function ContractComposerClient({
+  templates,
+  initialMode,
+}: {
+  templates: Template[];
+  initialMode: ContractMode;
+}) {
   const router = useRouter();
-  const [mode, setMode] = useState<ContractMode>('employee');
+  const [mode, setMode] = useState<ContractMode>(initialMode);
   const modeTemplates = useMemo(() => templates.filter((template) => template.mode === mode), [templates, mode]);
   const [templateId, setTemplateId] = useState(modeTemplates[0]?.id ?? '');
   const selectedTemplate = modeTemplates.find((template) => template.id === templateId) ?? modeTemplates[0];
   const [title, setTitle] = useState('');
   const [recipientName, setRecipientName] = useState('');
   const [recipientEmail, setRecipientEmail] = useState('');
+  const [recipientPhone, setRecipientPhone] = useState('');
+  const [recipientRelationship, setRecipientRelationship] = useState<NdaRecipientRelationship | ''>('');
+  const [recipientCompany, setRecipientCompany] = useState('');
+  const [projectName, setProjectName] = useState('');
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentDescription, setPaymentDescription] = useState('');
   const [values, setValues] = useState<Record<string, string>>({});
@@ -76,6 +96,7 @@ export default function ContractComposerClient({ templates }: { templates: Templ
   const [saveFieldValue, setSaveFieldValue] = useState(false);
   const [savedFieldValues, setSavedFieldValues] = useState<Record<string, string[]>>({});
   const [saving, setSaving] = useState(false);
+  const [shareResult, setShareResult] = useState<ShareResult | null>(null);
 
   const fields = useMemo(
     () => buildTemplateFields(selectedTemplate),
@@ -87,6 +108,21 @@ export default function ContractComposerClient({ templates }: { templates: Templ
   const activeSavedValues = activeField ? (savedFieldValues[activeField.key] ?? []) : [];
   const activeIsRich = activeField ? shouldUseRichContractInput(toSuggestionField(activeField)) : false;
   const activeQuickValues = uniqueValues([...activeSavedValues, ...activeSuggestions]);
+
+  useEffect(() => {
+    if (mode !== 'nda') return;
+    setValues((current) => ({
+      ...current,
+      recipient_name: recipientName,
+      recipient_email: recipientEmail,
+      recipient_phone: recipientPhone,
+      recipient_relationship: recipientRelationship
+        ? `${recipientRelationship.charAt(0).toUpperCase()}${recipientRelationship.slice(1)}`
+        : '',
+      recipient_company: recipientCompany,
+      project_name: projectName,
+    }));
+  }, [mode, projectName, recipientCompany, recipientEmail, recipientName, recipientPhone, recipientRelationship]);
 
   useEffect(() => {
     if (!activeField || savedFieldValues[activeField.key]) return;
@@ -122,7 +158,10 @@ export default function ContractComposerClient({ templates }: { templates: Templ
     setSaveFieldValue(false);
   }
 
-  async function createContract(sendNow: boolean): Promise<void> {
+  async function createContract(
+    sendNow: boolean,
+    deliveryMethod: 'email' | 'link' = 'email',
+  ): Promise<void> {
     if (!selectedTemplate) {
       toast.error('Create an active template first');
       return;
@@ -139,10 +178,15 @@ export default function ContractComposerClient({ templates }: { templates: Templ
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           template_id: selectedTemplate.id,
+          document_type: mode === 'nda' ? 'nda' : 'agreement',
           mode,
           title: title.trim() || `${selectedTemplate.name} - ${recipientName || 'Draft'}`,
           recipient_name: recipientName,
           recipient_email: recipientEmail,
+          recipient_phone: mode === 'nda' ? recipientPhone : null,
+          recipient_relationship: mode === 'nda' ? recipientRelationship : null,
+          recipient_company: mode === 'nda' ? recipientCompany : null,
+          project_name: mode === 'nda' ? projectName : null,
           payment_amount_ngn: mode === 'client' ? Number(paymentAmount || 0) : null,
           payment_description: paymentDescription,
           values,
@@ -155,12 +199,35 @@ export default function ContractComposerClient({ templates }: { templates: Templ
       }
 
       if (sendNow) {
-        const sendRes = await fetch(`/api/admin/contracts/${data.contract.id}/send`, { method: 'POST' });
-        const sendData = await sendRes.json() as { error?: string; missing_fields?: { label: string }[] };
+        const sendRes = await fetch(`/api/admin/contracts/${data.contract.id}/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ delivery_method: deliveryMethod }),
+        });
+        const sendData = await sendRes.json() as {
+          error?: string;
+          missing_fields?: { label: string }[];
+          signing_url?: string;
+          email_sent?: boolean;
+          email_error?: string;
+        };
         if (!sendRes.ok) {
           const missingLabels = sendData.missing_fields?.map((field) => field.label).join(', ');
           toast.error(missingLabels ? `Saved draft, but fill these fields before sending: ${missingLabels}` : sendData.error ?? 'Saved draft but could not send');
           router.push(`/admin/contracts/${data.contract.id}`);
+          return;
+        }
+        if (mode === 'nda' && sendData.signing_url) {
+          setShareResult({
+            contractId: data.contract.id,
+            signingUrl: absoluteSigningUrl(sendData.signing_url),
+            emailSent: Boolean(sendData.email_sent),
+          });
+          if (sendData.email_error) {
+            toast.warning(`Secure link created, but email failed: ${sendData.email_error}`);
+          } else {
+            toast.success(deliveryMethod === 'email' ? 'NDA emailed and link created' : 'NDA signing link created');
+          }
           return;
         }
         toast.success('Contract sent');
@@ -171,6 +238,23 @@ export default function ContractComposerClient({ templates }: { templates: Templ
     } finally {
       setSaving(false);
     }
+  }
+
+  async function copySigningLink(): Promise<void> {
+    if (!shareResult) return;
+    await navigator.clipboard.writeText(shareResult.signingUrl);
+    toast.success('Signing link copied');
+  }
+
+  function shareOnWhatsApp(): void {
+    if (!shareResult) return;
+    const url = buildNdaWhatsAppUrl({
+      phone: recipientPhone,
+      recipientName,
+      projectName,
+      signingUrl: shareResult.signingUrl,
+    });
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 
   async function saveActiveField(): Promise<void> {
@@ -240,11 +324,11 @@ export default function ContractComposerClient({ templates }: { templates: Templ
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold">New Contract</h2>
-        <p className="text-sm text-muted-foreground">Choose a mode, fill clickable fields, then save or send.</p>
+        <h2 className="text-xl font-semibold">{mode === 'nda' ? 'New NDA' : 'New Contract'}</h2>
+        <p className="text-sm text-muted-foreground">Choose a document type, fill clickable fields, then save or send.</p>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {modes.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
@@ -254,7 +338,7 @@ export default function ContractComposerClient({ templates }: { templates: Templ
           >
             <Icon className="mb-3 h-5 w-5 text-primary" />
             <p className="font-medium">{label}</p>
-            <p className="text-xs text-muted-foreground">Create a {label.toLowerCase()} agreement</p>
+            <p className="text-xs text-muted-foreground">{key === 'nda' ? 'Protect a private project' : `Create a ${label.toLowerCase()} agreement`}</p>
           </button>
         ))}
       </div>
@@ -281,6 +365,34 @@ export default function ContractComposerClient({ templates }: { templates: Templ
             <Field label="Recipient email">
               <Input type="email" value={recipientEmail} onChange={(event) => setRecipientEmail(event.target.value)} placeholder="person@example.com" />
             </Field>
+            {mode === 'nda' && (
+              <>
+                <Field label="Phone or WhatsApp number">
+                  <Input value={recipientPhone} onChange={(event) => setRecipientPhone(event.target.value)} placeholder="0803 123 4567" />
+                </Field>
+                <Field label="Relationship">
+                  <select
+                    className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                    value={recipientRelationship}
+                    onChange={(event) => setRecipientRelationship(event.target.value as NdaRecipientRelationship | '')}
+                  >
+                    <option value="">Choose relationship</option>
+                    <option value="employee">Employee</option>
+                    <option value="contractor">Contractor</option>
+                    <option value="client">Client</option>
+                    <option value="partner">Partner</option>
+                    <option value="vendor">Vendor</option>
+                    <option value="other">Other</option>
+                  </select>
+                </Field>
+                <Field label="Company (optional)">
+                  <Input value={recipientCompany} onChange={(event) => setRecipientCompany(event.target.value)} placeholder="Recipient company" />
+                </Field>
+                <Field label="Project name">
+                  <Input value={projectName} onChange={(event) => setProjectName(event.target.value)} placeholder="Private project name" />
+                </Field>
+              </>
+            )}
             {mode === 'client' && (
               <>
                 <Field label="Payment amount (NGN)">
@@ -297,14 +409,25 @@ export default function ContractComposerClient({ templates }: { templates: Templ
                 {missingFields.length === 0 ? 'All required fields complete.' : missingFields.map((field) => field.label).join(', ')}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" disabled={saving} onClick={() => createContract(false)}>Save Draft</Button>
               <Button variant="outline" disabled={saving || !selectedTemplate} onClick={openPreview}>
                 <Eye className="h-4 w-4" /> Preview
               </Button>
-              <Button disabled={saving || !canSend} onClick={() => createContract(true)}>
-                <Send className="h-4 w-4" /> Send
-              </Button>
+              {mode === 'nda' ? (
+                <>
+                  <Button variant="outline" disabled={saving || !canSend} onClick={() => createContract(true, 'link')}>
+                    <Copy className="h-4 w-4" /> Create Link
+                  </Button>
+                  <Button disabled={saving || !canSend} onClick={() => createContract(true, 'email')}>
+                    <Send className="h-4 w-4" /> Email &amp; Create Link
+                  </Button>
+                </>
+              ) : (
+                <Button disabled={saving || !canSend} onClick={() => createContract(true)}>
+                  <Send className="h-4 w-4" /> Send
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -376,6 +499,33 @@ export default function ContractComposerClient({ templates }: { templates: Templ
           </div>
           <DialogFooter>
             <Button onClick={saveActiveField}>Save Field</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(shareResult)} onOpenChange={(open) => !open && setShareResult(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>NDA link ready</DialogTitle>
+            <DialogDescription>
+              {shareResult?.emailSent
+                ? 'The recipient has been emailed. You can also send this same secure link manually.'
+                : 'Copy the secure link or open a prepared WhatsApp message.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-lg border bg-muted/30 p-3 text-sm break-all">
+            {shareResult?.signingUrl}
+          </div>
+          <DialogFooter className="flex-wrap sm:justify-between">
+            <Button variant="outline" onClick={copySigningLink}>
+              <Copy className="h-4 w-4" /> Copy Link
+            </Button>
+            <Button variant="outline" onClick={shareOnWhatsApp}>
+              <MessageCircle className="h-4 w-4" /> Share on WhatsApp
+            </Button>
+            <Button onClick={() => shareResult && router.push(`/admin/contracts/${shareResult.contractId}`)}>
+              Open NDA Record
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -508,4 +658,9 @@ function escapeHtml(value: string): string {
 
 function escapeAttr(value: string): string {
   return escapeHtml(value).replace(/`/g, '&#96;');
+}
+
+function absoluteSigningUrl(signingUrl: string): string {
+  if (signingUrl.startsWith('http://') || signingUrl.startsWith('https://')) return signingUrl;
+  return `${window.location.origin}${signingUrl.startsWith('/') ? signingUrl : `/${signingUrl}`}`;
 }

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Copy, Download, Eye, RefreshCcw, Trash2, WalletCards } from 'lucide-react';
+import { Ban, Copy, Download, Eye, MessageCircle, RefreshCcw, Trash2, WalletCards } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,14 +12,21 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { buildNdaWhatsAppUrl } from '@/lib/contracts/nda';
+import { contractSigningUrl } from '@/lib/urls';
 import type { ReactNode } from 'react';
 
 type Contract = {
   id: string;
   title: string;
+  document_type: 'agreement' | 'nda';
   mode: string;
   recipient_name: string;
   recipient_email: string;
+  recipient_phone: string | null;
+  recipient_relationship: string | null;
+  recipient_company: string | null;
+  project_name: string | null;
   status: string;
   payment_status: string;
   payment_amount_ngn: number | null;
@@ -28,7 +35,7 @@ type Contract = {
   signed_snapshot_html: string | null;
   sent_at: string | null;
   signed_at: string | null;
-  contract_signing_tokens: Array<{ id: string; status: string; expires_at: string; sent_at: string; viewed_at: string | null; used_at: string | null }>;
+  contract_signing_tokens: Array<{ id: string; token: string; status: string; expires_at: string; sent_at: string; viewed_at: string | null; used_at: string | null }>;
   contract_signatures: Array<{ signer_name: string; signer_email: string; signed_at: string; ip_address: string | null; user_agent: string | null; consent_text: string }>;
   contract_payments: Array<{ status: string; amount_ngn: number; method: string; paystack_reference: string | null; manual_reference: string | null; note: string | null; paid_at: string | null }>;
 };
@@ -43,17 +50,19 @@ export default function ContractDetailClient({ contract }: { contract: Contract 
   const [duplicating, setDuplicating] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   async function resend(): Promise<void> {
     setResending(true);
     try {
       const res = await fetch(`/api/admin/contracts/${contract.id}/resend`, { method: 'POST' });
-      const data = await res.json() as { error?: string };
+      const data = await res.json() as { error?: string; email_error?: string };
       if (!res.ok) {
         toast.error(data.error ?? 'Failed to resend contract');
         return;
       }
-      toast.success('Contract link resent');
+      if (data.email_error) toast.warning(`New link created, but email failed: ${data.email_error}`);
+      else toast.success(contract.document_type === 'nda' ? 'NDA link resent' : 'Contract link resent');
       router.refresh();
     } finally {
       setResending(false);
@@ -115,9 +124,47 @@ export default function ContractDetailClient({ contract }: { contract: Contract 
     }
   }
 
+  async function cancelAndRevoke(): Promise<void> {
+    setCancelling(true);
+    try {
+      const res = await fetch(`/api/admin/contracts/${contract.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'cancelled' }),
+      });
+      const data = await res.json() as { error?: string };
+      if (!res.ok) {
+        toast.error(data.error ?? 'Could not revoke the signing link');
+        return;
+      }
+      toast.success('NDA cancelled and active link revoked');
+      router.refresh();
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   const latestToken = [...(contract.contract_signing_tokens ?? [])].sort((a, b) => Date.parse(b.sent_at) - Date.parse(a.sent_at))[0];
   const signature = contract.contract_signatures?.[0];
   const html = contract.signed_snapshot_html ?? contract.rendered_html;
+  const isNda = contract.document_type === 'nda';
+  const signingUrl = latestToken?.token ? absoluteSigningUrl(contractSigningUrl(latestToken.token)) : null;
+
+  async function copySigningLink(): Promise<void> {
+    if (!signingUrl) return;
+    await navigator.clipboard.writeText(signingUrl);
+    toast.success('Signing link copied');
+  }
+
+  function shareOnWhatsApp(): void {
+    if (!signingUrl) return;
+    window.open(buildNdaWhatsAppUrl({
+      phone: contract.recipient_phone ?? '',
+      recipientName: contract.recipient_name,
+      projectName: contract.project_name ?? 'the project',
+      signingUrl,
+    }), '_blank', 'noopener,noreferrer');
+  }
 
   return (
     <div className="space-y-6">
@@ -125,7 +172,9 @@ export default function ContractDetailClient({ contract }: { contract: Contract 
         <div>
           <Link href="/admin/contracts" className="text-sm text-muted-foreground hover:text-foreground">Contracts</Link>
           <h2 className="text-xl font-semibold">{contract.title}</h2>
-          <p className="text-sm text-muted-foreground">{contract.recipient_name} · {contract.recipient_email}</p>
+          <p className="text-sm text-muted-foreground">
+            {contract.recipient_name} · {contract.recipient_email}{isNda && contract.project_name ? ` · ${contract.project_name}` : ''}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" asChild>
@@ -139,7 +188,20 @@ export default function ContractDetailClient({ contract }: { contract: Contract 
           <Button variant="outline" disabled={resending || contract.status === 'signed'} onClick={resend}>
             <RefreshCcw className="h-4 w-4" /> Resend Link
           </Button>
-          {contract.payment_status === 'pending' && (
+          {isNda && signingUrl && latestToken.status === 'active' ? (
+            <>
+              <Button variant="outline" onClick={copySigningLink}>
+                <Copy className="h-4 w-4" /> Copy Link
+              </Button>
+              <Button variant="outline" onClick={shareOnWhatsApp}>
+                <MessageCircle className="h-4 w-4" /> WhatsApp
+              </Button>
+              <Button variant="outline" disabled={cancelling} onClick={cancelAndRevoke}>
+                <Ban className="h-4 w-4" /> Cancel &amp; Revoke
+              </Button>
+            </>
+          ) : null}
+          {!isNda && contract.payment_status === 'pending' && (
             <Button variant="outline" onClick={() => setManualOpen(true)}>
               <WalletCards className="h-4 w-4" /> Mark Paid
             </Button>
@@ -156,16 +218,16 @@ export default function ContractDetailClient({ contract }: { contract: Contract 
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <StatusCard label="Mode" value={contract.mode} />
+        <StatusCard label={isNda ? 'Document' : 'Mode'} value={isNda ? 'NDA' : contract.mode} />
         <StatusCard label="Status" value={contract.status} />
-        <StatusCard label="Payment" value={contract.payment_status.replace('_', ' ')} />
-        <StatusCard label="Amount" value={contract.payment_amount_ngn ? `₦${contract.payment_amount_ngn.toLocaleString()}` : 'Not required'} />
+        <StatusCard label={isNda ? 'Relationship' : 'Payment'} value={isNda ? contract.recipient_relationship ?? 'Not set' : contract.payment_status.replace('_', ' ')} />
+        <StatusCard label={isNda ? 'Project' : 'Amount'} value={isNda ? contract.project_name ?? 'Not set' : contract.payment_amount_ngn ? `₦${contract.payment_amount_ngn.toLocaleString()}` : 'Not required'} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Stored Contract Snapshot</CardTitle>
+            <CardTitle className="text-base">Stored {isNda ? 'NDA' : 'Contract'} Snapshot</CardTitle>
           </CardHeader>
           <CardContent>
             {html ? (
@@ -290,4 +352,10 @@ function formatDateTime(iso: string): string {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
+}
+
+function absoluteSigningUrl(signingUrl: string): string {
+  if (signingUrl.startsWith('http://') || signingUrl.startsWith('https://')) return signingUrl;
+  if (typeof window === 'undefined') return signingUrl;
+  return `${window.location.origin}${signingUrl.startsWith('/') ? signingUrl : `/${signingUrl}`}`;
 }
