@@ -346,6 +346,7 @@ describe('NDA contracts', () => {
     expect(migration).toContain('cancel_contract_document');
     expect(migration).toContain('send_contract_document');
     expect(migration).toContain('update_nda_contract_draft');
+    expect(migration).toContain('p_expected_updated_at');
     expect(migration).toContain('REVOKE ALL ON FUNCTION');
   });
 });

@@ -42,6 +42,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     const { data: sent, error: sendError } = await admin.rpc('send_contract_document', {
       p_contract_id: id,
+      p_expected_updated_at: prepared.contract.updated_at,
       p_token: token,
       p_expires_at: expiresAt,
       p_sent_to_email: prepared.contract.recipient_email,
@@ -51,7 +52,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     });
     if (sendError) return NextResponse.json({ error: sendError.message }, { status: 500 });
     if (!sent) {
-      return NextResponse.json({ error: 'Signed or cancelled documents cannot be sent again' }, { status: 409 });
+      return NextResponse.json(
+        { error: 'This document changed, was signed, or was cancelled. Refresh and try again' },
+        { status: 409 },
+      );
     }
 
     const signingUrl = contractSigningUrl(token);
@@ -114,6 +118,7 @@ async function prepareContractForSending(
       recipient_relationship: string | null;
       recipient_company: string | null;
       project_name: string | null;
+      updated_at: string;
     };
     renderedHtml: string;
   }
@@ -121,7 +126,7 @@ async function prepareContractForSending(
 > {
   const { data: contract, error } = await admin
     .from('contracts')
-    .select('id, title, mode, document_type, recipient_name, recipient_email, recipient_phone, recipient_relationship, recipient_company, project_name, status, contract_templates(content_html, contract_template_fields(key, label, field_type, is_required, sort_order)), contract_field_values(field_key, value)')
+    .select('id, title, mode, document_type, recipient_name, recipient_email, recipient_phone, recipient_relationship, recipient_company, project_name, status, updated_at, contract_templates(content_html, contract_template_fields(key, label, field_type, is_required, sort_order)), contract_field_values(field_key, value)')
     .eq('id', id)
     .single();
 
@@ -208,6 +213,7 @@ async function prepareContractForSending(
       recipient_relationship: contract.recipient_relationship,
       recipient_company: contract.recipient_company,
       project_name: contract.project_name,
+      updated_at: contract.updated_at,
     },
     renderedHtml: renderContractHtml(template.content_html, values, fields),
   };

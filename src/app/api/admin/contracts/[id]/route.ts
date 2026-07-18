@@ -50,7 +50,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const admin = createAdminClient();
     const { data: existing, error: existingError } = await admin
       .from('contracts')
-      .select('status, document_type, mode, recipient_name, recipient_email, recipient_phone, recipient_relationship, recipient_company, project_name, contract_field_values(field_key, value)')
+      .select('status, document_type, mode, updated_at, recipient_name, recipient_email, recipient_phone, recipient_relationship, recipient_company, project_name')
       .eq('id', id)
       .maybeSingle();
     if (existingError) return NextResponse.json({ error: existingError.message }, { status: 500 });
@@ -103,36 +103,50 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     if (isNdaDocument(existing)) {
       if (bodyKeys.length === 0) return NextResponse.json({ ok: true });
 
-      const storedValues = Object.fromEntries(
-        (existing.contract_field_values ?? []).map((field) => [field.field_key, field.value]),
-      );
       const relationship = parseNdaRecipientRelationship(
         body.recipient_relationship ?? existing.recipient_relationship,
       );
-      const mergedValues = { ...storedValues, ...(body.values ?? {}) };
-      const values = {
-        ...mergedValues,
-        ...ndaMetadataFieldValues({
-          recipientName: body.recipient_name ?? existing.recipient_name,
-          recipientEmail: body.recipient_email ?? existing.recipient_email,
-          recipientPhone: body.recipient_phone ?? existing.recipient_phone ?? '',
-          recipientRelationship: relationship ?? '',
-          recipientCompany: body.recipient_company === undefined
-            ? existing.recipient_company
-            : body.recipient_company,
-          projectName: body.project_name ?? existing.project_name ?? '',
-          projectPurpose: mergedValues.project_purpose ?? '',
-          effectiveDate: mergedValues.effective_date ?? '',
-          confidentialityTerm: mergedValues.confidentiality_term ?? '',
-        }),
-      };
+      const values = { ...(body.values ?? {}) };
+      const metadataValues = ndaMetadataFieldValues({
+        recipientName: body.recipient_name ?? existing.recipient_name,
+        recipientEmail: body.recipient_email ?? existing.recipient_email,
+        recipientPhone: body.recipient_phone ?? existing.recipient_phone ?? '',
+        recipientRelationship: relationship ?? '',
+        recipientCompany: body.recipient_company === undefined
+          ? existing.recipient_company
+          : body.recipient_company,
+        projectName: body.project_name ?? existing.project_name ?? '',
+        projectPurpose: body.values?.project_purpose ?? '',
+        effectiveDate: body.values?.effective_date ?? '',
+        confidentialityTerm: body.values?.confidentiality_term ?? '',
+      });
+      const synchronizedKeys = [
+        ['recipient_name', body.recipient_name],
+        ['recipient_email', body.recipient_email],
+        ['recipient_phone', body.recipient_phone],
+        ['recipient_relationship', body.recipient_relationship],
+        ['recipient_company', body.recipient_company],
+        ['project_name', body.project_name],
+      ] as const;
+      synchronizedKeys.forEach(([fieldKey, columnValue]) => {
+        if (columnValue !== undefined || fieldKey in values) {
+          values[fieldKey] = metadataValues[fieldKey];
+        }
+      });
+
       const { data: updated, error: updateError } = await admin.rpc('update_nda_contract_draft', {
         p_contract_id: id,
+        p_expected_updated_at: existing.updated_at,
         p_update: updateData,
         p_values: values,
       });
       if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
-      if (!updated) return NextResponse.json({ error: 'Only draft NDAs can be edited' }, { status: 409 });
+      if (!updated) {
+        return NextResponse.json(
+          { error: 'This NDA changed while you were editing it. Refresh and try again' },
+          { status: 409 },
+        );
+      }
 
       return NextResponse.json({ ok: true });
     }

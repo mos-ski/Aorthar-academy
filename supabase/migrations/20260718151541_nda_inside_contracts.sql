@@ -115,6 +115,7 @@ GRANT EXECUTE ON FUNCTION public.cancel_contract_document(uuid, timestamptz) TO 
 
 CREATE OR REPLACE FUNCTION public.send_contract_document(
   p_contract_id uuid,
+  p_expected_updated_at timestamptz,
   p_token text,
   p_expires_at timestamptz,
   p_sent_to_email text,
@@ -134,6 +135,7 @@ BEGIN
     rendered_html = p_rendered_html,
     sent_at = p_sent_at
   WHERE id = p_contract_id
+    AND updated_at = p_expected_updated_at
     AND status NOT IN ('signed', 'cancelled');
 
   IF NOT FOUND THEN
@@ -165,11 +167,12 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.send_contract_document(uuid, text, timestamptz, text, uuid, text, timestamptz) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.send_contract_document(uuid, text, timestamptz, text, uuid, text, timestamptz) TO service_role;
+REVOKE ALL ON FUNCTION public.send_contract_document(uuid, timestamptz, text, timestamptz, text, uuid, text, timestamptz) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.send_contract_document(uuid, timestamptz, text, timestamptz, text, uuid, text, timestamptz) TO service_role;
 
 CREATE OR REPLACE FUNCTION public.update_nda_contract_draft(
   p_contract_id uuid,
+  p_expected_updated_at timestamptz,
   p_update jsonb,
   p_values jsonb
 )
@@ -189,6 +192,7 @@ BEGIN
     recipient_company = CASE WHEN p_update ? 'recipient_company' THEN NULLIF(btrim(p_update ->> 'recipient_company'), '') ELSE recipient_company END,
     project_name = CASE WHEN p_update ? 'project_name' THEN NULLIF(btrim(p_update ->> 'project_name'), '') ELSE project_name END
   WHERE id = p_contract_id
+    AND updated_at = p_expected_updated_at
     AND status = 'draft'
     AND document_type = 'nda'
     AND mode = 'nda';
@@ -218,8 +222,8 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.update_nda_contract_draft(uuid, jsonb, jsonb) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.update_nda_contract_draft(uuid, jsonb, jsonb) TO service_role;
+REVOKE ALL ON FUNCTION public.update_nda_contract_draft(uuid, timestamptz, jsonb, jsonb) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.update_nda_contract_draft(uuid, timestamptz, jsonb, jsonb) TO service_role;
 
 CREATE OR REPLACE FUNCTION public.sign_contract_document(
   p_token text,
