@@ -21,7 +21,7 @@ import {
   shouldUseRichContractInput,
   suggestContractFieldType,
 } from '@/lib/contracts/field-suggestions';
-import { createTokenExpiry, isTokenExpired } from '@/lib/contracts/tokens';
+import { createTokenExpiry, isContractSendableStatus, isTokenExpired } from '@/lib/contracts/tokens';
 import { getContractPlaceholderState, hasMeaningfulContractValue } from '@/lib/contracts/field-state';
 import { nextPaymentStatus } from '@/lib/contracts/payments';
 import {
@@ -244,6 +244,15 @@ describe('NDA contracts', () => {
     expect(isPublicRoute('/api/contracts/sign/token')).toBe(true);
   });
 
+  it('never reactivates signed or cancelled documents', () => {
+    expect(isContractSendableStatus('draft')).toBe(true);
+    expect(isContractSendableStatus('sent')).toBe(true);
+    expect(isContractSendableStatus('viewed')).toBe(true);
+    expect(isContractSendableStatus('expired')).toBe(true);
+    expect(isContractSendableStatus('signed')).toBe(false);
+    expect(isContractSendableStatus('cancelled')).toBe(false);
+  });
+
   it('classifies only NDA documents as NDAs', () => {
     expect(isNdaDocument({ document_type: 'nda', mode: 'nda' })).toBe(true);
     expect(isNdaDocument({ document_type: 'agreement', mode: 'client' })).toBe(false);
@@ -335,6 +344,8 @@ describe('NDA contracts', () => {
     expect(migration.toLowerCase()).toContain('survive permanently');
     expect(migration).toContain('sign_contract_document');
     expect(migration).toContain('cancel_contract_document');
+    expect(migration).toContain('send_contract_document');
+    expect(migration).toContain('update_nda_contract_draft');
     expect(migration).toContain('REVOKE ALL ON FUNCTION');
   });
 });

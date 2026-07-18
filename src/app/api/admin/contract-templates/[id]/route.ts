@@ -69,6 +69,12 @@ export async function PATCH(request: NextRequest, { params }: Params) {
           .insert(fields.map((field) => ({ ...field, template_id: id })));
         if (fieldsError) return NextResponse.json({ error: fieldsError.message }, { status: 500 });
       }
+    } else if (nextMode !== existing.mode) {
+      const { error: fieldsError } = await admin
+        .from('contract_template_fields')
+        .update({ mode: nextMode })
+        .eq('template_id', id);
+      if (fieldsError) return NextResponse.json({ error: fieldsError.message }, { status: 500 });
     }
 
     return NextResponse.json({ ok: true });

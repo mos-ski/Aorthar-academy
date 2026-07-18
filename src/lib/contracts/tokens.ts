@@ -7,3 +7,7 @@ export function createTokenExpiry(now: Date = new Date()): Date {
 export function isTokenExpired(expiresAt: string, now: Date = new Date()): boolean {
   return new Date(expiresAt).getTime() <= now.getTime();
 }
+
+export function isContractSendableStatus(status: string): boolean {
+  return !['signed', 'cancelled'].includes(status);
+}

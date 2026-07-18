@@ -40,7 +40,9 @@ export async function upsertContractFieldValues(
 
   if (rows.length === 0) return;
 
-  await admin
+  const { error } = await admin
     .from('contract_field_values')
     .upsert(rows, { onConflict: 'contract_id,field_key' });
+
+  if (error) throw new Error(error.message);
 }

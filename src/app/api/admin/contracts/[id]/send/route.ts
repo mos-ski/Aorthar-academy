@@ -10,7 +10,7 @@ import {
 import { sendEmail } from '@/lib/email';
 import { isNdaDocument, parseNdaRecipientRelationship, validateNdaMetadata } from '@/lib/contracts/nda';
 import { findMissingContractFields, renderContractHtml } from '@/lib/contracts/placeholders';
-import { createTokenExpiry } from '@/lib/contracts/tokens';
+import { createTokenExpiry, isContractSendableStatus } from '@/lib/contracts/tokens';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { contractSigningUrl } from '@/lib/urls';
 import type { ContractMode, ContractTemplateField } from '@/lib/contracts/types';
@@ -38,33 +38,21 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = createTokenExpiry().toISOString();
+    const sentAt = new Date().toISOString();
 
-    await admin
-      .from('contract_signing_tokens')
-      .update({ status: 'revoked', revoked_at: new Date().toISOString() })
-      .eq('contract_id', id)
-      .eq('status', 'active');
-
-    const { error: tokenError } = await admin.from('contract_signing_tokens').insert({
-      contract_id: id,
-      token,
-      expires_at: expiresAt,
-      sent_to_email: prepared.contract.recipient_email,
-      created_by: userId,
+    const { data: sent, error: sendError } = await admin.rpc('send_contract_document', {
+      p_contract_id: id,
+      p_token: token,
+      p_expires_at: expiresAt,
+      p_sent_to_email: prepared.contract.recipient_email,
+      p_created_by: userId,
+      p_rendered_html: prepared.renderedHtml,
+      p_sent_at: sentAt,
     });
-
-    if (tokenError) return NextResponse.json({ error: tokenError.message }, { status: 500 });
-
-    const { error: updateError } = await admin
-      .from('contracts')
-      .update({
-        status: 'sent',
-        rendered_html: prepared.renderedHtml,
-        sent_at: new Date().toISOString(),
-      })
-      .eq('id', id);
-
-    if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+    if (sendError) return NextResponse.json({ error: sendError.message }, { status: 500 });
+    if (!sent) {
+      return NextResponse.json({ error: 'Signed or cancelled documents cannot be sent again' }, { status: 409 });
+    }
 
     const signingUrl = contractSigningUrl(token);
     let emailError: string | null = null;
@@ -133,12 +121,21 @@ async function prepareContractForSending(
 > {
   const { data: contract, error } = await admin
     .from('contracts')
-    .select('id, title, mode, document_type, recipient_name, recipient_email, recipient_phone, recipient_relationship, recipient_company, project_name, contract_templates(content_html, contract_template_fields(key, label, field_type, is_required, sort_order)), contract_field_values(field_key, value)')
+    .select('id, title, mode, document_type, recipient_name, recipient_email, recipient_phone, recipient_relationship, recipient_company, project_name, status, contract_templates(content_html, contract_template_fields(key, label, field_type, is_required, sort_order)), contract_field_values(field_key, value)')
     .eq('id', id)
     .single();
 
   if (error || !contract) {
     return { response: NextResponse.json({ error: 'Contract not found' }, { status: 404 }) };
+  }
+
+  if (!isContractSendableStatus(contract.status)) {
+    return {
+      response: NextResponse.json(
+        { error: `${contract.status === 'signed' ? 'Signed' : 'Cancelled'} documents cannot be sent again` },
+        { status: 409 },
+      ),
+    };
   }
 
   if (!contract.recipient_email || !/^[^@]+@[^@]+\.[^@]+$/.test(contract.recipient_email)) {

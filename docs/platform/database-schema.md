@@ -349,7 +349,7 @@ Defines placeholder metadata, input type, required state, help text, and orderin
 | `completion_delivery_status` | TEXT | checked enum | `not_started`, `sent`, `partial`, or `failed` for signed-copy delivery |
 | `completion_delivery_error` | TEXT | NULL | Most recent recipient/owner delivery error for admin follow-up |
 
-Supporting tables remain `contract_field_values`, `contract_signing_tokens`, `contract_signatures`, and `contract_payments`. Tokens expire after seven days, are single-use, and are revoked on resend or cancellation. The `sign_contract_document` and `cancel_contract_document` database functions lock and update the document and token together so a cancellation and signature cannot both succeed. Public signing reads these records only through server-side token validation; no public table policy is added.
+Supporting tables remain `contract_field_values`, `contract_signing_tokens`, `contract_signatures`, and `contract_payments`. Tokens expire after seven days, are single-use, and are revoked on resend or cancellation. The `send_contract_document`, `sign_contract_document`, and `cancel_contract_document` database functions lock and update the document and token together so terminal documents cannot be reactivated and a cancellation and signature cannot both succeed. `update_nda_contract_draft` keeps NDA identity columns and template values in one transaction. Public signing reads these records only through server-side token validation; no public table policy is added.
 
 ---
 

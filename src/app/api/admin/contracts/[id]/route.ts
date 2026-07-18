@@ -100,40 +100,49 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     if (body.payment_description !== undefined) updateData.payment_description = body.payment_description?.trim() || null;
     if (body.status !== undefined) updateData.status = body.status;
 
+    if (isNdaDocument(existing)) {
+      if (bodyKeys.length === 0) return NextResponse.json({ ok: true });
+
+      const storedValues = Object.fromEntries(
+        (existing.contract_field_values ?? []).map((field) => [field.field_key, field.value]),
+      );
+      const relationship = parseNdaRecipientRelationship(
+        body.recipient_relationship ?? existing.recipient_relationship,
+      );
+      const mergedValues = { ...storedValues, ...(body.values ?? {}) };
+      const values = {
+        ...mergedValues,
+        ...ndaMetadataFieldValues({
+          recipientName: body.recipient_name ?? existing.recipient_name,
+          recipientEmail: body.recipient_email ?? existing.recipient_email,
+          recipientPhone: body.recipient_phone ?? existing.recipient_phone ?? '',
+          recipientRelationship: relationship ?? '',
+          recipientCompany: body.recipient_company === undefined
+            ? existing.recipient_company
+            : body.recipient_company,
+          projectName: body.project_name ?? existing.project_name ?? '',
+          projectPurpose: mergedValues.project_purpose ?? '',
+          effectiveDate: mergedValues.effective_date ?? '',
+          confidentialityTerm: mergedValues.confidentiality_term ?? '',
+        }),
+      };
+      const { data: updated, error: updateError } = await admin.rpc('update_nda_contract_draft', {
+        p_contract_id: id,
+        p_update: updateData,
+        p_values: values,
+      });
+      if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+      if (!updated) return NextResponse.json({ error: 'Only draft NDAs can be edited' }, { status: 409 });
+
+      return NextResponse.json({ ok: true });
+    }
+
     if (Object.keys(updateData).length > 0) {
       const { error } = await admin.from('contracts').update(updateData).eq('id', id);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    if (body.values || (isNdaDocument(existing) && bodyKeys.length > 0)) {
-      let values = body.values ?? {};
-      if (isNdaDocument(existing)) {
-        const storedValues = Object.fromEntries(
-          (existing.contract_field_values ?? []).map((field) => [field.field_key, field.value]),
-        );
-        const relationship = parseNdaRecipientRelationship(
-          body.recipient_relationship ?? existing.recipient_relationship,
-        );
-        const mergedValues = { ...storedValues, ...values };
-        values = {
-          ...mergedValues,
-          ...ndaMetadataFieldValues({
-            recipientName: body.recipient_name ?? existing.recipient_name,
-            recipientEmail: body.recipient_email ?? existing.recipient_email,
-            recipientPhone: body.recipient_phone ?? existing.recipient_phone ?? '',
-            recipientRelationship: relationship ?? '',
-            recipientCompany: body.recipient_company === undefined
-              ? existing.recipient_company
-              : body.recipient_company,
-            projectName: body.project_name ?? existing.project_name ?? '',
-            projectPurpose: mergedValues.project_purpose ?? '',
-            effectiveDate: mergedValues.effective_date ?? '',
-            confidentialityTerm: mergedValues.confidentiality_term ?? '',
-          }),
-        };
-      }
-      await upsertContractFieldValues(admin, id, values);
-    }
+    if (body.values) await upsertContractFieldValues(admin, id, body.values);
 
     return NextResponse.json({ ok: true });
   } catch (error) {

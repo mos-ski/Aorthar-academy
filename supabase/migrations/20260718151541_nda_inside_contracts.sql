@@ -113,6 +113,114 @@ $$;
 REVOKE ALL ON FUNCTION public.cancel_contract_document(uuid, timestamptz) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.cancel_contract_document(uuid, timestamptz) TO service_role;
 
+CREATE OR REPLACE FUNCTION public.send_contract_document(
+  p_contract_id uuid,
+  p_token text,
+  p_expires_at timestamptz,
+  p_sent_to_email text,
+  p_created_by uuid,
+  p_rendered_html text,
+  p_sent_at timestamptz
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public
+AS $$
+BEGIN
+  UPDATE public.contracts
+  SET
+    status = 'sent',
+    rendered_html = p_rendered_html,
+    sent_at = p_sent_at
+  WHERE id = p_contract_id
+    AND status NOT IN ('signed', 'cancelled');
+
+  IF NOT FOUND THEN
+    RETURN false;
+  END IF;
+
+  UPDATE public.contract_signing_tokens
+  SET status = 'revoked', revoked_at = p_sent_at
+  WHERE contract_id = p_contract_id
+    AND status = 'active';
+
+  INSERT INTO public.contract_signing_tokens (
+    contract_id,
+    token,
+    expires_at,
+    sent_to_email,
+    sent_at,
+    created_by
+  ) VALUES (
+    p_contract_id,
+    p_token,
+    p_expires_at,
+    p_sent_to_email,
+    p_sent_at,
+    p_created_by
+  );
+
+  RETURN true;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.send_contract_document(uuid, text, timestamptz, text, uuid, text, timestamptz) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.send_contract_document(uuid, text, timestamptz, text, uuid, text, timestamptz) TO service_role;
+
+CREATE OR REPLACE FUNCTION public.update_nda_contract_draft(
+  p_contract_id uuid,
+  p_update jsonb,
+  p_values jsonb
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public
+AS $$
+BEGIN
+  UPDATE public.contracts
+  SET
+    title = CASE WHEN p_update ? 'title' THEN p_update ->> 'title' ELSE title END,
+    recipient_name = CASE WHEN p_update ? 'recipient_name' THEN p_update ->> 'recipient_name' ELSE recipient_name END,
+    recipient_email = CASE WHEN p_update ? 'recipient_email' THEN p_update ->> 'recipient_email' ELSE recipient_email END,
+    recipient_phone = CASE WHEN p_update ? 'recipient_phone' THEN NULLIF(btrim(p_update ->> 'recipient_phone'), '') ELSE recipient_phone END,
+    recipient_relationship = CASE WHEN p_update ? 'recipient_relationship' THEN NULLIF(btrim(p_update ->> 'recipient_relationship'), '') ELSE recipient_relationship END,
+    recipient_company = CASE WHEN p_update ? 'recipient_company' THEN NULLIF(btrim(p_update ->> 'recipient_company'), '') ELSE recipient_company END,
+    project_name = CASE WHEN p_update ? 'project_name' THEN NULLIF(btrim(p_update ->> 'project_name'), '') ELSE project_name END
+  WHERE id = p_contract_id
+    AND status = 'draft'
+    AND document_type = 'nda'
+    AND mode = 'nda';
+
+  IF NOT FOUND THEN
+    RETURN false;
+  END IF;
+
+  INSERT INTO public.contract_field_values (
+    contract_id,
+    field_key,
+    field_label,
+    field_type,
+    value
+  )
+  SELECT
+    p_contract_id,
+    field_entry.key,
+    initcap(replace(field_entry.key, '_', ' ')),
+    'text',
+    field_entry.value
+  FROM jsonb_each_text(COALESCE(p_values, '{}'::jsonb)) AS field_entry
+  ON CONFLICT (contract_id, field_key) DO UPDATE SET
+    value = EXCLUDED.value;
+
+  RETURN true;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.update_nda_contract_draft(uuid, jsonb, jsonb) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.update_nda_contract_draft(uuid, jsonb, jsonb) TO service_role;
+
 CREATE OR REPLACE FUNCTION public.sign_contract_document(
   p_token text,
   p_signer_name text,
@@ -129,7 +237,7 @@ AS $$
 DECLARE
   v_token public.contract_signing_tokens%ROWTYPE;
   v_contract public.contracts%ROWTYPE;
-  v_now timestamptz := clock_timestamp();
+  v_now timestamptz;
 BEGIN
   SELECT *
   INTO v_token
@@ -160,6 +268,8 @@ BEGIN
   IF NOT FOUND THEN
     RETURN jsonb_build_object('status', 'not_found');
   END IF;
+
+  v_now := clock_timestamp();
 
   IF v_contract.status = 'cancelled' THEN
     RETURN jsonb_build_object('status', 'cancelled');

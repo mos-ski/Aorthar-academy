@@ -185,7 +185,11 @@ export default function ContractDetailClient({ contract }: { contract: Contract 
           <Button variant="outline" disabled={duplicating} onClick={duplicateContract}>
             <Copy className="h-4 w-4" /> Duplicate
           </Button>
-          <Button variant="outline" disabled={resending || contract.status === 'signed'} onClick={resend}>
+          <Button
+            variant="outline"
+            disabled={resending || ['signed', 'cancelled'].includes(contract.status)}
+            onClick={resend}
+          >
             <RefreshCcw className="h-4 w-4" /> Resend Link
           </Button>
           {isNda && signingUrl && latestToken.status === 'active' ? (
