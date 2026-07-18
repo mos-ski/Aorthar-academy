@@ -31,6 +31,13 @@ export function isNdaDocument(document: NdaDocumentIdentity): boolean {
   return document.document_type === 'nda' || document.mode === 'nda';
 }
 
+export function parseNdaRecipientRelationship(value: unknown): NdaRecipientRelationship | null {
+  if (typeof value !== 'string') return null;
+  return NDA_RELATIONSHIPS.includes(value as NdaRecipientRelationship)
+    ? value as NdaRecipientRelationship
+    : null;
+}
+
 export function validateNdaMetadata(input: NdaMetadata): NdaValidationIssue[] {
   const issues: NdaValidationIssue[] = [];
 

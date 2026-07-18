@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { mapAdminApiError, requireAdminApi } from '@/lib/admin/apiAuth';
 import { normalizeTemplateFields } from '@/lib/contracts/admin';
 import { createAdminClient } from '@/lib/supabase/admin';
-import type { ContractFieldType, ContractMode } from '@/lib/contracts/types';
+import type { ContractDocumentType, ContractFieldType, ContractMode } from '@/lib/contracts/types';
 
 type FieldPayload = {
   key: string;
@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
   try {
     await requireAdminApi('finance');
     const mode = request.nextUrl.searchParams.get('mode');
+    const documentType = request.nextUrl.searchParams.get('document_type');
     const admin = createAdminClient();
 
     let query = admin
@@ -25,6 +26,7 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false });
 
     if (mode) query = query.eq('mode', mode);
+    if (documentType) query = query.eq('document_type', documentType);
 
     const { data, error } = await query;
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -41,6 +43,7 @@ export async function POST(request: NextRequest) {
     const { userId } = await requireAdminApi('finance');
     const body = await request.json() as {
       mode?: ContractMode;
+      document_type?: ContractDocumentType;
       name?: string;
       description?: string | null;
       content_html?: string;
@@ -49,8 +52,14 @@ export async function POST(request: NextRequest) {
     };
 
     const mode = body.mode;
-    if (!mode || !['employee', 'contractor', 'client'].includes(mode)) {
+    const documentType: ContractDocumentType = body.document_type === 'nda' || mode === 'nda'
+      ? 'nda'
+      : 'agreement';
+    if (!mode || !['employee', 'contractor', 'client', 'nda'].includes(mode)) {
       return NextResponse.json({ error: 'Valid template mode is required' }, { status: 400 });
+    }
+    if ((documentType === 'nda') !== (mode === 'nda')) {
+      return NextResponse.json({ error: 'NDA templates must use NDA mode and document type' }, { status: 400 });
     }
     if (!body.name?.trim()) {
       return NextResponse.json({ error: 'Template name is required' }, { status: 400 });
@@ -64,6 +73,7 @@ export async function POST(request: NextRequest) {
       .from('contract_templates')
       .insert({
         mode,
+        document_type: documentType,
         name: body.name.trim(),
         description: body.description?.trim() || null,
         content_html: body.content_html,

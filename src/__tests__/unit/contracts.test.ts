@@ -5,6 +5,7 @@ import {
   buildNdaWhatsAppUrl,
   isNdaDocument,
   ndaMetadataFieldValues,
+  parseNdaRecipientRelationship,
   validateNdaMetadata,
 } from '@/lib/contracts/nda';
 import {
@@ -21,6 +22,13 @@ import {
 import { createTokenExpiry, isTokenExpired } from '@/lib/contracts/tokens';
 import { getContractPlaceholderState, hasMeaningfulContractValue } from '@/lib/contracts/field-state';
 import { nextPaymentStatus } from '@/lib/contracts/payments';
+import {
+  ndaCompletedOwnerHtml,
+  ndaCompletedRecipientHtml,
+  ndaCompletedSubject,
+  ndaSigningRequestHtml,
+  ndaSigningRequestSubject,
+} from '@/lib/email/templates/contracts';
 import type { ContractTemplateField } from '@/lib/contracts/types';
 
 const validNdaMetadata = {
@@ -265,6 +273,12 @@ describe('NDA contracts', () => {
     });
   });
 
+  it('accepts only supported recipient relationships', () => {
+    expect(parseNdaRecipientRelationship('vendor')).toBe('vendor');
+    expect(parseNdaRecipientRelationship('stranger')).toBeNull();
+    expect(parseNdaRecipientRelationship('')).toBeNull();
+  });
+
   it('builds a manual WhatsApp share URL from a Nigerian local number', () => {
     const url = buildNdaWhatsAppUrl({
       phone: '0803 123 4567',
@@ -286,5 +300,36 @@ describe('NDA contracts', () => {
     expect(migration.toLowerCase()).toContain('portfolio');
     expect(migration.toLowerCase()).toContain('prior written permission');
     expect(migration.toLowerCase()).toContain('survive permanently');
+  });
+});
+
+describe('NDA contract emails', () => {
+  it('creates NDA-specific signing request copy', () => {
+    expect(ndaSigningRequestSubject('Atlas NDA')).toBe('Signature requested: Atlas NDA');
+    const html = ndaSigningRequestHtml({
+      recipientName: '<Ada>',
+      contractTitle: 'Atlas NDA',
+      projectName: 'Atlas & Co',
+      signingUrl: 'https://aorthar.com/contracts/sign/token',
+      expiresAt: '2026-07-25T10:00:00.000Z',
+    });
+
+    expect(html).toContain('Non-Disclosure Agreement');
+    expect(html).toContain('Atlas &amp; Co');
+    expect(html).not.toContain('<Ada>');
+  });
+
+  it('creates completed-copy messages for recipient and owner', () => {
+    const data = {
+      contractTitle: 'Atlas NDA',
+      projectName: 'Atlas',
+      signerName: 'Ada Lovelace',
+      signerEmail: 'ada@example.com',
+      signedAt: '2026-07-18T10:00:00.000Z',
+    };
+
+    expect(ndaCompletedSubject(data.contractTitle)).toBe('Completed NDA: Atlas NDA');
+    expect(ndaCompletedRecipientHtml({ ...data, recipientName: 'Ada' })).toContain('attached PDF');
+    expect(ndaCompletedOwnerHtml(data)).toContain('ada@example.com');
   });
 });

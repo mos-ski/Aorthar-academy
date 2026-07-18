@@ -23,6 +23,16 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     const paidAt = body.paid_at ? new Date(body.paid_at).toISOString() : new Date().toISOString();
     const admin = createAdminClient();
+    const { data: contract } = await admin
+      .from('contracts')
+      .select('document_type')
+      .eq('id', id)
+      .single();
+
+    if (!contract) return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
+    if (contract.document_type === 'nda') {
+      return NextResponse.json({ error: 'NDAs do not support payments' }, { status: 400 });
+    }
 
     const { error: paymentError } = await admin
       .from('contract_payments')

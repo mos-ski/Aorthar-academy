@@ -2,8 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   contractSignedNotificationHtml,
   contractSignedNotificationSubject,
+  ndaCompletedOwnerHtml,
+  ndaCompletedRecipientHtml,
+  ndaCompletedSubject,
 } from '@/lib/email/templates/contracts';
 import { sendEmail } from '@/lib/email';
+import { isNdaDocument } from '@/lib/contracts/nda';
+import { contractPdfBuffer, safeContractFilename } from '@/lib/contracts/pdf';
 import { isTokenExpired } from '@/lib/contracts/tokens';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { contractSigningUrl } from '@/lib/urls';
@@ -23,8 +28,10 @@ export async function GET(_request: NextRequest, { params }: Params) {
       id: result.contract.id,
       title: result.contract.title,
       mode: result.contract.mode,
+      document_type: result.contract.document_type,
       recipient_name: result.contract.recipient_name,
       recipient_email: result.contract.recipient_email,
+      project_name: result.contract.project_name,
       rendered_html: result.contract.rendered_html,
       payment_status: result.contract.payment_status,
       payment_amount_ngn: result.contract.payment_amount_ngn,
@@ -91,7 +98,63 @@ export async function POST(request: NextRequest, { params }: Params) {
   ]);
 
   const contactEmail = await loadContactEmail(admin);
-  if (contactEmail) {
+  if (isNdaDocument(result.contract)) {
+    try {
+      const pdf = await contractPdfBuffer({
+        title: result.contract.title,
+        recipientName: result.contract.recipient_name,
+        recipientEmail: result.contract.recipient_email,
+        contractHtml: snapshotHtml,
+        signature: {
+          signer_name: signerName,
+          signer_email: result.contract.recipient_email,
+          signed_at: signedAt,
+          ip_address: ipAddress,
+          consent_text: consentText,
+        },
+      });
+      const attachment = {
+        filename: `${safeContractFilename(result.contract.title)}-signed.pdf`,
+        content: pdf.toString('base64'),
+      };
+      const completedEmailData = {
+        contractTitle: result.contract.title,
+        projectName: result.contract.project_name ?? 'the project',
+        signerName,
+        signerEmail: result.contract.recipient_email,
+        signedAt,
+      };
+      const deliveries = [
+        sendEmail({
+          to: result.contract.recipient_email,
+          subject: ndaCompletedSubject(result.contract.title),
+          html: ndaCompletedRecipientHtml({
+            ...completedEmailData,
+            recipientName: result.contract.recipient_name,
+          }),
+          attachments: [attachment],
+        }),
+      ];
+
+      if (contactEmail) {
+        deliveries.push(sendEmail({
+          to: contactEmail,
+          subject: ndaCompletedSubject(result.contract.title),
+          html: ndaCompletedOwnerHtml(completedEmailData),
+          attachments: [attachment],
+        }));
+      }
+
+      const deliveryResults = await Promise.allSettled(deliveries);
+      deliveryResults.forEach((delivery) => {
+        if (delivery.status === 'rejected') {
+          console.error('[contracts/sign] completed NDA delivery failed:', delivery.reason);
+        }
+      });
+    } catch (pdfError) {
+      console.error('[contracts/sign] completed NDA PDF generation failed:', pdfError);
+    }
+  } else if (contactEmail) {
     void sendEmail({
       to: contactEmail,
       subject: contractSignedNotificationSubject(result.contract.title),
@@ -110,7 +173,9 @@ export async function POST(request: NextRequest, { params }: Params) {
   return NextResponse.json({
     ok: true,
     signed_at: signedAt,
-    payment_required: result.contract.mode === 'client' && result.contract.payment_status === 'pending',
+    payment_required: !isNdaDocument(result.contract)
+      && result.contract.mode === 'client'
+      && result.contract.payment_status === 'pending',
   });
 }
 
@@ -121,7 +186,7 @@ async function loadSigningContract(
 ) {
   const { data: tokenRow, error } = await admin
     .from('contract_signing_tokens')
-    .select('id, token, status, expires_at, contract_id, contracts(id, title, mode, recipient_name, recipient_email, status, rendered_html, payment_status, payment_amount_ngn, payment_description, signed_at)')
+    .select('id, token, status, expires_at, contract_id, contracts(id, title, mode, document_type, recipient_name, recipient_email, project_name, status, rendered_html, payment_status, payment_amount_ngn, payment_description, signed_at)')
     .eq('token', token)
     .maybeSingle();
 

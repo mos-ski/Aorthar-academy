@@ -4,8 +4,11 @@ import { mapAdminApiError, requireAdminApi } from '@/lib/admin/apiAuth';
 import {
   contractSigningRequestHtml,
   contractSigningRequestSubject,
+  ndaSigningRequestHtml,
+  ndaSigningRequestSubject,
 } from '@/lib/email/templates/contracts';
 import { sendEmail } from '@/lib/email';
+import { isNdaDocument, parseNdaRecipientRelationship, validateNdaMetadata } from '@/lib/contracts/nda';
 import { findMissingContractFields, renderContractHtml } from '@/lib/contracts/placeholders';
 import { createTokenExpiry } from '@/lib/contracts/tokens';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -26,6 +29,8 @@ export async function POST(request: NextRequest, { params }: Params) {
   try {
     const { userId } = await requireAdminApi('finance');
     const { id } = await params;
+    const body = await request.json().catch(() => ({})) as { delivery_method?: 'email' | 'link' };
+    const deliveryMethod = body.delivery_method === 'link' ? 'link' : 'email';
     const admin = createAdminClient();
 
     const prepared = await prepareContractForSending(admin, id);
@@ -61,18 +66,44 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
 
-    await sendEmail({
-      to: prepared.contract.recipient_email,
-      subject: contractSigningRequestSubject(prepared.contract.title),
-      html: contractSigningRequestHtml({
-        recipientName: prepared.contract.recipient_name,
-        contractTitle: prepared.contract.title,
-        signingUrl: contractSigningUrl(token),
-        expiresAt,
-      }),
-    });
+    const signingUrl = contractSigningUrl(token);
+    let emailError: string | null = null;
 
-    return NextResponse.json({ ok: true, expires_at: expiresAt });
+    if (deliveryMethod === 'email') {
+      try {
+        const nda = isNdaDocument(prepared.contract);
+        await sendEmail({
+          to: prepared.contract.recipient_email,
+          subject: nda
+            ? ndaSigningRequestSubject(prepared.contract.title)
+            : contractSigningRequestSubject(prepared.contract.title),
+          html: nda
+            ? ndaSigningRequestHtml({
+              recipientName: prepared.contract.recipient_name,
+              contractTitle: prepared.contract.title,
+              projectName: prepared.contract.project_name ?? 'the project',
+              signingUrl,
+              expiresAt,
+            })
+            : contractSigningRequestHtml({
+              recipientName: prepared.contract.recipient_name,
+              contractTitle: prepared.contract.title,
+              signingUrl,
+              expiresAt,
+            }),
+        });
+      } catch (error) {
+        emailError = error instanceof Error ? error.message : 'Email delivery failed';
+      }
+    }
+
+    return NextResponse.json({
+      ok: true,
+      signing_url: signingUrl,
+      expires_at: expiresAt,
+      email_sent: deliveryMethod === 'email' && emailError === null,
+      ...(emailError ? { email_error: emailError } : {}),
+    });
   } catch (error) {
     const mapped = mapAdminApiError(error);
     return NextResponse.json({ error: mapped.message }, { status: mapped.status });
@@ -88,8 +119,13 @@ async function prepareContractForSending(
       id: string;
       title: string;
       mode: ContractMode;
+      document_type: 'agreement' | 'nda';
       recipient_name: string;
       recipient_email: string;
+      recipient_phone: string | null;
+      recipient_relationship: string | null;
+      recipient_company: string | null;
+      project_name: string | null;
     };
     renderedHtml: string;
   }
@@ -97,7 +133,7 @@ async function prepareContractForSending(
 > {
   const { data: contract, error } = await admin
     .from('contracts')
-    .select('id, title, mode, recipient_name, recipient_email, contract_templates(content_html, contract_template_fields(key, label, field_type, is_required, sort_order)), contract_field_values(field_key, value)')
+    .select('id, title, mode, document_type, recipient_name, recipient_email, recipient_phone, recipient_relationship, recipient_company, project_name, contract_templates(content_html, contract_template_fields(key, label, field_type, is_required, sort_order)), contract_field_values(field_key, value)')
     .eq('id', id)
     .single();
 
@@ -141,13 +177,40 @@ async function prepareContractForSending(
     };
   }
 
+  if (isNdaDocument(contract)) {
+    const ndaIssues = validateNdaMetadata({
+      recipientName: contract.recipient_name,
+      recipientEmail: contract.recipient_email,
+      recipientPhone: contract.recipient_phone ?? '',
+      recipientRelationship: parseNdaRecipientRelationship(contract.recipient_relationship) ?? '',
+      recipientCompany: contract.recipient_company,
+      projectName: contract.project_name ?? '',
+      projectPurpose: values.project_purpose ?? '',
+      effectiveDate: values.effective_date ?? '',
+      confidentialityTerm: values.confidentiality_term ?? '',
+    });
+    if (ndaIssues.length > 0) {
+      return {
+        response: NextResponse.json({
+          error: 'Required NDA details must be completed before sending',
+          missing_fields: ndaIssues.map((issue) => ({ key: issue.field, label: issue.message })),
+        }, { status: 400 }),
+      };
+    }
+  }
+
   return {
     contract: {
       id: contract.id,
       title: contract.title,
       mode: contract.mode as ContractMode,
+      document_type: contract.document_type as 'agreement' | 'nda',
       recipient_name: contract.recipient_name,
       recipient_email: contract.recipient_email,
+      recipient_phone: contract.recipient_phone,
+      recipient_relationship: contract.recipient_relationship,
+      recipient_company: contract.recipient_company,
+      project_name: contract.project_name,
     },
     renderedHtml: renderContractHtml(template.content_html, values, fields),
   };

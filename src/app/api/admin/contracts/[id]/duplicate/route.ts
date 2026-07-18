@@ -20,7 +20,7 @@ export async function POST(_request: Request, { params }: Params) {
 
     const { data: source, error: sourceError } = await admin
       .from('contracts')
-      .select('template_id, mode, title, recipient_name, recipient_email, payment_amount_ngn, payment_description, contract_field_values(field_key, value, field_label, field_type)')
+      .select('template_id, document_type, mode, title, recipient_name, recipient_email, recipient_phone, recipient_relationship, recipient_company, project_name, payment_amount_ngn, payment_description, contract_field_values(field_key, value, field_label, field_type)')
       .eq('id', id)
       .single();
 
@@ -29,17 +29,24 @@ export async function POST(_request: Request, { params }: Params) {
     }
 
     const paymentAmount = Number(source.payment_amount_ngn ?? 0);
-    const paymentStatus = source.mode === 'client' && paymentAmount > 0 ? 'pending' : 'not_required';
+    const paymentStatus = source.document_type !== 'nda' && source.mode === 'client' && paymentAmount > 0
+      ? 'pending'
+      : 'not_required';
     const { data: copy, error: copyError } = await admin
       .from('contracts')
       .insert({
         template_id: source.template_id,
+        document_type: source.document_type,
         mode: source.mode,
         title: `Copy of ${source.title}`,
         recipient_name: source.recipient_name,
         recipient_email: source.recipient_email,
-        payment_amount_ngn: paymentAmount > 0 ? paymentAmount : null,
-        payment_description: source.payment_description,
+        recipient_phone: source.recipient_phone,
+        recipient_relationship: source.recipient_relationship,
+        recipient_company: source.recipient_company,
+        project_name: source.project_name,
+        payment_amount_ngn: paymentStatus === 'pending' ? paymentAmount : null,
+        payment_description: paymentStatus === 'pending' ? source.payment_description : null,
         payment_status: paymentStatus,
         status: 'draft',
         created_by: userId,

@@ -13,6 +13,22 @@ type ContractSignedNotificationEmailData = {
   signedContractUrl: string;
 };
 
+type NdaSigningRequestEmailData = ContractSigningRequestEmailData & {
+  projectName: string;
+};
+
+type NdaCompletedEmailData = {
+  contractTitle: string;
+  projectName: string;
+  signerName: string;
+  signerEmail: string;
+  signedAt: string;
+};
+
+type NdaCompletedRecipientEmailData = NdaCompletedEmailData & {
+  recipientName: string;
+};
+
 export function contractSigningRequestSubject(contractTitle: string): string {
   return `Signature requested: ${contractTitle}`;
 }
@@ -58,6 +74,61 @@ export function contractSignedNotificationHtml(data: ContractSignedNotificationE
           </td>
         </tr>
       </table>
+    `,
+  });
+}
+
+export function ndaSigningRequestSubject(contractTitle: string): string {
+  return contractSigningRequestSubject(contractTitle);
+}
+
+export function ndaSigningRequestHtml(data: NdaSigningRequestEmailData): string {
+  const expiresAt = formatEmailDate(data.expiresAt);
+
+  return baseContractEmail({
+    eyebrow: 'NDA Signature Request',
+    title: 'Review and sign your NDA',
+    body: `
+      <p style="margin:0 0 16px 0;">Hi ${escapeHtml(data.recipientName || 'there')},</p>
+      <p style="margin:0 0 16px 0;">Aorthar has sent you <strong>${escapeHtml(data.contractTitle)}</strong>, a Non-Disclosure Agreement for <strong>${escapeHtml(data.projectName)}</strong>.</p>
+      <p style="margin:0 0 28px 0;">Please review and sign it using the secure link below. The link expires on <strong>${escapeHtml(expiresAt)}</strong>.</p>
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+        <tr>
+          <td style="border-radius:10px;background:#08694a;">
+            <a href="${escapeHtml(data.signingUrl)}" style="display:inline-block;padding:14px 22px;color:#ffffff;text-decoration:none;font-weight:700;">Open NDA</a>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:28px 0 0 0;color:#656565;font-size:13px;line-height:1.6;">If the button does not work, copy and paste this link into your browser:<br>${escapeHtml(data.signingUrl)}</p>
+    `,
+  });
+}
+
+export function ndaCompletedSubject(contractTitle: string): string {
+  return `Completed NDA: ${contractTitle}`;
+}
+
+export function ndaCompletedRecipientHtml(data: NdaCompletedRecipientEmailData): string {
+  return baseContractEmail({
+    eyebrow: 'NDA Completed',
+    title: 'Your signed copy',
+    body: `
+      <p style="margin:0 0 16px 0;">Hi ${escapeHtml(data.recipientName || 'there')},</p>
+      <p style="margin:0 0 16px 0;">Your Non-Disclosure Agreement for <strong>${escapeHtml(data.projectName)}</strong> was completed on ${escapeHtml(formatEmailDate(data.signedAt))}.</p>
+      <p style="margin:0;">The attached PDF is your completed copy of <strong>${escapeHtml(data.contractTitle)}</strong>. Please keep it for your records.</p>
+    `,
+  });
+}
+
+export function ndaCompletedOwnerHtml(data: NdaCompletedEmailData): string {
+  return baseContractEmail({
+    eyebrow: 'NDA Signed',
+    title: 'NDA completed',
+    body: `
+      <p style="margin:0 0 16px 0;"><strong>${escapeHtml(data.signerName)}</strong> has signed <strong>${escapeHtml(data.contractTitle)}</strong> for <strong>${escapeHtml(data.projectName)}</strong>.</p>
+      <p style="margin:0 0 8px 0;">Signer email: ${escapeHtml(data.signerEmail)}</p>
+      <p style="margin:0 0 16px 0;">Signed at: ${escapeHtml(formatEmailDate(data.signedAt))}</p>
+      <p style="margin:0;">The completed PDF is attached and is also available in the Contracts dashboard.</p>
     `,
   });
 }
