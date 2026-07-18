@@ -28,7 +28,7 @@
 
 ### Create
 
-- `supabase/migrations/20260718000000_nda_inside_contracts.sql` — extend constraints/columns, indexes, and seed the universal NDA template and fields.
+- `supabase/migrations/20260718151541_nda_inside_contracts.sql` — extend constraints/columns, indexes, and seed the universal NDA template and fields.
 - `src/lib/contracts/nda.ts` — NDA classification, metadata validation, template-value mapping, phone normalisation, and WhatsApp sharing.
 
 ### Modify
@@ -58,7 +58,7 @@
 ### Task 1: NDA Schema, Types, And Seed Template
 
 **Files:**
-- Create: `supabase/migrations/20260718000000_nda_inside_contracts.sql`
+- Create: `supabase/migrations/20260718151541_nda_inside_contracts.sql`
 - Modify: `src/lib/contracts/types.ts`
 - Modify: `src/__tests__/unit/contracts.test.ts`
 
@@ -88,7 +88,7 @@ describe('NDA contracts', () => {
   });
 
   it('seeds the permanent no-portfolio restriction', () => {
-    const migration = readFileSync('supabase/migrations/20260718000000_nda_inside_contracts.sql', 'utf8');
+    const migration = readFileSync('supabase/migrations/20260718151541_nda_inside_contracts.sql', 'utf8');
     expect(migration).toContain('portfolio');
     expect(migration).toContain('prior written permission');
     expect(migration).toContain('survive permanently');
@@ -174,14 +174,14 @@ Seed the template as `draft`, with a description stating that Nigerian counsel m
 
 - [ ] **Step 5: Check SQL and type formatting**
 
-Run: `bunx prettier --check supabase/migrations/20260718000000_nda_inside_contracts.sql src/lib/contracts/types.ts`
+Run: `bunx prettier --check supabase/migrations/20260718151541_nda_inside_contracts.sql src/lib/contracts/types.ts`
 
 Expected: PASS, or only the SQL file is reported as unsupported while TypeScript passes.
 
 - [ ] **Step 6: Commit the schema slice**
 
 ```bash
-git add supabase/migrations/20260718000000_nda_inside_contracts.sql src/lib/contracts/types.ts src/__tests__/unit/contracts.test.ts
+git add supabase/migrations/20260718151541_nda_inside_contracts.sql src/lib/contracts/types.ts src/__tests__/unit/contracts.test.ts
 git commit -m "feat: add NDA contract schema"
 ```
 
@@ -552,7 +552,7 @@ Add NDA routes, new actions, migration name, and the production legal-review req
 Run:
 
 ```bash
-rg -n "Aorthar One-Way Project NDA|survive permanently|prior written permission" supabase/migrations/20260718000000_nda_inside_contracts.sql
+rg -n "Aorthar One-Way Project NDA|survive permanently|prior written permission" supabase/migrations/20260718151541_nda_inside_contracts.sql
 rg -n "T[B]D|T[O]DO|implement[[:space:]]+later|fill[[:space:]]+in[[:space:]]+details" docs/superpowers/plans/2026-07-18-nda-inside-contracts.md
 ```
 

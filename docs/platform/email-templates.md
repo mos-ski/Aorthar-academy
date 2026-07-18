@@ -339,3 +339,37 @@ The Aorthar Team
 | `full_name` | Learner name |
 | `bootcamp_title` | Completed bootcamp title |
 | `certificate_url` | Certificate download link |
+
+---
+
+### 11. NDA Signature Request
+
+**Trigger:** Admin chooses Email & Create Link for an NDA, or resends it
+
+**Implementation:** `ndaSigningRequestHtml()` in `src/lib/email/templates/contracts.ts`
+
+**Subject:** `Signature requested: {{nda_title}}`
+
+The email identifies the NDA, project, secure signing URL, and seven-day expiry. Link-only creation skips this email and returns the same URL for manual delivery.
+
+### 12. Completed NDA — Recipient Copy
+
+**Trigger:** Recipient signs an NDA
+
+**Implementation:** `ndaCompletedRecipientHtml()`
+
+**Subject:** `Completed NDA: {{nda_title}}`
+
+The recipient receives the final signed PDF as an attachment. The attachment is generated from the immutable document snapshot and signature proof.
+
+### 13. Completed NDA — Aorthar Copy
+
+**Trigger:** Recipient signs an NDA
+
+**Recipient:** `site_settings.contact_email`
+
+**Implementation:** `ndaCompletedOwnerHtml()`
+
+**Subject:** `Completed NDA: {{nda_title}}`
+
+The owner email identifies the signer, email, project, and signed timestamp and includes the same PDF sent to the recipient. A PDF or email failure is logged but never rolls back a successful signature; the dashboard PDF remains available for retry.

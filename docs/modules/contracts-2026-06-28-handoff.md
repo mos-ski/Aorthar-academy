@@ -2,6 +2,22 @@
 
 This note captures today’s Contracts module work so we can continue without re-discovering the flow.
 
+## NDA Extension - 2026-07-18
+
+- Added NDA as a document type inside Contracts rather than a new sidebar module.
+- Added `document_type = agreement | nda`; NDA templates and records use `mode = nda`.
+- Added recipient phone, relationship, company, and project metadata.
+- Added email delivery and link-only creation. Every successful send returns a secure link for Copy Link or manual WhatsApp sharing.
+- Added a prepared `wa.me` message; no WhatsApp Business API integration is used.
+- Added recipient-only NDA signing and permanent no-posting/no-portfolio terms.
+- Added completed signed-PDF emails to the recipient and `site_settings.contact_email`.
+- Added Agreements/NDAs dashboard filters, NDA metadata, copy-link, WhatsApp, cancel/revoke, duplicate, and PDF actions.
+- NDA payments are blocked in the UI and admin payment API.
+- Migration: `supabase/migrations/20260718151541_nda_inside_contracts.sql`.
+- The seeded `Aorthar One-Way Project NDA` is a draft. Qualified Nigerian counsel must review it before an admin activates it for production use.
+- Design: `docs/superpowers/specs/2026-07-18-nda-inside-contracts-design.md`.
+- Implementation plan: `docs/superpowers/plans/2026-07-18-nda-inside-contracts.md`.
+
 ## Production State
 
 - Live URL: https://aorthar.com
