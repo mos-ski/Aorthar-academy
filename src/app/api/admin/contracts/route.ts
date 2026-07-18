@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { mapAdminApiError, requireAdminApi } from '@/lib/admin/apiAuth';
 import { upsertContractFieldValues } from '@/lib/contracts/admin';
-import { ndaMetadataFieldValues, parseNdaRecipientRelationship } from '@/lib/contracts/nda';
+import {
+  isContractTemplateCompatible,
+  ndaMetadataFieldValues,
+  parseNdaRecipientRelationship,
+} from '@/lib/contracts/nda';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { ContractDocumentType, ContractMode } from '@/lib/contracts/types';
 
@@ -65,6 +69,25 @@ export async function POST(request: NextRequest) {
     if (!body.title?.trim()) return NextResponse.json({ error: 'Contract title is required' }, { status: 400 });
 
     const admin = createAdminClient();
+    const { data: template, error: templateError } = await admin
+      .from('contract_templates')
+      .select('id, mode, document_type, status')
+      .eq('id', body.template_id)
+      .maybeSingle();
+
+    if (templateError) {
+      return NextResponse.json({ error: templateError.message }, { status: 500 });
+    }
+    if (!template) {
+      return NextResponse.json({ error: 'Template not found' }, { status: 404 });
+    }
+    if (!isContractTemplateCompatible(template, documentType, mode)) {
+      return NextResponse.json(
+        { error: 'Select an active template that matches this document type and mode' },
+        { status: 400 },
+      );
+    }
+
     const paymentAmount = Number(body.payment_amount_ngn ?? 0);
     const paymentStatus = documentType === 'agreement' && mode === 'client' && paymentAmount > 0
       ? 'pending'

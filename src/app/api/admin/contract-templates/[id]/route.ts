@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { mapAdminApiError, requireAdminApi } from '@/lib/admin/apiAuth';
 import { normalizeTemplateFields } from '@/lib/contracts/admin';
 import { createAdminClient } from '@/lib/supabase/admin';
-import type { ContractMode } from '@/lib/contracts/types';
+import type { ContractDocumentType, ContractMode } from '@/lib/contracts/types';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -12,6 +12,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const { id } = await params;
     const body = await request.json() as {
       mode?: ContractMode;
+      document_type?: ContractDocumentType;
       name?: string;
       description?: string | null;
       content_html?: string;
@@ -20,7 +21,29 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     };
 
     const admin = createAdminClient();
+    const { data: existing, error: existingError } = await admin
+      .from('contract_templates')
+      .select('id, mode, document_type')
+      .eq('id', id)
+      .maybeSingle();
+    if (existingError) return NextResponse.json({ error: existingError.message }, { status: 500 });
+    if (!existing) return NextResponse.json({ error: 'Template not found' }, { status: 404 });
+
+    const nextMode = body.mode ?? existing.mode as ContractMode;
+    const nextDocumentType = body.document_type ?? existing.document_type as ContractDocumentType;
+    const validClassification = nextDocumentType === 'nda'
+      ? nextMode === 'nda'
+      : nextMode !== 'nda';
+    if (!validClassification) {
+      return NextResponse.json(
+        { error: 'Template document type and mode must match' },
+        { status: 400 },
+      );
+    }
+
     const updateData: Record<string, unknown> = {};
+    if (body.mode !== undefined) updateData.mode = nextMode;
+    if (body.document_type !== undefined) updateData.document_type = nextDocumentType;
     if (body.name !== undefined) updateData.name = body.name.trim();
     if (body.description !== undefined) updateData.description = body.description?.trim() || null;
     if (body.content_html !== undefined) updateData.content_html = body.content_html;
@@ -30,7 +53,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       .from('contract_templates')
       .update(updateData)
       .eq('id', id)
-      .select('id, mode')
+      .select('id, mode, document_type')
       .single();
 
     if (error || !template) {
@@ -39,7 +62,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
     if (body.fields) {
       await admin.from('contract_template_fields').delete().eq('template_id', id);
-      const fields = normalizeTemplateFields((body.mode ?? template.mode) as ContractMode, body.fields);
+      const fields = normalizeTemplateFields(nextMode, body.fields);
       if (fields.length > 0) {
         const { error: fieldsError } = await admin
           .from('contract_template_fields')

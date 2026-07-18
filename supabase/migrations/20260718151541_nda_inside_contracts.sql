@@ -8,7 +8,9 @@ ALTER TABLE public.contracts
   ADD COLUMN IF NOT EXISTS recipient_phone text,
   ADD COLUMN IF NOT EXISTS recipient_relationship text,
   ADD COLUMN IF NOT EXISTS recipient_company text,
-  ADD COLUMN IF NOT EXISTS project_name text;
+  ADD COLUMN IF NOT EXISTS project_name text,
+  ADD COLUMN IF NOT EXISTS completion_delivery_status text NOT NULL DEFAULT 'not_started',
+  ADD COLUMN IF NOT EXISTS completion_delivery_error text;
 
 ALTER TABLE public.contract_templates
   DROP CONSTRAINT IF EXISTS contract_templates_mode_check;
@@ -43,10 +45,197 @@ ALTER TABLE public.contracts
     OR recipient_relationship IN ('employee', 'contractor', 'client', 'partner', 'vendor', 'other')
   );
 
+ALTER TABLE public.contracts
+  ADD CONSTRAINT contracts_completion_delivery_status_check
+  CHECK (completion_delivery_status IN ('not_started', 'sent', 'partial', 'failed'));
+
+ALTER TABLE public.contract_templates
+  ADD CONSTRAINT contract_templates_document_mode_check
+  CHECK (
+    (document_type = 'nda' AND mode = 'nda')
+    OR (document_type = 'agreement' AND mode IN ('employee', 'contractor', 'client'))
+  );
+
+ALTER TABLE public.contracts
+  ADD CONSTRAINT contracts_document_mode_check
+  CHECK (
+    (document_type = 'nda' AND mode = 'nda')
+    OR (document_type = 'agreement' AND mode IN ('employee', 'contractor', 'client'))
+  );
+
+ALTER TABLE public.contracts
+  ADD CONSTRAINT contracts_nda_payment_check
+  CHECK (
+    document_type <> 'nda'
+    OR (
+      payment_status = 'not_required'
+      AND payment_amount_ngn IS NULL
+      AND payment_description IS NULL
+    )
+  );
+
 CREATE INDEX IF NOT EXISTS idx_contract_templates_document_type_status
   ON public.contract_templates(document_type, status);
 CREATE INDEX IF NOT EXISTS idx_contracts_document_type_status_created
   ON public.contracts(document_type, status, created_at DESC);
+
+CREATE OR REPLACE FUNCTION public.cancel_contract_document(
+  p_contract_id uuid,
+  p_cancelled_at timestamptz DEFAULT now()
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public
+AS $$
+DECLARE
+  v_cancelled boolean := false;
+BEGIN
+  UPDATE public.contracts
+  SET status = 'cancelled', cancelled_at = p_cancelled_at
+  WHERE id = p_contract_id
+    AND status NOT IN ('signed', 'cancelled');
+
+  v_cancelled := FOUND;
+  IF NOT v_cancelled THEN
+    RETURN false;
+  END IF;
+
+  UPDATE public.contract_signing_tokens
+  SET status = 'revoked', revoked_at = p_cancelled_at
+  WHERE contract_id = p_contract_id
+    AND status = 'active';
+
+  RETURN true;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.cancel_contract_document(uuid, timestamptz) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.cancel_contract_document(uuid, timestamptz) TO service_role;
+
+CREATE OR REPLACE FUNCTION public.sign_contract_document(
+  p_token text,
+  p_signer_name text,
+  p_consent_text text,
+  p_consent_version text,
+  p_ip_address text,
+  p_user_agent text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public
+AS $$
+DECLARE
+  v_token public.contract_signing_tokens%ROWTYPE;
+  v_contract public.contracts%ROWTYPE;
+  v_now timestamptz := clock_timestamp();
+BEGIN
+  SELECT *
+  INTO v_token
+  FROM public.contract_signing_tokens
+  WHERE token = p_token;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('status', 'not_found');
+  END IF;
+
+  -- Lock contract before token, matching cancellation's lock order.
+  SELECT *
+  INTO v_contract
+  FROM public.contracts
+  WHERE id = v_token.contract_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('status', 'not_found');
+  END IF;
+
+  SELECT *
+  INTO v_token
+  FROM public.contract_signing_tokens AS signing_token
+  WHERE signing_token.id = v_token.id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('status', 'not_found');
+  END IF;
+
+  IF v_contract.status = 'cancelled' THEN
+    RETURN jsonb_build_object('status', 'cancelled');
+  END IF;
+
+  IF v_contract.status = 'signed' THEN
+    RETURN jsonb_build_object('status', 'already_signed');
+  END IF;
+
+  IF v_token.status <> 'active' THEN
+    RETURN jsonb_build_object('status', 'inactive');
+  END IF;
+
+  IF v_token.expires_at <= v_now THEN
+    UPDATE public.contract_signing_tokens
+    SET status = 'expired'
+    WHERE id = v_token.id;
+
+    UPDATE public.contracts
+    SET status = 'expired'
+    WHERE id = v_contract.id
+      AND status NOT IN ('signed', 'cancelled');
+
+    RETURN jsonb_build_object('status', 'expired');
+  END IF;
+
+  IF COALESCE(btrim(v_contract.rendered_html), '') = '' THEN
+    RETURN jsonb_build_object('status', 'invalid_snapshot');
+  END IF;
+
+  INSERT INTO public.contract_signatures (
+    contract_id,
+    token_id,
+    signer_name,
+    signer_email,
+    consent_text,
+    consent_version,
+    ip_address,
+    user_agent,
+    snapshot_html,
+    signed_at
+  ) VALUES (
+    v_contract.id,
+    v_token.id,
+    p_signer_name,
+    v_contract.recipient_email,
+    p_consent_text,
+    p_consent_version,
+    p_ip_address,
+    p_user_agent,
+    v_contract.rendered_html,
+    v_now
+  );
+
+  UPDATE public.contract_signing_tokens
+  SET status = 'used', used_at = v_now
+  WHERE id = v_token.id;
+
+  UPDATE public.contracts
+  SET
+    status = 'signed',
+    signed_at = v_now,
+    signed_snapshot_html = v_contract.rendered_html
+  WHERE id = v_contract.id;
+
+  RETURN jsonb_build_object(
+    'status', 'signed',
+    'signed_at', v_now,
+    'snapshot_html', v_contract.rendered_html,
+    'signer_email', v_contract.recipient_email
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.sign_contract_document(text, text, text, text, text, text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.sign_contract_document(text, text, text, text, text, text) TO service_role;
 
 INSERT INTO public.contract_templates (
   mode,

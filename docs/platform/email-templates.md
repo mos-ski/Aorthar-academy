@@ -372,4 +372,4 @@ The recipient receives the final signed PDF as an attachment. The attachment is 
 
 **Subject:** `Completed NDA: {{nda_title}}`
 
-The owner email identifies the signer, email, project, and signed timestamp and includes the same PDF sent to the recipient. A PDF or email failure is logged but never rolls back a successful signature; the dashboard PDF remains available for retry.
+The owner email identifies the signer, email, project, and signed timestamp and includes the same PDF sent to the recipient. A PDF or email failure never rolls back a successful signature. Delivery is recorded as `sent`, `partial`, or `failed` on the contract, the signer sees an accurate result, and the dashboard PDF remains available for follow-up.

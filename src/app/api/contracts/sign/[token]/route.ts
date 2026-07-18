@@ -7,13 +7,24 @@ import {
   ndaCompletedSubject,
 } from '@/lib/email/templates/contracts';
 import { sendEmail } from '@/lib/email';
-import { isNdaDocument } from '@/lib/contracts/nda';
+import {
+  isNdaDocument,
+  summarizeNdaDeliveryResults,
+} from '@/lib/contracts/nda';
 import { contractPdfBuffer, safeContractFilename } from '@/lib/contracts/pdf';
 import { isTokenExpired } from '@/lib/contracts/tokens';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { contractSigningUrl } from '@/lib/urls';
+import type { NdaCompletionDeliveryStatus } from '@/lib/contracts/nda';
 
 type Params = { params: Promise<{ token: string }> };
+
+type AtomicSigningResult = {
+  status: 'signed' | 'not_found' | 'inactive' | 'expired' | 'cancelled' | 'already_signed' | 'invalid_snapshot';
+  signed_at?: string;
+  snapshot_html?: string;
+  signer_email?: string;
+};
 
 export async function GET(_request: NextRequest, { params }: Params) {
   const { token } = await params;
@@ -57,47 +68,38 @@ export async function POST(request: NextRequest, { params }: Params) {
   const result = await loadSigningContract(admin, token, { allowSigned: false });
   if ('response' in result) return result.response;
 
-  const signedAt = new Date().toISOString();
-  const snapshotHtml = result.contract.rendered_html ?? '';
   const ipAddress = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     ?? request.headers.get('x-real-ip')
     ?? null;
   const userAgent = request.headers.get('user-agent');
   const consentText = 'I have read this agreement and consent to sign it electronically by typing my full name.';
 
-  const { error: signatureError } = await admin.from('contract_signatures').insert({
-    contract_id: result.contract.id,
-    token_id: result.token.id,
-    signer_name: signerName,
-    signer_email: result.contract.recipient_email,
-    consent_text: consentText,
-    consent_version: 'v1',
-    ip_address: ipAddress,
-    user_agent: userAgent,
-    snapshot_html: snapshotHtml,
-    signed_at: signedAt,
+  const { data: signingData, error: signingError } = await admin.rpc('sign_contract_document', {
+    p_token: token,
+    p_signer_name: signerName,
+    p_consent_text: consentText,
+    p_consent_version: 'v1',
+    p_ip_address: ipAddress,
+    p_user_agent: userAgent,
   });
-
-  if (signatureError) {
-    return NextResponse.json({ error: signatureError.message }, { status: 500 });
+  if (signingError) {
+    return NextResponse.json({ error: signingError.message }, { status: 500 });
   }
 
-  await Promise.all([
-    admin
-      .from('contract_signing_tokens')
-      .update({ status: 'used', used_at: signedAt })
-      .eq('id', result.token.id),
-    admin
-      .from('contracts')
-      .update({
-        status: 'signed',
-        signed_at: signedAt,
-        signed_snapshot_html: snapshotHtml,
-      })
-      .eq('id', result.contract.id),
-  ]);
+  const signingResult = signingData as AtomicSigningResult | null;
+  if (!signingResult || signingResult.status !== 'signed') {
+    const response = atomicSigningError(signingResult?.status);
+    return NextResponse.json({ error: response.message }, { status: response.status });
+  }
+
+  const signedAt = signingResult.signed_at;
+  const snapshotHtml = signingResult.snapshot_html;
+  if (!signedAt || !snapshotHtml) {
+    return NextResponse.json({ error: 'Signed document snapshot is unavailable' }, { status: 500 });
+  }
 
   const contactEmail = await loadContactEmail(admin);
+  let copyDelivery: NdaCompletionDeliveryStatus | 'not_applicable' = 'not_applicable';
   if (isNdaDocument(result.contract)) {
     try {
       const pdf = await contractPdfBuffer({
@@ -124,8 +126,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         signerEmail: result.contract.recipient_email,
         signedAt,
       };
-      const deliveries = [
-        sendEmail({
+      const recipientDelivery = sendEmail({
           to: result.contract.recipient_email,
           subject: ndaCompletedSubject(result.contract.title),
           html: ndaCompletedRecipientHtml({
@@ -133,26 +134,55 @@ export async function POST(request: NextRequest, { params }: Params) {
             recipientName: result.contract.recipient_name,
           }),
           attachments: [attachment],
-        }),
-      ];
-
-      if (contactEmail) {
-        deliveries.push(sendEmail({
+        });
+      const ownerDelivery = contactEmail
+        ? sendEmail({
           to: contactEmail,
           subject: ndaCompletedSubject(result.contract.title),
           html: ndaCompletedOwnerHtml(completedEmailData),
           attachments: [attachment],
-        }));
-      }
+        })
+        : Promise.reject(new Error('Owner contact email is not configured'));
 
-      const deliveryResults = await Promise.allSettled(deliveries);
-      deliveryResults.forEach((delivery) => {
-        if (delivery.status === 'rejected') {
-          console.error('[contracts/sign] completed NDA delivery failed:', delivery.reason);
-        }
-      });
+      const [recipientResult, ownerResult] = await Promise.allSettled([
+        recipientDelivery,
+        ownerDelivery,
+      ]);
+      copyDelivery = summarizeNdaDeliveryResults(
+        recipientResult.status === 'fulfilled',
+        true,
+        ownerResult.status === 'fulfilled',
+      );
+      const deliveryErrors = [recipientResult, ownerResult]
+        .filter((delivery): delivery is PromiseRejectedResult => delivery.status === 'rejected')
+        .map((delivery) => errorMessage(delivery.reason));
+
+      if (deliveryErrors.length > 0) {
+        console.error('[contracts/sign] completed NDA delivery failed:', deliveryErrors.join('; '));
+      }
+      await persistCompletionDelivery(admin, result.contract.id, copyDelivery, deliveryErrors);
     } catch (pdfError) {
       console.error('[contracts/sign] completed NDA PDF generation failed:', pdfError);
+      copyDelivery = 'failed';
+      await persistCompletionDelivery(admin, result.contract.id, copyDelivery, [errorMessage(pdfError)]);
+
+      if (contactEmail) {
+        try {
+          await sendEmail({
+            to: contactEmail,
+            subject: contractSignedNotificationSubject(result.contract.title),
+            html: contractSignedNotificationHtml({
+              contractTitle: result.contract.title,
+              signerName,
+              signerEmail: result.contract.recipient_email,
+              signedAt,
+              signedContractUrl: contractSigningUrl(token),
+            }),
+          });
+        } catch (fallbackError) {
+          console.error('[contracts/sign] owner fallback notification failed:', fallbackError);
+        }
+      }
     }
   } else if (contactEmail) {
     void sendEmail({
@@ -173,6 +203,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   return NextResponse.json({
     ok: true,
     signed_at: signedAt,
+    copy_delivery: copyDelivery,
     payment_required: !isNdaDocument(result.contract)
       && result.contract.mode === 'client'
       && result.contract.payment_status === 'pending',
@@ -197,6 +228,10 @@ async function loadSigningContract(
   const contract = Array.isArray(tokenRow.contracts) ? tokenRow.contracts[0] : tokenRow.contracts;
   if (!contract) {
     return { response: NextResponse.json({ error: 'Contract not found' }, { status: 404 }) };
+  }
+
+  if (contract.status === 'cancelled') {
+    return { response: NextResponse.json({ error: 'This document has been cancelled' }, { status: 410 }) };
   }
 
   if (tokenRow.status !== 'active') {
@@ -248,4 +283,44 @@ async function loadContactEmail(admin: ReturnType<typeof createAdminClient>): Pr
     .maybeSingle();
 
   return data?.value || null;
+}
+
+function atomicSigningError(status?: AtomicSigningResult['status']): { message: string; status: number } {
+  switch (status) {
+    case 'not_found':
+      return { message: 'Signing link not found', status: 404 };
+    case 'already_signed':
+      return { message: 'This contract has already been signed', status: 409 };
+    case 'expired':
+      return { message: 'This signing link has expired', status: 410 };
+    case 'cancelled':
+      return { message: 'This document has been cancelled', status: 410 };
+    case 'inactive':
+      return { message: 'This signing link is no longer active', status: 410 };
+    default:
+      return { message: 'The document could not be signed', status: 500 };
+  }
+}
+
+async function persistCompletionDelivery(
+  admin: ReturnType<typeof createAdminClient>,
+  contractId: string,
+  status: NdaCompletionDeliveryStatus,
+  errors: string[],
+): Promise<void> {
+  const { error } = await admin
+    .from('contracts')
+    .update({
+      completion_delivery_status: status,
+      completion_delivery_error: errors.length > 0 ? errors.join('; ').slice(0, 2000) : null,
+    })
+    .eq('id', contractId);
+
+  if (error) {
+    console.error('[contracts/sign] completion delivery status update failed:', error.message);
+  }
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

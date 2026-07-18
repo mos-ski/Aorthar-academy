@@ -3,9 +3,11 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   buildNdaWhatsAppUrl,
+  isContractTemplateCompatible,
   isNdaDocument,
   ndaMetadataFieldValues,
   parseNdaRecipientRelationship,
+  summarizeNdaDeliveryResults,
   validateNdaMetadata,
 } from '@/lib/contracts/nda';
 import {
@@ -30,6 +32,7 @@ import {
   ndaSigningRequestSubject,
 } from '@/lib/email/templates/contracts';
 import type { ContractTemplateField } from '@/lib/contracts/types';
+import { isPublicRoute } from '@/middleware';
 
 const validNdaMetadata = {
   recipientName: 'Ada Lovelace',
@@ -236,6 +239,11 @@ describe('contract payments', () => {
 });
 
 describe('NDA contracts', () => {
+  it('allows unauthenticated recipients to open signing pages and APIs', () => {
+    expect(isPublicRoute('/contracts/sign/token')).toBe(true);
+    expect(isPublicRoute('/api/contracts/sign/token')).toBe(true);
+  });
+
   it('classifies only NDA documents as NDAs', () => {
     expect(isNdaDocument({ document_type: 'nda', mode: 'nda' })).toBe(true);
     expect(isNdaDocument({ document_type: 'agreement', mode: 'client' })).toBe(false);
@@ -279,6 +287,31 @@ describe('NDA contracts', () => {
     expect(parseNdaRecipientRelationship('')).toBeNull();
   });
 
+  it('requires the template classification to match the document', () => {
+    expect(isContractTemplateCompatible(
+      { document_type: 'nda', mode: 'nda', status: 'active' },
+      'nda',
+      'nda',
+    )).toBe(true);
+    expect(isContractTemplateCompatible(
+      { document_type: 'agreement', mode: 'client', status: 'active' },
+      'nda',
+      'nda',
+    )).toBe(false);
+    expect(isContractTemplateCompatible(
+      { document_type: 'nda', mode: 'nda', status: 'draft' },
+      'nda',
+      'nda',
+    )).toBe(false);
+  });
+
+  it('summarizes completion delivery without claiming failed email was sent', () => {
+    expect(summarizeNdaDeliveryResults(true, true, true)).toBe('sent');
+    expect(summarizeNdaDeliveryResults(true, true, false)).toBe('partial');
+    expect(summarizeNdaDeliveryResults(false, true, true)).toBe('failed');
+    expect(summarizeNdaDeliveryResults(false, false, false)).toBe('failed');
+  });
+
   it('builds a manual WhatsApp share URL from a Nigerian local number', () => {
     const url = buildNdaWhatsAppUrl({
       phone: '0803 123 4567',
@@ -300,6 +333,9 @@ describe('NDA contracts', () => {
     expect(migration.toLowerCase()).toContain('portfolio');
     expect(migration.toLowerCase()).toContain('prior written permission');
     expect(migration.toLowerCase()).toContain('survive permanently');
+    expect(migration).toContain('sign_contract_document');
+    expect(migration).toContain('cancel_contract_document');
+    expect(migration).toContain('REVOKE ALL ON FUNCTION');
   });
 });
 

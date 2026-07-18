@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { mapAdminApiError, requireAdminApi } from '@/lib/admin/apiAuth';
 import { upsertContractFieldValues } from '@/lib/contracts/admin';
-import { parseNdaRecipientRelationship } from '@/lib/contracts/nda';
+import {
+  isNdaDocument,
+  ndaMetadataFieldValues,
+  parseNdaRecipientRelationship,
+} from '@/lib/contracts/nda';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 type Params = { params: Promise<{ id: string }> };
@@ -43,6 +47,45 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       status?: 'draft' | 'cancelled';
     };
 
+    const admin = createAdminClient();
+    const { data: existing, error: existingError } = await admin
+      .from('contracts')
+      .select('status, document_type, mode, recipient_name, recipient_email, recipient_phone, recipient_relationship, recipient_company, project_name, contract_field_values(field_key, value)')
+      .eq('id', id)
+      .maybeSingle();
+    if (existingError) return NextResponse.json({ error: existingError.message }, { status: 500 });
+    if (!existing) return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
+
+    const bodyKeys = Object.keys(body).filter((key) => key !== 'status');
+    if (body.status === 'cancelled') {
+      if (bodyKeys.length > 0) {
+        return NextResponse.json({ error: 'Cancel the document separately from editing it' }, { status: 400 });
+      }
+
+      const cancelledAt = new Date().toISOString();
+      const { data: cancelled, error: cancelError } = await admin.rpc('cancel_contract_document', {
+        p_contract_id: id,
+        p_cancelled_at: cancelledAt,
+      });
+      if (cancelError) return NextResponse.json({ error: cancelError.message }, { status: 500 });
+      if (!cancelled) {
+        return NextResponse.json({ error: 'Signed or already-cancelled documents cannot be cancelled' }, { status: 409 });
+      }
+
+      return NextResponse.json({ ok: true });
+    }
+
+    if (existing.status !== 'draft' && (bodyKeys.length > 0 || body.status !== undefined)) {
+      return NextResponse.json({ error: 'Only draft documents can be edited' }, { status: 409 });
+    }
+
+    if (
+      isNdaDocument(existing)
+      && (body.payment_amount_ngn !== undefined || body.payment_description !== undefined)
+    ) {
+      return NextResponse.json({ error: 'NDAs cannot include payment fields' }, { status: 400 });
+    }
+
     const updateData: Record<string, unknown> = {};
     if (body.title !== undefined) updateData.title = body.title.trim();
     if (body.recipient_name !== undefined) updateData.recipient_name = body.recipient_name.trim();
@@ -55,35 +98,43 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     if (body.project_name !== undefined) updateData.project_name = body.project_name.trim() || null;
     if (body.payment_amount_ngn !== undefined) updateData.payment_amount_ngn = body.payment_amount_ngn;
     if (body.payment_description !== undefined) updateData.payment_description = body.payment_description?.trim() || null;
-    if (body.status !== undefined) {
-      updateData.status = body.status;
-      if (body.status === 'cancelled') updateData.cancelled_at = new Date().toISOString();
-    }
-
-    const admin = createAdminClient();
-    const { data: existing } = await admin
-      .from('contracts')
-      .select('status')
-      .eq('id', id)
-      .single();
-    if (!existing) return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
-    if (existing.status === 'signed' && (Object.keys(updateData).length > 0 || body.values)) {
-      return NextResponse.json({ error: 'Signed documents cannot be edited' }, { status: 409 });
-    }
+    if (body.status !== undefined) updateData.status = body.status;
 
     if (Object.keys(updateData).length > 0) {
       const { error } = await admin.from('contracts').update(updateData).eq('id', id);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    if (body.values) await upsertContractFieldValues(admin, id, body.values);
-    if (body.status === 'cancelled') {
-      await admin
-        .from('contract_signing_tokens')
-        .update({ status: 'revoked', revoked_at: new Date().toISOString() })
-        .eq('contract_id', id)
-        .eq('status', 'active');
+    if (body.values || (isNdaDocument(existing) && bodyKeys.length > 0)) {
+      let values = body.values ?? {};
+      if (isNdaDocument(existing)) {
+        const storedValues = Object.fromEntries(
+          (existing.contract_field_values ?? []).map((field) => [field.field_key, field.value]),
+        );
+        const relationship = parseNdaRecipientRelationship(
+          body.recipient_relationship ?? existing.recipient_relationship,
+        );
+        const mergedValues = { ...storedValues, ...values };
+        values = {
+          ...mergedValues,
+          ...ndaMetadataFieldValues({
+            recipientName: body.recipient_name ?? existing.recipient_name,
+            recipientEmail: body.recipient_email ?? existing.recipient_email,
+            recipientPhone: body.recipient_phone ?? existing.recipient_phone ?? '',
+            recipientRelationship: relationship ?? '',
+            recipientCompany: body.recipient_company === undefined
+              ? existing.recipient_company
+              : body.recipient_company,
+            projectName: body.project_name ?? existing.project_name ?? '',
+            projectPurpose: mergedValues.project_purpose ?? '',
+            effectiveDate: mergedValues.effective_date ?? '',
+            confidentialityTerm: mergedValues.confidentiality_term ?? '',
+          }),
+        };
+      }
+      await upsertContractFieldValues(admin, id, values);
     }
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     const mapped = mapAdminApiError(error);

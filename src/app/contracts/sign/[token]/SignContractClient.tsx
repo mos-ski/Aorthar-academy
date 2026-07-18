@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import type { NdaCompletionDeliveryStatus } from '@/lib/contracts/nda';
 
 type PublicContract = {
   id: string;
@@ -32,6 +33,7 @@ export default function SignContractClient({ token, paymentRef }: { token: strin
   const [showSignaturePanel, setShowSignaturePanel] = useState(false);
   const [paying, setPaying] = useState(false);
   const [paymentVerified, setPaymentVerified] = useState(false);
+  const [copyDelivery, setCopyDelivery] = useState<NdaCompletionDeliveryStatus | null>(null);
 
   useEffect(() => {
     async function loadContract(): Promise<void> {
@@ -66,13 +68,25 @@ export default function SignContractClient({ token, paymentRef }: { token: strin
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ signer_name: signerName, consent_accepted: consent }),
     });
-    const data = await res.json() as { error?: string };
+    const data = await res.json() as {
+      error?: string;
+      copy_delivery?: NdaCompletionDeliveryStatus | 'not_applicable';
+    };
     if (!res.ok) {
       toast.error(data.error ?? 'Could not submit signature');
       return;
     }
     setSigned(true);
-    toast.success(contract?.document_type === 'nda' ? 'NDA signed' : 'Agreement signed');
+    if (data.copy_delivery && data.copy_delivery !== 'not_applicable') {
+      setCopyDelivery(data.copy_delivery);
+    }
+    if (contract?.document_type === 'nda' && data.copy_delivery === 'failed') {
+      toast.warning('NDA signed, but the completed copy could not be emailed');
+    } else if (contract?.document_type === 'nda' && data.copy_delivery === 'partial') {
+      toast.warning('NDA signed; one completed-copy delivery needs attention');
+    } else {
+      toast.success(contract?.document_type === 'nda' ? 'NDA signed' : 'Agreement signed');
+    }
   }
 
   async function payNow(): Promise<void> {
@@ -141,7 +155,7 @@ export default function SignContractClient({ token, paymentRef }: { token: strin
           <CardContent className="space-y-4">
             {signed ? (
               <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-                {isNda ? 'NDA signed. A completed copy has been emailed to you.' : 'Agreement signed. Thank you.'}
+                {isNda ? ndaSignedMessage(copyDelivery) : 'Agreement signed. Thank you.'}
               </div>
             ) : (
               <>
@@ -194,4 +208,17 @@ export default function SignContractClient({ token, paymentRef }: { token: strin
       </div>
     </main>
   );
+}
+
+function ndaSignedMessage(copyDelivery: NdaCompletionDeliveryStatus | null): string {
+  switch (copyDelivery) {
+    case 'sent':
+      return 'NDA signed. A completed copy has been emailed to you.';
+    case 'partial':
+      return 'NDA signed. Your completed copy was emailed, but one delivery needs admin attention.';
+    case 'failed':
+      return 'NDA signed. The completed copy could not be emailed; please contact Aorthar for a copy.';
+    default:
+      return 'NDA signed.';
+  }
 }

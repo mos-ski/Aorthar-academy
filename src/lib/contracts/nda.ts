@@ -1,4 +1,9 @@
-import type { NdaMetadata, NdaRecipientRelationship } from '@/lib/contracts/types';
+import type {
+  ContractDocumentType,
+  ContractMode,
+  NdaMetadata,
+  NdaRecipientRelationship,
+} from '@/lib/contracts/types';
 
 type NdaDocumentIdentity = {
   document_type?: string | null;
@@ -17,6 +22,14 @@ type NdaWhatsAppInput = {
   signingUrl: string;
 };
 
+type ContractTemplateIdentity = {
+  document_type?: string | null;
+  mode?: string | null;
+  status?: string | null;
+};
+
+export type NdaCompletionDeliveryStatus = 'sent' | 'partial' | 'failed';
+
 const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const NDA_RELATIONSHIPS: NdaRecipientRelationship[] = [
   'employee',
@@ -29,6 +42,27 @@ const NDA_RELATIONSHIPS: NdaRecipientRelationship[] = [
 
 export function isNdaDocument(document: NdaDocumentIdentity): boolean {
   return document.document_type === 'nda' || document.mode === 'nda';
+}
+
+export function isContractTemplateCompatible(
+  template: ContractTemplateIdentity,
+  documentType: ContractDocumentType,
+  mode: ContractMode,
+): boolean {
+  if (template.status !== 'active') return false;
+  if (template.document_type !== documentType || template.mode !== mode) return false;
+
+  return documentType === 'nda' ? mode === 'nda' : mode !== 'nda';
+}
+
+export function summarizeNdaDeliveryResults(
+  recipientDelivered: boolean,
+  ownerExpected: boolean,
+  ownerDelivered: boolean,
+): NdaCompletionDeliveryStatus {
+  if (!recipientDelivered) return 'failed';
+  if (ownerExpected && !ownerDelivered) return 'partial';
+  return 'sent';
 }
 
 export function parseNdaRecipientRelationship(value: unknown): NdaRecipientRelationship | null {
