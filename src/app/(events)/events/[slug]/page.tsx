@@ -7,11 +7,28 @@ import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import RegisterButton from '@/components/events/RegisterButton';
 import VerifyPaymentOnReturn from '@/components/events/VerifyPaymentOnReturn';
+import { getEventAccessState, getSeededEventReplayUrl, getYouTubeEmbedUrl, normalizeEventUrl } from '@/lib/events/status';
 import { eventPublicUrl } from '@/lib/urls';
 
 const naira = (n: number) => `₦${n.toLocaleString('en-NG')}`;
 
 type Params = { params: Promise<{ slug: string }> };
+type EventDetail = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  scheduled_at: string;
+  duration_minutes: number;
+  price_ngn: number;
+  thumbnail_url: string | null;
+  whatsapp_community_url: string | null;
+  join_url: string;
+  replay_url?: string | null;
+};
+
+const eventDetailSelect = 'id, slug, title, description, scheduled_at, duration_minutes, price_ngn, thumbnail_url, whatsapp_community_url, join_url, replay_url';
+const eventDetailSelectWithoutReplay = 'id, slug, title, description, scheduled_at, duration_minutes, price_ngn, thumbnail_url, whatsapp_community_url, join_url';
 
 function eventDescription(description: string): string {
   const clean = description.replace(/\s+/g, ' ').trim();
@@ -60,15 +77,34 @@ export default async function EventDetailPage({ params }: Params) {
   const { slug } = await params;
   const supabase = await createClient();
 
-  const { data: webinar } = await supabase
+  let { data: webinar, error } = await supabase
     .from('webinars')
-    .select('id, slug, title, description, scheduled_at, duration_minutes, price_ngn, thumbnail_url, whatsapp_community_url')
+    .select(eventDetailSelect)
     .eq('slug', slug)
     .eq('status', 'published')
-    .single();
+    .single<EventDetail>();
 
-  if (!webinar) notFound();
+  if (error && error.message.toLowerCase().includes('replay_url')) {
+    const fallback = await supabase
+      .from('webinars')
+      .select(eventDetailSelectWithoutReplay)
+      .eq('slug', slug)
+      .eq('status', 'published')
+      .single<EventDetail>();
+    webinar = fallback.data;
+    error = fallback.error;
+  }
 
+  if (error || !webinar) notFound();
+
+  const joinUrl = normalizeEventUrl(webinar.join_url);
+  const replayUrl = normalizeEventUrl(webinar.replay_url) || getSeededEventReplayUrl(webinar.slug);
+  const replayEmbedUrl = getYouTubeEmbedUrl(replayUrl);
+  const accessState = getEventAccessState({
+    scheduledAt: webinar.scheduled_at,
+    durationMinutes: webinar.duration_minutes,
+    hasJoinUrl: Boolean(joinUrl),
+  });
   const when = new Date(webinar.scheduled_at).toLocaleString('en-NG', {
     dateStyle: 'full',
     timeStyle: 'short',
@@ -98,20 +134,80 @@ export default async function EventDetailPage({ params }: Params) {
         </section>
 
         <aside className="rounded-lg border bg-card p-5 shadow-sm lg:sticky lg:top-6">
-          <p className="text-xs font-medium uppercase text-muted-foreground">Reserve your spot</p>
-          <p className="mt-2 text-3xl font-bold">
-            {webinar.price_ngn > 0 ? naira(webinar.price_ngn) : 'Free'}
-          </p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Enter your details and we&apos;ll email the event link with a calendar invite.
-          </p>
-          <div className="mt-5">
-            <RegisterButton
-              slug={webinar.slug}
-              priceNgn={webinar.price_ngn}
-              communityEnabled={Boolean(webinar.whatsapp_community_url)}
-            />
-          </div>
+          {accessState === 'replay' ? (
+            <div>
+              <p className="inline-flex rounded-full bg-red-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-red-800">
+                {replayUrl ? 'Replay available' : 'Class ended'}
+              </p>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight">Class has ended</h2>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                {replayUrl
+                  ? 'The live class is over. Watch the replay now.'
+                  : 'The live class is over. The replay will appear here once it is available.'}
+              </p>
+              {replayUrl ? (
+                <>
+                  {replayEmbedUrl ? (
+                    <div className="mt-5 overflow-hidden rounded-md border bg-black shadow-sm">
+                      <iframe
+                        className="aspect-video w-full"
+                        src={replayEmbedUrl}
+                        title={`${webinar.title} replay`}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    </div>
+                  ) : (
+                    <a
+                      href={replayUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-5 flex min-h-12 w-full items-center justify-center rounded-md bg-red-600 px-4 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-red-700"
+                    >
+                      Watch replay
+                    </a>
+                  )}
+                  <p className="mt-3 break-all text-xs text-muted-foreground">{replayUrl}</p>
+                </>
+              ) : null}
+            </div>
+          ) : accessState === 'live' ? (
+            <div>
+              <p className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-emerald-800">
+                Class in session
+              </p>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight">Build with Moski is live</h2>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                The live class has started. Join the Google Meet now and keep this page open if you need to rejoin.
+              </p>
+              <a
+                href={joinUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-5 flex min-h-12 w-full items-center justify-center rounded-md bg-emerald-700 px-4 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800"
+              >
+                Join Google Meet
+              </a>
+              <p className="mt-3 break-all text-xs text-muted-foreground">{joinUrl}</p>
+            </div>
+          ) : (
+            <>
+              <p className="text-xs font-medium uppercase text-muted-foreground">Reserve your spot</p>
+              <p className="mt-2 text-3xl font-bold">
+                {webinar.price_ngn > 0 ? naira(webinar.price_ngn) : 'Free'}
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Enter your details and we&apos;ll email the event link with a calendar invite.
+              </p>
+              <div className="mt-5">
+                <RegisterButton
+                  slug={webinar.slug}
+                  priceNgn={webinar.price_ngn}
+                  communityEnabled={Boolean(webinar.whatsapp_community_url)}
+                />
+              </div>
+            </>
+          )}
         </aside>
       </div>
     </div>

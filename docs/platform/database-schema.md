@@ -318,6 +318,41 @@ Complete reference for all database tables across all three products.
 
 ---
 
+## Contracts And NDAs
+
+The Contracts module uses one signing engine for agreements and one-way NDAs. `document_type` distinguishes `agreement` from `nda`; NDA templates and documents use `mode = 'nda'`, while `recipient_relationship` records whether the NDA recipient is an employee, contractor, client, partner, vendor, or other participant.
+
+### contract_templates
+
+Stores editable agreement and NDA source templates. Important columns are `document_type`, `mode`, `content_html`, and `status`. The `20260718151541_nda_inside_contracts.sql` migration seeds `Aorthar One-Way Project NDA` as a draft pending qualified Nigerian legal review.
+
+### contract_template_fields
+
+Defines placeholder metadata, input type, required state, help text, and ordering for each template. The allowed modes are `employee`, `contractor`, `client`, and `nda`.
+
+### contracts
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `document_type` | TEXT | `agreement` / `nda`, default `agreement` | Document classification |
+| `mode` | TEXT | `employee` / `contractor` / `client` / `nda` | Agreement mode or NDA marker |
+| `recipient_name` | TEXT | NOT NULL | Recipient legal name |
+| `recipient_email` | TEXT | NOT NULL | Email tied to signing evidence |
+| `recipient_phone` | TEXT | NULL | Phone or WhatsApp number for NDA sharing |
+| `recipient_relationship` | TEXT | NULL, checked enum | NDA recipient category |
+| `recipient_company` | TEXT | NULL | Optional recipient company |
+| `project_name` | TEXT | NULL | NDA project context |
+| `rendered_html` | TEXT | NULL | Immutable snapshot created when sent |
+| `signed_snapshot_html` | TEXT | NULL | Final snapshot retained after signing |
+| `status` | TEXT | checked enum | `draft`, `sent`, `viewed`, `expired`, `signed`, or `cancelled` |
+| `payment_status` | TEXT | checked enum | Always `not_required` for NDAs |
+| `completion_delivery_status` | TEXT | checked enum | `not_started`, `sent`, `partial`, or `failed` for signed-copy delivery |
+| `completion_delivery_error` | TEXT | NULL | Most recent recipient/owner delivery error for admin follow-up |
+
+Supporting tables remain `contract_field_values`, `contract_signing_tokens`, `contract_signatures`, and `contract_payments`. Tokens expire after seven days, are single-use, and are revoked on resend or cancellation. The `send_contract_document`, `sign_contract_document`, and `cancel_contract_document` database functions lock and update the document and token together so terminal documents cannot be reactivated and a cancellation and signature cannot both succeed. `update_nda_contract_draft` keeps NDA identity columns and template values in one transaction. Public signing reads these records only through server-side token validation; no public table policy is added.
+
+---
+
 ## Shared Tables
 
 ### subscriptions

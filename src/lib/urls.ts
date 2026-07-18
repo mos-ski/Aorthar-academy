@@ -59,6 +59,13 @@ export function eventPublicUrl(slug: string): string {
   return `${base}/events/${cleanSlug}`;
 }
 
+export function contractSigningUrl(token: string): string {
+  const cleanToken = token.replace(/^\/+/, '');
+  if (isDev) return `/contracts/sign/${cleanToken}`;
+  const base = (process.env.NEXT_PUBLIC_BASE_URL ?? 'https://aorthar.com').replace(/\/$/, '');
+  return `${base}/contracts/sign/${cleanToken}`;
+}
+
 /**
  * Extract the subdomain product name from a hostname.
  * Returns `'university' | 'bootcamp' | 'internship' | 'admin' | 'base' | null`

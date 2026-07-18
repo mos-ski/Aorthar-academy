@@ -18,6 +18,7 @@ interface Webinar {
   capacity: number | null;
   price_ngn: number;
   join_url: string;
+  replay_url: string | null;
   thumbnail_url: string | null;
   whatsapp_community_url: string | null;
   status: 'draft' | 'published';
@@ -39,6 +40,7 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
   const [capacity, setCapacity] = useState(webinar.capacity != null ? String(webinar.capacity) : '');
   const [priceNgn, setPriceNgn] = useState(String(webinar.price_ngn));
   const [joinUrl, setJoinUrl] = useState(webinar.join_url);
+  const [replayUrl, setReplayUrl] = useState(webinar.replay_url ?? '');
   const [thumbnailUrl, setThumbnailUrl] = useState(webinar.thumbnail_url ?? '');
   const [whatsappCommunityUrl, setWhatsappCommunityUrl] = useState(webinar.whatsapp_community_url ?? '');
   const [saving, setSaving] = useState(false);
@@ -61,6 +63,7 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
           capacity: capacity === '' ? null : capacity,
           price_ngn: priceNgn,
           join_url: joinUrl,
+          replay_url: replayUrl.trim() || null,
           thumbnail_url: thumbnailUrl.trim() || null,
           whatsapp_community_url: whatsappCommunityUrl.trim() || null,
           status: nextStatus,
@@ -246,6 +249,17 @@ export default function WebinarEditor({ webinar, registrationCount }: { webinar:
       <div className="flex flex-col gap-1">
         <label className="text-xs text-muted-foreground">Join URL (Zoom / Google Meet link)</label>
         <input className="border rounded px-3 py-2 text-sm bg-background" value={joinUrl} onChange={(e) => setJoinUrl(e.target.value)} placeholder="https://zoom.us/j/..." />
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-muted-foreground">Replay URL</label>
+        <input
+          className="border rounded px-3 py-2 text-sm bg-background"
+          value={replayUrl}
+          onChange={(e) => setReplayUrl(e.target.value)}
+          placeholder="https://youtu.be/..."
+        />
+        <p className="text-xs text-muted-foreground">After the scheduled duration ends, the public event link redirects here when this is set.</p>
       </div>
 
       <div className="flex flex-col gap-1">

@@ -13,6 +13,7 @@ import {
   ChevronRight,
   CircleUser,
   CreditCard,
+  FileSignature,
   GraduationCap,
   Layers,
   Lightbulb,
@@ -149,19 +150,27 @@ const adminWebinarsNav: NavItem[] = [
   { href: '/admin/webinars/broadcast', label: 'Broadcast', icon: Megaphone },
 ];
 
+const adminContractsNav: NavItem[] = [
+  { href: '/admin/contracts', label: 'Contracts', icon: FileSignature },
+  { href: '/admin/contracts/new', label: 'New Contract', icon: ClipboardList },
+  { href: '/admin/contracts/templates', label: 'Templates', icon: ScrollText },
+];
+
 const adminPrimaryModules: Array<{
-  key: 'overview' | 'university' | 'courses' | 'internship' | 'marketplace' | 'studio' | 'webinars' | 'admin_access' | 'audit_logs' | 'profile';
+  key: 'overview' | 'contacts' | 'university' | 'courses' | 'internship' | 'marketplace' | 'studio' | 'webinars' | 'contracts' | 'admin_access' | 'audit_logs' | 'profile';
   label: string;
   icon: LucideIcon;
   href: string;
 }> = [
   { key: 'overview', label: 'Overview', icon: LayoutDashboard, href: '/admin' },
+  { key: 'contacts', label: 'Contacts', icon: Users, href: '/admin/contacts' },
   { key: 'university', label: 'University', icon: Building2, href: '/admin/courses' },
   { key: 'courses', label: 'Bootcamps', icon: BookOpen, href: '/admin/standalone-courses' },
   { key: 'internship', label: 'Internship', icon: BriefcaseBusiness, href: '/admin/internship' },
   { key: 'marketplace', label: 'Marketplace', icon: ShoppingBag, href: '/admin/marketplace' },
   { key: 'studio', label: 'Studio', icon: Palette, href: '/admin/studio' },
   { key: 'webinars', label: 'Webinars', icon: Radio, href: '/admin/webinars' },
+  { key: 'contracts', label: 'Contracts', icon: FileSignature, href: '/admin/contracts' },
   { key: 'admin_access', label: 'Admin Access', icon: ShieldCheck, href: '/admin/admin-access' },
   { key: 'audit_logs', label: 'Audit Logs', icon: ScrollText, href: '/admin/audit-logs' },
   { key: 'profile', label: 'Profile Settings', icon: CircleUser, href: '/admin/profile' },
@@ -248,21 +257,27 @@ export default function Sidebar({
 
   const inAdminAccessPath = pathname.startsWith('/admin/admin-access');
   const inAuditLogsPath = pathname.startsWith('/admin/audit-logs');
+  const inContactsPath = pathname.startsWith('/admin/contacts');
   const inInternshipPath = pathname.startsWith('/admin/internship');
   const inMarketplacePath = pathname.startsWith('/admin/marketplace');
   const inStudioPath = pathname.startsWith('/admin/studio');
   const inWebinarsPath = pathname.startsWith('/admin/webinars');
+  const inContractsPath = pathname.startsWith('/admin/contracts');
 
-  const activeModule: 'overview' | 'university' | 'courses' | 'internship' | 'marketplace' | 'studio' | 'webinars' | 'admin_access' | 'audit_logs' | 'profile' = inProfilePath
+  const activeModule: 'overview' | 'contacts' | 'university' | 'courses' | 'internship' | 'marketplace' | 'studio' | 'webinars' | 'contracts' | 'admin_access' | 'audit_logs' | 'profile' = inProfilePath
     ? 'profile'
     : inAdminAccessPath
     ? 'admin_access'
     : inAuditLogsPath
     ? 'audit_logs'
+    : inContactsPath
+    ? 'contacts'
     : inStudioPath
     ? 'studio'
     : inWebinarsPath
     ? 'webinars'
+    : inContractsPath
+    ? 'contracts'
     : inMarketplacePath
     ? 'marketplace'
     : inInternshipPath
@@ -280,6 +295,8 @@ export default function Sidebar({
       ? adminExternalNav
       : activeModule === 'webinars'
       ? adminWebinarsNav
+      : activeModule === 'contracts'
+      ? adminContractsNav
       : activeModule === 'internship'
       ? adminInternshipNav
       : activeModule === 'marketplace'
@@ -301,6 +318,8 @@ export default function Sidebar({
       ? 'Bootcamps'
       : activeModule === 'webinars'
       ? 'Webinars'
+      : activeModule === 'contracts'
+      ? 'Contracts'
       : activeModule === 'internship'
       ? 'Internship'
       : activeModule === 'marketplace'
@@ -314,10 +333,11 @@ export default function Sidebar({
       : activeModule === 'profile'
       ? 'Profile Settings'
       : 'Admin';
-  const showSecondaryPane = activeModule === 'university' || activeModule === 'courses' || activeModule === 'webinars' || activeModule === 'internship' || activeModule === 'marketplace' || activeModule === 'studio';
+  const showSecondaryPane = activeModule === 'university' || activeModule === 'courses' || activeModule === 'webinars' || activeModule === 'contracts' || activeModule === 'internship' || activeModule === 'marketplace' || activeModule === 'studio';
   const visiblePrimaryModules = adminPrimaryModules.filter((module) => {
     if (module.key === 'admin_access') return hasAdminPermission(adminLevel, 'admin_management');
     if (module.key === 'audit_logs') return hasAdminPermission(adminLevel, 'audit');
+    if (module.key === 'contracts') return hasAdminPermission(adminLevel, 'finance');
     if (module.key === 'university' || module.key === 'courses' || module.key === 'webinars') return hasAdminPermission(adminLevel, 'content') || hasAdminPermission(adminLevel, 'finance');
     if (module.key === 'internship') return hasAdminPermission(adminLevel, 'internship');
     if (module.key === 'marketplace') return hasAdminPermission(adminLevel, 'content');

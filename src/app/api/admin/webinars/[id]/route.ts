@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAuth, requireRole } from '@/lib/auth';
 import { writeAuditLog } from '@/lib/admin/audit';
+import { normalizeEventUrl } from '@/lib/events/status';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -48,6 +49,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     capacity: body.capacity === '' || body.capacity == null ? null : Number(body.capacity),
     price_ngn: Number(body.price_ngn) || 0,
     join_url: body.join_url ?? '',
+    replay_url: normalizeEventUrl(body.replay_url) || null,
     thumbnail_url: body.thumbnail_url ?? null,
     whatsapp_community_url: body.whatsapp_community_url ?? null,
     status: body.status,

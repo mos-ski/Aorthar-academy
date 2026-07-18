@@ -6,12 +6,18 @@ import 'plyr/dist/plyr.css';
 
 declare global {
   interface Window {
-    YT: { Player: any };
+    YT: { Player: unknown };
     onYouTubeIframeAPIReady: () => void;
   }
 }
 
 type NextLesson = { title: string; href: string };
+type YouTubeEmbed = {
+  loadModule?: (module: string) => void;
+  unloadModule?: (module: string) => void;
+  setOption?: (module: string, option: string, value: unknown) => void;
+};
+type PlyrWithEmbed = Plyr & { embed?: YouTubeEmbed };
 
 interface Props {
   src?: string;
@@ -41,7 +47,7 @@ function loadYouTubeAPI(): Promise<void> {
 }
 
 export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson, className, previewSeconds, onPreviewExpired }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLElement | null>(null);
   const playerRef = useRef<Plyr | null>(null);
   const captionListenerRef = useRef<((e: Event) => void) | null>(null);
   const fullscreenListenerRef = useRef<((e: Event) => void) | null>(null);
@@ -50,6 +56,7 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
   const [showEndOverlay, setShowEndOverlay] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fullscreenOptIn, setFullscreenOptIn] = useState(false);
+  const [playerReady, setPlayerReady] = useState(false);
 
   // Load opt-in preference from localStorage on mount
   useEffect(() => {
@@ -60,8 +67,10 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
   }, []);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
     setError(null);
+    setPlayerReady(false);
 
     // Validate YouTube ID
     if (youtubeId && youtubeId.length !== 11) {
@@ -94,7 +103,7 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
         }
 
         const { default: Plyr } = await import('plyr');
-        const player = new Plyr(containerRef.current!, {
+        const player = new Plyr(container, {
           controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
           settings: ['captions', 'quality', 'speed', 'loop'],
           speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
@@ -113,11 +122,12 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
         });
 
         playerRef.current = player;
+        setPlayerReady(true);
 
         // Plyr's toggleCaptions() never calls the YouTube IFrame API — we own
         // the toggle completely. Capture phase so we intercept before Plyr's
         // bubble-phase delegation runs and double-toggles the UI state.
-        if (isYouTube && containerRef.current) {
+        if (isYouTube) {
           let captionsEnabled = false;
 
           const handleCaptionClick = (e: Event) => {
@@ -126,7 +136,7 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
             e.stopImmediatePropagation();
 
             captionsEnabled = !captionsEnabled;
-            const ytPlayer = (playerRef.current as any)?.embed;
+            const ytPlayer = (playerRef.current as PlyrWithEmbed | null)?.embed;
 
             if (captionsEnabled) {
               ytPlayer?.loadModule?.('captions');
@@ -138,7 +148,7 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
             }
 
             // Keep Plyr button in sync
-            const btn = containerRef.current?.querySelector('[data-plyr="captions"]') as HTMLElement | null;
+            const btn = container.querySelector('[data-plyr="captions"]') as HTMLElement | null;
             if (btn) {
               btn.setAttribute('aria-pressed', String(captionsEnabled));
               btn.classList.toggle('plyr__control--pressed', captionsEnabled);
@@ -147,7 +157,7 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
 
           captionListenerRef.current = handleCaptionClick;
           // Use capture:true so our handler fires before Plyr's bubble handler
-          containerRef.current.addEventListener('click', handleCaptionClick, true);
+          container.addEventListener('click', handleCaptionClick, true);
         }
 
         // iOS Safari can't put an arbitrary <div> into chrome-hiding fullscreen
@@ -157,7 +167,7 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
         // proper fullscreen on iPhone. Request it directly on the iframe so we
         // get the same native, chrome-hiding result.
         const requestIframeFullscreen = (): boolean => {
-          const iframe = containerRef.current?.querySelector('iframe') as (HTMLIFrameElement & {
+          const iframe = container.querySelector('iframe') as (HTMLIFrameElement & {
             webkitRequestFullscreen?: () => void;
             webkitEnterFullscreen?: () => void;
           }) | null;
@@ -170,7 +180,7 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
           return true;
         };
 
-        if (isYouTube && isIos && containerRef.current) {
+        if (isYouTube && isIos) {
           const handleFullscreenClick = (e: Event) => {
             if (!(e.target as HTMLElement).closest?.('[data-plyr="fullscreen"]')) return;
             if (requestIframeFullscreen()) {
@@ -182,7 +192,7 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
           };
 
           fullscreenListenerRef.current = handleFullscreenClick;
-          containerRef.current.addEventListener('click', handleFullscreenClick, true);
+          container.addEventListener('click', handleFullscreenClick, true);
         }
 
         // Lock body scroll when fullscreen
@@ -210,7 +220,7 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
                 if (!(isIos && requestIframeFullscreen())) {
                   player.fullscreen.enter();
                 }
-              } catch (e) {
+              } catch {
                 // Silently fail if fullscreen not available
               }
             }, 100);
@@ -248,12 +258,12 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
     void initPlayer();
 
     return () => {
-      if (captionListenerRef.current && containerRef.current) {
-        containerRef.current.removeEventListener('click', captionListenerRef.current, true);
+      if (captionListenerRef.current) {
+        container.removeEventListener('click', captionListenerRef.current, true);
         captionListenerRef.current = null;
       }
-      if (fullscreenListenerRef.current && containerRef.current) {
-        containerRef.current.removeEventListener('click', fullscreenListenerRef.current, true);
+      if (fullscreenListenerRef.current) {
+        container.removeEventListener('click', fullscreenListenerRef.current, true);
         fullscreenListenerRef.current = null;
       }
       if (playerRef.current) {
@@ -281,10 +291,30 @@ export default function PlyrPlayer({ src, youtubeId, poster, onEnded, nextLesson
     <div className={`relative w-full aspect-video bg-black rounded-xl ${className ?? ''}`}>
       {/* Video or YouTube container */}
       {youtubeId ? (
-        <div ref={containerRef} data-plyr-provider="youtube" data-plyr-embed-id={youtubeId} className="absolute inset-0" />
+        <>
+          {!playerReady && (
+            <iframe
+              className="absolute inset-0 h-full w-full rounded-xl"
+              src={`https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1&playsinline=1`}
+              title="Lesson video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          )}
+          <div
+            ref={(node) => {
+              containerRef.current = node;
+            }}
+            data-plyr-provider="youtube"
+            data-plyr-embed-id={youtubeId}
+            className={`absolute inset-0 ${playerReady ? '' : 'pointer-events-none opacity-0'}`}
+          />
+        </>
       ) : (
         <video
-          ref={containerRef as any}
+          ref={(node) => {
+            containerRef.current = node;
+          }}
           className="w-full h-full rounded-xl"
           poster={poster}
           playsInline

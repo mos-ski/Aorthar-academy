@@ -27,6 +27,9 @@ const PUBLIC_ROUTES = [
   '/verify',
   '/forgot-password',
   '/reset-password',
+  // external contract recipients review and sign without an Aorthar account
+  '/contracts/sign',
+  '/api/contracts/sign',
   // public API routes (no auth required)
   '/api/auth/forgot-password',
   '/api/auth/send-welcome',
@@ -76,7 +79,7 @@ function isAuthPassthrough(pathname: string): boolean {
   return AUTH_PASSTHROUGH_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
-function isPublicRoute(pathname: string): boolean {
+export function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'));
 }
 
