@@ -21,6 +21,7 @@ const PUBLIC_ROUTES = [
   '/privacy',
   '/register',
   '/terms',
+  '/university',
   '/unauthorized',
   '/suspended',
   '/verify',
