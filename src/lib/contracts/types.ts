@@ -1,4 +1,26 @@
-export type ContractMode = 'employee' | 'contractor' | 'client';
+export type ContractDocumentType = 'agreement' | 'nda';
+
+export type ContractMode = 'employee' | 'contractor' | 'client' | 'nda';
+
+export type NdaRecipientRelationship =
+  | 'employee'
+  | 'contractor'
+  | 'client'
+  | 'partner'
+  | 'vendor'
+  | 'other';
+
+export type NdaMetadata = {
+  recipientName: string;
+  recipientEmail: string;
+  recipientPhone: string;
+  recipientRelationship: NdaRecipientRelationship | '';
+  recipientCompany?: string | null;
+  projectName: string;
+  projectPurpose: string;
+  effectiveDate: string;
+  confidentialityTerm: string;
+};
 
 export type ContractFieldType =
   | 'text'

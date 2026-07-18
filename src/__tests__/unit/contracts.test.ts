@@ -1,4 +1,12 @@
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import {
+  buildNdaWhatsAppUrl,
+  isNdaDocument,
+  ndaMetadataFieldValues,
+  validateNdaMetadata,
+} from '@/lib/contracts/nda';
 import {
   extractPlaceholderKeys,
   findMissingContractFields,
@@ -14,6 +22,18 @@ import { createTokenExpiry, isTokenExpired } from '@/lib/contracts/tokens';
 import { getContractPlaceholderState, hasMeaningfulContractValue } from '@/lib/contracts/field-state';
 import { nextPaymentStatus } from '@/lib/contracts/payments';
 import type { ContractTemplateField } from '@/lib/contracts/types';
+
+const validNdaMetadata = {
+  recipientName: 'Ada Lovelace',
+  recipientEmail: 'ada@example.com',
+  recipientPhone: '0803 123 4567',
+  recipientRelationship: 'contractor' as const,
+  recipientCompany: 'Analytical Engines Ltd',
+  projectName: 'Atlas',
+  projectPurpose: 'Design and deliver the private Atlas client portal.',
+  effectiveDate: '2026-07-18',
+  confidentialityTerm: '5 years',
+};
 
 const fields: ContractTemplateField[] = [
   {
@@ -200,5 +220,71 @@ describe('contract payments', () => {
 
   it('marks successful Paystack payments as paid', () => {
     expect(nextPaymentStatus({ mode: 'client', amountNgn: 250000, paystackStatus: 'success' })).toBe('paid');
+  });
+
+  it('never requires payment for an NDA', () => {
+    expect(nextPaymentStatus({ mode: 'nda', amountNgn: 250000 })).toBe('not_required');
+  });
+});
+
+describe('NDA contracts', () => {
+  it('classifies only NDA documents as NDAs', () => {
+    expect(isNdaDocument({ document_type: 'nda', mode: 'nda' })).toBe(true);
+    expect(isNdaDocument({ document_type: 'agreement', mode: 'client' })).toBe(false);
+  });
+
+  it('requires recipient and project identity before sending', () => {
+    expect(validateNdaMetadata({
+      recipientName: '',
+      recipientEmail: 'not-an-email',
+      recipientPhone: '',
+      recipientRelationship: '',
+      projectName: '',
+      projectPurpose: '',
+      effectiveDate: '',
+      confidentialityTerm: '',
+    }).map((issue) => issue.field)).toEqual([
+      'recipient_name',
+      'recipient_email',
+      'recipient_phone',
+      'recipient_relationship',
+      'project_name',
+      'project_purpose',
+      'effective_date',
+      'confidentiality_term',
+    ]);
+  });
+
+  it('maps NDA metadata into immutable template values', () => {
+    expect(ndaMetadataFieldValues(validNdaMetadata)).toMatchObject({
+      recipient_name: 'Ada Lovelace',
+      recipient_email: 'ada@example.com',
+      recipient_phone: '0803 123 4567',
+      recipient_relationship: 'Contractor',
+      project_name: 'Atlas',
+    });
+  });
+
+  it('builds a manual WhatsApp share URL from a Nigerian local number', () => {
+    const url = buildNdaWhatsAppUrl({
+      phone: '0803 123 4567',
+      recipientName: 'Ada',
+      projectName: 'Atlas',
+      signingUrl: 'https://aorthar.com/contracts/sign/token',
+    });
+
+    expect(url).toContain('https://wa.me/2348031234567?text=');
+    expect(decodeURIComponent(url)).toContain('Atlas');
+  });
+
+  it('seeds a permanent no-portfolio restriction', () => {
+    const migrationName = readdirSync('supabase/migrations')
+      .find((name) => name.endsWith('_nda_inside_contracts.sql'));
+
+    expect(migrationName).toBeDefined();
+    const migration = readFileSync(join('supabase/migrations', migrationName ?? ''), 'utf8');
+    expect(migration.toLowerCase()).toContain('portfolio');
+    expect(migration.toLowerCase()).toContain('prior written permission');
+    expect(migration.toLowerCase()).toContain('survive permanently');
   });
 });
