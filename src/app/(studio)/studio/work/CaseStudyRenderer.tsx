@@ -19,7 +19,7 @@ function CoverMedia({ study }: Pick<Props, 'study'>): React.ReactElement | null 
   if (!study.cover_url) return null;
 
   if (study.cover_media_type === 'video') {
-    return <video autoPlay loop muted playsInline preload="metadata" src={study.cover_url} aria-label={`${study.title} project film`} />;
+    return <video controls playsInline preload="metadata" src={study.cover_url} aria-label={`${study.title} project film`} />;
   }
 
   return <Media src={study.cover_url} alt={study.cover_alt ?? study.title} />;
