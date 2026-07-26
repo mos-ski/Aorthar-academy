@@ -31,3 +31,13 @@ Results:
 ## Concerns
 
 - No concerns identified for Task 1.
+
+## Review Fix
+
+The review identified that the original admin policies checked only `profiles.role = 'admin'`, which also allowed finance admins to manage case studies. Updated both the case study and block management policies, including their `using` and `with check` clauses, to require `COALESCE(profiles.admin_level, 'super_admin') IN ('super_admin', 'content_admin')`. Finance admins are now excluded from both tables while legacy admin rows with a null level retain super-admin behavior.
+
+Follow-up verification:
+
+- Confirmed all four management policy predicates include the restricted admin-level condition.
+- Confirmed the public policies remain published-only.
+- `git diff --check` completed without errors.

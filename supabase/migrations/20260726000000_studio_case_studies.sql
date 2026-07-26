@@ -82,11 +82,13 @@ create policy "Admins can manage studio case studies"
     select 1 from public.profiles
     where profiles.user_id = auth.uid()
       and profiles.role = 'admin'
+      and COALESCE(profiles.admin_level, 'super_admin') IN ('super_admin', 'content_admin')
   ))
   with check (exists (
     select 1 from public.profiles
     where profiles.user_id = auth.uid()
       and profiles.role = 'admin'
+      and COALESCE(profiles.admin_level, 'super_admin') IN ('super_admin', 'content_admin')
   ));
 
 drop policy if exists "Public can read published studio case study blocks" on public.studio_case_study_blocks;
@@ -107,9 +109,11 @@ create policy "Admins can manage studio case study blocks"
     select 1 from public.profiles
     where profiles.user_id = auth.uid()
       and profiles.role = 'admin'
+      and COALESCE(profiles.admin_level, 'super_admin') IN ('super_admin', 'content_admin')
   ))
   with check (exists (
     select 1 from public.profiles
     where profiles.user_id = auth.uid()
       and profiles.role = 'admin'
+      and COALESCE(profiles.admin_level, 'super_admin') IN ('super_admin', 'content_admin')
   ));
