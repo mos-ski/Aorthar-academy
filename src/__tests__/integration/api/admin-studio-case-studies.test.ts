@@ -121,6 +121,34 @@ describe('admin studio case study API safeguards', () => {
     await expect(response.json()).resolves.toMatchObject({ error: 'Subtitle is required before publishing.' });
   });
 
+  it('maps database publishability check violations to a bad request', async () => {
+    const studyBuilder = readOneBuilder({ ...publishedStudy, status: 'draft', published_at: null });
+    const updateBuilder = {
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: null,
+        error: { code: '23514', message: 'At least one renderable content block is required before publishing.' },
+      }),
+    };
+    (createAdminClient as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: vi.fn()
+        .mockReturnValueOnce(studyBuilder)
+        .mockReturnValueOnce(updateBuilder),
+    });
+
+    const response = await PATCH(
+      makeRequest(`http://localhost/api/admin/studio/case-studies/${CASE_STUDY_ID}`, { status: 'archived' }),
+      makeParams(),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      error: 'At least one renderable content block is required before publishing.',
+    });
+  });
+
   it('rejects a block edit that would make a published study unrenderable', async () => {
     const studyBuilder = readOneBuilder(publishedStudy);
     const blocksBuilder = readManyBuilder([validTextBlock]);

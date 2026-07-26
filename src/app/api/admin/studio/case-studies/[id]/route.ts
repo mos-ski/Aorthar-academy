@@ -61,6 +61,12 @@ function pendingValue<T>(updates: Record<string, unknown>, field: string, curren
   return currentValue;
 }
 
+function publishIntegrityError(error: { code?: string; message: string }): NextResponse | null {
+  return error.code === '23514'
+    ? NextResponse.json({ error: error.message }, { status: 400 })
+    : null;
+}
+
 export async function GET(_request: NextRequest, { params }: Params): Promise<NextResponse> {
   try {
     await requireAdminApi('content');
@@ -196,6 +202,8 @@ export async function PATCH(request: NextRequest, { params }: Params): Promise<N
       if (error.code === '23505') {
         return NextResponse.json({ error: 'A case study with this slug already exists.' }, { status: 409 });
       }
+      const integrityError = publishIntegrityError(error);
+      if (integrityError) return integrityError;
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
@@ -229,12 +237,20 @@ export async function DELETE(_request: NextRequest, { params }: Params): Promise
         .update({ status: 'archived', updated_by: userId })
         .eq('id', id);
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) {
+        const integrityError = publishIntegrityError(error);
+        if (integrityError) return integrityError;
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
       return NextResponse.json({ ok: true, archived: true });
     }
 
     const { error } = await admin.from('studio_case_studies').delete().eq('id', id);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      const integrityError = publishIntegrityError(error);
+      if (integrityError) return integrityError;
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     return NextResponse.json({ ok: true, archived: false });
   } catch (err) {
     const { status, message } = mapAdminApiError(err);

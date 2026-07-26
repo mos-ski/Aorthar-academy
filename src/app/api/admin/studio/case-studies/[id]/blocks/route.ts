@@ -15,6 +15,12 @@ const blockFields = 'id, case_study_id, type, sort_order, content';
 const publishFields = 'title, slug, subtitle, cover_url, cover_media_type, preview_video_url, og_image_url, year, release_date, status';
 const uuidSchema = z.string().uuid();
 
+function publishIntegrityError(error: { code?: string; message: string }): NextResponse | null {
+  return error.code === '23514'
+    ? NextResponse.json({ error: error.message }, { status: 400 })
+    : null;
+}
+
 export async function POST(request: NextRequest, { params }: Params): Promise<NextResponse> {
   try {
     await requireAdminApi('content');
@@ -81,7 +87,11 @@ export async function POST(request: NextRequest, { params }: Params): Promise<Ne
       .select(blockFields)
       .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      const integrityError = publishIntegrityError(error);
+      if (integrityError) return integrityError;
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     return NextResponse.json({ data }, { status: 201 });
   } catch (err) {
     const { status, message } = mapAdminApiError(err);

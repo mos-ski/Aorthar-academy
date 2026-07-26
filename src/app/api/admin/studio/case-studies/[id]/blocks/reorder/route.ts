@@ -13,6 +13,12 @@ const blockFields = 'id, case_study_id, type, sort_order, content';
 const publishFields = 'title, slug, subtitle, cover_url, cover_media_type, preview_video_url, og_image_url, year, release_date, status';
 const uuidSchema = z.string().uuid();
 
+function publishIntegrityError(error: { code?: string; message: string }): NextResponse | null {
+  return error.code === '23514'
+    ? NextResponse.json({ error: error.message }, { status: 400 })
+    : null;
+}
+
 export async function POST(request: NextRequest, { params }: Params): Promise<NextResponse> {
   try {
     await requireAdminApi('content');
@@ -70,6 +76,8 @@ export async function POST(request: NextRequest, { params }: Params): Promise<Ne
       if (error.code === 'P0002') {
         return NextResponse.json({ error: error.message }, { status: 404 });
       }
+      const integrityError = publishIntegrityError(error);
+      if (integrityError) return integrityError;
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 

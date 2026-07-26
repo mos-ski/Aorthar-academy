@@ -25,6 +25,12 @@ function invalidIds(caseStudyId: string, blockId: string): NextResponse | null {
   return null;
 }
 
+function publishIntegrityError(error: { code?: string; message: string }): NextResponse | null {
+  return error.code === '23514'
+    ? NextResponse.json({ error: error.message }, { status: 400 })
+    : null;
+}
+
 export async function PATCH(request: NextRequest, { params }: Params): Promise<NextResponse> {
   try {
     await requireAdminApi('content');
@@ -84,7 +90,11 @@ export async function PATCH(request: NextRequest, { params }: Params): Promise<N
       .select(blockFields)
       .maybeSingle();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      const integrityError = publishIntegrityError(error);
+      if (integrityError) return integrityError;
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     if (!data) return NextResponse.json({ error: 'Block not found.' }, { status: 404 });
     return NextResponse.json({ data });
   } catch (err) {
@@ -139,7 +149,11 @@ export async function DELETE(_request: NextRequest, { params }: Params): Promise
       .select('id')
       .maybeSingle();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      const integrityError = publishIntegrityError(error);
+      if (integrityError) return integrityError;
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     if (!data) return NextResponse.json({ error: 'Block not found.' }, { status: 404 });
     return NextResponse.json({ ok: true });
   } catch (err) {
