@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { ArrowDown, ArrowLeft, ArrowUp, Copy, ExternalLink, Plus, Save, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -51,6 +51,8 @@ function fieldValue(value: string | null): string { return value ?? ''; }
 
 export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactElement {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const defaultTab = searchParams.get('tab') ?? 'overview';
   const [draft, setDraft] = useState<StudyDraft>(() => {
     return {
       id: study.id,
@@ -194,7 +196,7 @@ export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactE
       <div><Button asChild variant="ghost" size="sm" className="mb-2 -ml-3"><Link href="/admin/studio/work"><ArrowLeft />Back to work</Link></Button><h1 className="text-2xl font-semibold">{study.title}</h1><p className="mt-1 text-sm text-muted-foreground">Edit case study content and publishing details.</p></div>
       <div className="flex flex-wrap gap-2">{study.status === 'published' ? <Button asChild type="button" variant="outline"><a href={`/studio/work/${study.slug}`} target="_blank" rel="noreferrer"><ExternalLink />View live</a></Button> : null}<Button type="button" variant="outline" onClick={() => void saveStudy()} disabled={saving}><Save />Save</Button><Button type="button" onClick={() => void saveStudy('published')} disabled={saving}>{saving ? 'Saving...' : 'Publish'}</Button></div>
     </div>
-    <Tabs defaultValue="overview">
+    <Tabs defaultValue={defaultTab}>
       <TabsList className="h-auto w-full flex-wrap justify-start"><TabsTrigger value="overview">Overview</TabsTrigger><TabsTrigger value="media">Media</TabsTrigger><TabsTrigger value="metadata">Metadata</TabsTrigger><TabsTrigger value="story">Story</TabsTrigger><TabsTrigger value="credits">Credits</TabsTrigger><TabsTrigger value="seo">SEO</TabsTrigger></TabsList>
       <TabsContent value="overview" className="mt-6"><Card><CardContent className="grid gap-4 pt-6 md:grid-cols-2"><Field label="Title"><Input value={draft.title} onChange={(event) => updateDraft('title', event.target.value)} /></Field><Field label="Slug"><Input value={draft.slug} onChange={(event) => updateDraft('slug', event.target.value)} /></Field><Field label="Subtitle" className="md:col-span-2"><Textarea value={fieldValue(draft.subtitle)} onChange={(event) => updateDraft('subtitle', event.target.value || null)} /></Field><Field label="Client"><Input value={fieldValue(draft.client)} onChange={(event) => updateDraft('client', event.target.value || null)} /></Field><Field label="Status"><Select value={draft.status} onValueChange={(value) => updateDraft('status', value as StudioCaseStudyStatus)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="draft">Draft</SelectItem><SelectItem value="published">Published</SelectItem><SelectItem value="archived">Archived</SelectItem></SelectContent></Select></Field></CardContent></Card></TabsContent>
       <TabsContent value="media" className="mt-6"><Card><CardContent className="grid gap-4 pt-6 md:grid-cols-2"><Field label="Hero media type"><Select value={draft.cover_media_type} onValueChange={(value) => updateDraft('cover_media_type', value as 'image' | 'video')}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="image">Cover image</SelectItem><SelectItem value="video">Preview video</SelectItem></SelectContent></Select></Field><Field label="Cover image URL"><Input type="url" value={fieldValue(draft.cover_url)} onChange={(event) => updateDraft('cover_url', event.target.value || null)} placeholder="https://" /></Field><Field label="Cover alt text"><Input value={fieldValue(draft.cover_alt)} onChange={(event) => updateDraft('cover_alt', event.target.value || null)} /></Field><Field label="Preview video URL"><Input type="url" value={fieldValue(draft.preview_video_url)} onChange={(event) => updateDraft('preview_video_url', event.target.value || null)} placeholder="Vimeo or direct HTTPS video URL" /></Field></CardContent></Card></TabsContent>

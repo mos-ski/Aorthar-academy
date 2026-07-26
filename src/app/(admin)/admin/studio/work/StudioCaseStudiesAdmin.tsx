@@ -28,6 +28,7 @@ type StudioCaseStudiesAdminProps = {
 type StatusFilter = 'all' | StudioCaseStudyStatus;
 
 type ApiResponse = {
+  id?: string;
   archived?: boolean;
   error?: string;
 };
@@ -104,9 +105,13 @@ export default function StudioCaseStudiesAdmin({ studies }: StudioCaseStudiesAdm
         return;
       }
 
-      toast.success('Case study created');
-      closeCreate();
-      router.refresh();
+      if (data?.id) {
+        router.push(`/admin/studio/work/${data.id}?tab=story`);
+      } else {
+        toast.success('Case study created');
+        closeCreate();
+        router.refresh();
+      }
     } catch {
       toast.error('Failed to create case study');
     } finally {

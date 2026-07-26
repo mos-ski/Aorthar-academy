@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic';
 
+import { Suspense } from 'react';
 import { notFound, redirect } from 'next/navigation';
 import { hasAdminPermission, normalizeAdminLevel } from '@/lib/admin/permissions';
 import { requireRole } from '@/lib/auth';
@@ -18,5 +19,5 @@ export default async function AdminStudioWorkEditorPage({ params }: Props): Prom
   const study = await getAdminCaseStudyById(id);
   if (!study) notFound();
 
-  return <CaseStudyEditor study={study} />;
+  return <Suspense><CaseStudyEditor study={study} /></Suspense>;
 }
