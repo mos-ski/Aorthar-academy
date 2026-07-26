@@ -18,30 +18,19 @@ export async function POST(request: NextRequest, { params }: Params): Promise<Ne
     }
 
     const admin = createAdminClient();
-    const { data: blocks, error: blocksError } = await admin
-      .from('studio_case_study_blocks')
-      .select('id')
-      .eq('case_study_id', caseStudyId);
+    const { error } = await admin.rpc('reorder_studio_case_study_blocks', {
+      p_case_study_id: caseStudyId,
+      p_ordered_ids: body.orderedIds,
+    });
 
-    if (blocksError) return NextResponse.json({ error: blocksError.message }, { status: 500 });
-
-    const blockIds = new Set((blocks ?? []).map((block) => block.id));
-    if (blockIds.size !== body.orderedIds.length || body.orderedIds.some((id) => !blockIds.has(id))) {
-      return NextResponse.json({ error: 'orderedIds must include every block for this case study exactly once.' }, { status: 400 });
-    }
-
-    if (body.orderedIds.length === 0) {
-      return NextResponse.json({ ok: true });
-    }
-
-    for (const [sortOrder, blockId] of body.orderedIds.entries()) {
-      const { error } = await admin
-        .from('studio_case_study_blocks')
-        .update({ sort_order: sortOrder })
-        .eq('case_study_id', caseStudyId)
-        .eq('id', blockId);
-
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      if (error.code === '22023') {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+      }
+      if (error.code === 'P0002') {
+        return NextResponse.json({ error: error.message }, { status: 404 });
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ ok: true });

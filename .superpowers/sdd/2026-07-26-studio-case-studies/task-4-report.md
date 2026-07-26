@@ -42,3 +42,16 @@ This task adds no admin pages, list UI, editor UI, freeform JSON editing surface
 - `bun run test src/__tests__/integration/api/admin-studio-case-studies.test.ts src/__tests__/unit/studio-case-studies.test.ts` - passed: 2 files, 7 tests.
 - `bunx eslint src/app/api/admin/studio/case-studies/[id]/blocks/reorder/route.ts src/__tests__/integration/api/admin-studio-case-studies.test.ts` - passed.
 - `git diff --check` - passed.
+
+## Review Fix Round 3
+
+- Added `reorder_studio_case_study_blocks(p_case_study_id uuid, p_ordered_ids uuid[])` in a forward migration. The function locks the parent case study and its blocks, verifies that the submitted UUID array is exactly the current block ID set (including duplicate detection), and updates only `sort_order` in one transaction.
+- The admin route now makes one `createAdminClient().rpc('reorder_studio_case_study_blocks', ...)` call. It retains request-shape and duplicate-ID checks, maps set-validation failures to HTTP 400, and no longer performs a stale full-row upsert or independent updates.
+- RPC execution is revoked from public roles and granted only to `service_role`, matching the API's `createAdminClient()` write path.
+
+## Review Fix Round 3 Verification
+
+- `bun run test src/__tests__/integration/api/admin-studio-case-studies.test.ts src/__tests__/unit/studio-case-studies.test.ts` - passed: 2 files, 7 tests.
+- `bunx eslint src/app/api/admin/studio/case-studies/[id]/blocks/reorder/route.ts src/__tests__/integration/api/admin-studio-case-studies.test.ts` - passed.
+- The reorder regression asserts that a valid request delegates to the single atomic RPC with the case-study ID and full ordered block ID array.
+- `git diff --check` - passed.

@@ -68,13 +68,10 @@ describe('admin studio case study API safeguards', () => {
   });
 
   it('rejects duplicate block IDs before reorder writes', async () => {
-    const builder = {
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
+    const admin = {
+      rpc: vi.fn(),
     };
-    (createAdminClient as ReturnType<typeof vi.fn>).mockReturnValue({
-      from: vi.fn(() => builder),
-    });
+    (createAdminClient as ReturnType<typeof vi.fn>).mockReturnValue(admin);
 
     const response = await reorderBlocks(
       makeRequest(`http://localhost/api/admin/studio/case-studies/${CASE_STUDY_ID}/blocks/reorder`, { orderedIds: ['block-1', 'block-1'] }),
@@ -82,27 +79,14 @@ describe('admin studio case study API safeguards', () => {
     );
 
     expect(response.status).toBe(400);
-    expect(builder.update).not.toHaveBeenCalled();
+    expect(admin.rpc).not.toHaveBeenCalled();
   });
 
-  it('updates only sort order after validating a complete reorder', async () => {
-    const blocks = [
-      { id: 'block-1' },
-      { id: 'block-2' },
-    ];
-    const readBuilder = {
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockResolvedValue({ data: blocks, error: null }),
+  it('delegates a complete reorder to the atomic database RPC', async () => {
+    const admin = {
+      rpc: vi.fn().mockResolvedValue({ error: null }),
     };
-    const writeBuilder = {
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-    };
-    (createAdminClient as ReturnType<typeof vi.fn>).mockReturnValue({
-      from: vi.fn()
-        .mockReturnValueOnce(readBuilder)
-        .mockReturnValue(writeBuilder),
-    });
+    (createAdminClient as ReturnType<typeof vi.fn>).mockReturnValue(admin);
 
     const response = await reorderBlocks(
       makeRequest(`http://localhost/api/admin/studio/case-studies/${CASE_STUDY_ID}/blocks/reorder`, { orderedIds: ['block-2', 'block-1'] }),
@@ -110,9 +94,9 @@ describe('admin studio case study API safeguards', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(writeBuilder.update).toHaveBeenNthCalledWith(1, { sort_order: 0 });
-    expect(writeBuilder.update).toHaveBeenNthCalledWith(2, { sort_order: 1 });
-    expect(writeBuilder.update).toHaveBeenCalledTimes(2);
-    expect(writeBuilder).not.toHaveProperty('upsert');
+    expect(admin.rpc).toHaveBeenCalledWith('reorder_studio_case_study_blocks', {
+      p_case_study_id: CASE_STUDY_ID,
+      p_ordered_ids: ['block-2', 'block-1'],
+    });
   });
 });
