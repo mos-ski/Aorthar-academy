@@ -1,9 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { selectActiveNavHref } from '@/lib/admin/navigation';
+import {
+  ADMIN_MENU_COLLAPSED_EVENT,
+  ADMIN_MENU_COLLAPSED_STORAGE_KEY,
+  getInitialAdminMenuCollapsed,
+  readAdminMenuCollapsedPreference,
+} from '@/lib/admin/sidebar-preference';
 import { cn } from '@/lib/utils';
 import {
   BookOpen,
@@ -192,6 +199,20 @@ const mobileAdminNav = [
   { href: '/settings', label: 'Profile', icon: CircleUser },
 ];
 
+function subscribeToAdminMenuPreference(onStoreChange: () => void): () => void {
+  window.addEventListener('storage', onStoreChange);
+  window.addEventListener(ADMIN_MENU_COLLAPSED_EVENT, onStoreChange);
+
+  return () => {
+    window.removeEventListener('storage', onStoreChange);
+    window.removeEventListener(ADMIN_MENU_COLLAPSED_EVENT, onStoreChange);
+  };
+}
+
+function getAdminMenuPreferenceSnapshot(): boolean {
+  return readAdminMenuCollapsedPreference(window.localStorage);
+}
+
 export default function Sidebar({
   role,
   adminLevel = 'super_admin',
@@ -201,10 +222,11 @@ export default function Sidebar({
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [adminMenuCollapsed, setAdminMenuCollapsed] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.localStorage.getItem('aorthar:admin-menu-collapsed') === '1';
-  });
+  const adminMenuCollapsed = useSyncExternalStore(
+    subscribeToAdminMenuPreference,
+    getAdminMenuPreferenceSnapshot,
+    getInitialAdminMenuCollapsed,
+  );
   const tab = searchParams.get('tab');
   const courseTab = searchParams.get('courseTab');
   const moduleParam = searchParams.get('module');
@@ -311,30 +333,22 @@ export default function Sidebar({
       : activeModule === 'profile'
       ? [{ href: '/admin/profile', label: 'Account & Profile', icon: Settings }]
       : adminOverviewNav;
-
-  const secondaryTitle =
-    activeModule === 'university'
-      ? 'University'
-    : activeModule === 'courses'
-      ? 'Bootcamps'
-      : activeModule === 'webinars'
-      ? 'Webinars'
-      : activeModule === 'contracts'
-      ? 'Contracts'
-      : activeModule === 'internship'
-      ? 'Internship'
-      : activeModule === 'marketplace'
-      ? 'Marketplace'
-      : activeModule === 'studio'
-      ? 'Studio'
-      : activeModule === 'admin_access'
-      ? 'Admin Access'
-      : activeModule === 'audit_logs'
-      ? 'Audit Logs'
-      : activeModule === 'profile'
-      ? 'Profile Settings'
-      : 'Admin';
-  const showSecondaryPane = activeModule === 'university' || activeModule === 'courses' || activeModule === 'webinars' || activeModule === 'contracts' || activeModule === 'internship' || activeModule === 'marketplace' || activeModule === 'studio';
+  const modulesWithNestedNav = new Set([
+    'university',
+    'courses',
+    'internship',
+    'marketplace',
+    'studio',
+    'webinars',
+    'contracts',
+  ]);
+  const activeSecondaryHref = selectActiveNavHref(
+    secondaryNav.map((item) => ({
+      href: item.href,
+      matches: item.match?.(pathname, tab, courseTab, moduleParam),
+    })),
+    pathname,
+  );
   const visiblePrimaryModules = adminPrimaryModules.filter((module) => {
     if (module.key === 'admin_access') return hasAdminPermission(adminLevel, 'admin_management');
     if (module.key === 'audit_logs') return hasAdminPermission(adminLevel, 'audit');
@@ -346,11 +360,11 @@ export default function Sidebar({
   });
 
   function toggleAdminMenu(): void {
-    setAdminMenuCollapsed((collapsed) => {
-      const next = !collapsed;
-      window.localStorage.setItem('aorthar:admin-menu-collapsed', next ? '1' : '0');
-      return next;
-    });
+    window.localStorage.setItem(
+      ADMIN_MENU_COLLAPSED_STORAGE_KEY,
+      adminMenuCollapsed ? '0' : '1',
+    );
+    window.dispatchEvent(new Event(ADMIN_MENU_COLLAPSED_EVENT));
   }
 
   return (
@@ -360,22 +374,29 @@ export default function Sidebar({
         <aside
           className={cn(
             'hidden shrink-0 border-r bg-background transition-[width] duration-200 md:flex',
-            showSecondaryPane
-              ? adminMenuCollapsed ? 'w-[248px]' : 'w-[400px]'
-              : adminMenuCollapsed ? 'w-20' : 'w-60',
+            adminMenuCollapsed ? 'w-20' : 'w-60',
           )}
         >
           <div className={cn(
-            'border-r bg-[#111214] text-white flex flex-col transition-[width] duration-200',
+            'w-full bg-[#111214] text-white flex flex-col transition-[width] duration-200',
             adminMenuCollapsed ? 'w-20' : 'w-60',
           )}>
             <div className={cn(
-              'h-[73px] border-b border-white/10 flex items-center',
+              'h-14 border-b border-white/10 flex items-center',
               'relative',
-              adminMenuCollapsed ? 'justify-center px-3' : 'justify-between px-6',
+              adminMenuCollapsed ? 'justify-center px-3' : 'justify-between px-4',
             )}>
-              <Link href="/admin" className="flex items-center justify-center">
-                <Image src="/Aorthar Favion.svg" alt="Aorthar" width={30} height={30} className="brightness-0 invert" unoptimized />
+              <Link href="/admin" className="flex min-w-0 items-center gap-2.5">
+                {adminMenuCollapsed ? (
+                  <Image src="/Aorthar Favion.svg" alt="Aorthar" width={28} height={28} unoptimized />
+                ) : (
+                  <>
+                    <Image src="/Aorthar Logo long complete.svg" alt="Aorthar" width={84} height={36} unoptimized />
+                    <span className="rounded-full border border-[#b9e85b]/25 bg-[#b9e85b]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#b9e85b]">
+                      Admin
+                    </span>
+                  </>
+                )}
               </Link>
               {!adminMenuCollapsed && (
                 <button
@@ -391,71 +412,77 @@ export default function Sidebar({
                 <button
                   type="button"
                   aria-label="Expand main menu"
-                  className="absolute left-[52px] top-5 inline-flex size-7 items-center justify-center rounded-full border border-white/10 bg-[#161719] text-white/60 shadow-sm hover:text-white"
+                  className="absolute left-[52px] top-3.5 inline-flex size-7 items-center justify-center rounded-full border border-white/10 bg-[#161719] text-white/60 shadow-sm hover:text-white"
                   onClick={toggleAdminMenu}
                 >
                   <ChevronRight className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
-            <nav className={cn('flex-1 space-y-1', adminMenuCollapsed ? 'p-3' : 'p-4')}>
+            <nav className={cn('flex-1 space-y-1 overflow-y-auto', adminMenuCollapsed ? 'p-3' : 'p-4')}>
               {!adminMenuCollapsed && (
                 <p className="px-3 pb-2 text-[11px] tracking-[0.12em] uppercase text-white/45">Main Menu</p>
               )}
               {visiblePrimaryModules.map(({ key, href, label, icon: Icon }) => {
                 const active = activeModule === key;
+                const showNestedNav = active
+                  && modulesWithNestedNav.has(key)
+                  && !adminMenuCollapsed;
                 return (
-                  <Link
-                    key={href}
-                    href={href}
-                    title={adminMenuCollapsed ? label : undefined}
-                    className={cn(
-                      'flex items-center rounded-lg text-sm font-medium transition-colors',
-                      adminMenuCollapsed ? 'justify-center px-0 py-3' : 'justify-between gap-3 px-3 py-2.5',
-                      active
-                        ? 'bg-white text-black shadow-sm'
-                        : 'text-white/70 hover:bg-white/10 hover:text-white',
+                  <div key={key}>
+                    <Link
+                      href={href}
+                      title={adminMenuCollapsed ? label : undefined}
+                      aria-current={active ? 'page' : undefined}
+                      className={cn(
+                        'flex items-center rounded-lg text-sm font-medium transition-colors',
+                        adminMenuCollapsed ? 'justify-center px-0 py-3' : 'justify-between gap-3 px-3 py-2.5',
+                        active
+                          ? 'bg-white text-black shadow-sm'
+                          : 'text-white/70 hover:bg-white/10 hover:text-white',
+                      )}
+                    >
+                      <span className={cn('flex items-center', adminMenuCollapsed ? 'justify-center' : 'gap-3')}>
+                        <Icon className="h-4 w-4" />
+                        {!adminMenuCollapsed && <span>{label}</span>}
+                      </span>
+                      {!adminMenuCollapsed && (
+                        <ChevronRight
+                          className={cn(
+                            'h-4 w-4 transition-transform',
+                            active ? 'rotate-90 opacity-100' : 'opacity-30',
+                          )}
+                        />
+                      )}
+                    </Link>
+
+                    {showNestedNav && (
+                      <div className="ml-5 mt-1.5 mb-2 space-y-0.5 border-l border-white/15 pl-3">
+                        {secondaryNav.map((item) => {
+                          const childActive = activeSecondaryHref === item.href;
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              aria-current={childActive ? 'page' : undefined}
+                              className={cn(
+                                'block rounded-md px-3 py-2 text-[13px] font-medium transition-colors',
+                                childActive
+                                  ? 'bg-white/10 text-[#B9E85B]'
+                                  : 'text-white/55 hover:bg-white/5 hover:text-white',
+                              )}
+                            >
+                              <span className="block truncate">{item.label}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
                     )}
-                  >
-                    <span className={cn('flex items-center', adminMenuCollapsed ? 'justify-center' : 'gap-3')}>
-                      <Icon className="h-4 w-4" />
-                      {!adminMenuCollapsed && <span>{label}</span>}
-                    </span>
-                    {!adminMenuCollapsed && (
-                      <ChevronRight className={cn('h-4 w-4', active ? 'opacity-100' : 'opacity-30')} />
-                    )}
-                  </Link>
+                  </div>
                 );
               })}
             </nav>
           </div>
-
-          {showSecondaryPane && (
-            <div className="flex-1 bg-muted/30 flex flex-col min-w-0">
-              <div className="h-[73px] px-6 flex items-center border-b">
-                <h3 className="truncate text-2xl font-semibold text-foreground tracking-tight">{secondaryTitle}</h3>
-              </div>
-              <nav className="p-4 space-y-1 overflow-y-auto">
-                {secondaryNav.map(({ href, label, icon, match }) => {
-                  const active = isNavItemActive({ href, label, icon, match });
-                  return (
-                    <Link
-                      key={href}
-                      href={href}
-                      className={cn(
-                        'block rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
-                        active
-                          ? 'text-primary'
-                          : 'text-foreground/70 hover:bg-background/60 hover:text-foreground',
-                      )}
-                    >
-                      <span className="truncate">{label}</span>
-                    </Link>
-                  );
-                })}
-              </nav>
-            </div>
-          )}
         </aside>
       ) : (
         <aside className="hidden w-64 shrink-0 border-r bg-background md:flex md:flex-col">

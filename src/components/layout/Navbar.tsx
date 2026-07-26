@@ -1,9 +1,13 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+
+import ThemeToggle from '@/components/theme-toggle';
 import { createClient } from '@/lib/supabase/client';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,21 +16,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+
 import type { Role } from '@/types';
-import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
-import { useState } from 'react';
 
 interface NavbarProps {
   user: { name: string; email: string; role: Role };
-  isDemoMode?: boolean;
-  appEnv?: string;
 }
 
-export default function Navbar({ user, isDemoMode = false, appEnv = 'development' }: NavbarProps) {
+export default function Navbar({ user }: NavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [toggling, setToggling] = useState(false);
 
   const initials = user.name
     .split(' ')
@@ -40,16 +39,6 @@ export default function Navbar({ user, isDemoMode = false, appEnv = 'development
     await supabase.auth.signOut();
     router.push('/login');
     router.refresh();
-  }
-
-  async function handleDemoToggle() {
-    setToggling(true);
-    try {
-      await fetch('/api/demo-mode', { method: 'POST' });
-      router.refresh();
-    } finally {
-      setToggling(false);
-    }
   }
 
   const PAGE_TITLES: Record<string, string> = {
@@ -77,14 +66,10 @@ export default function Navbar({ user, isDemoMode = false, appEnv = 'development
   };
   const pageTitle = PAGE_TITLES[pathname] ?? PAGE_TITLES[Object.keys(PAGE_TITLES).find((k) => pathname.startsWith(k + '/')) ?? ''] ?? '';
 
-  const isProduction = appEnv === 'production';
-  const environmentLabel = isProduction ? 'prod' : isDemoMode ? 'demo' : 'live';
-  const switchEnabled = isProduction || !isDemoMode;
-
   return (
     <header className="h-14 border-b px-4 md:px-6 flex items-center justify-between bg-background">
       <div className="flex items-center gap-3">
-        <Link href="/dashboard" className="md:hidden">
+        <Link href="/admin" className="md:hidden">
           <Image src="/Aorthar Logo long complete.svg" alt="Aorthar" width={99} height={43} className="brightness-0 dark:brightness-100" unoptimized />
         </Link>
         <p className="hidden md:block text-sm font-medium text-foreground/80">
@@ -92,30 +77,7 @@ export default function Navbar({ user, isDemoMode = false, appEnv = 'development
         </p>
       </div>
       <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={isProduction ? undefined : handleDemoToggle}
-          disabled={isProduction || toggling}
-          role="switch"
-          aria-checked={switchEnabled}
-          title={isProduction ? 'Production environment' : isDemoMode ? 'Switch to live data' : 'Switch to demo data'}
-          className="hidden items-center gap-3 disabled:cursor-default disabled:opacity-100 sm:flex"
-        >
-          <span className="text-xs font-medium text-primary">
-            You are on {environmentLabel}
-          </span>
-          <span
-            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 ${
-              switchEnabled ? 'bg-emerald-600' : 'bg-orange-400'
-            }`}
-          >
-            <span
-              className={`absolute h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-                switchEnabled ? 'translate-x-[18px]' : 'translate-x-0.5'
-              }`}
-            />
-          </span>
-        </button>
+        <ThemeToggle />
 
         <Badge variant="secondary" className="capitalize">
           {user.role}

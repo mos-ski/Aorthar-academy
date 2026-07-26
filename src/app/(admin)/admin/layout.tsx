@@ -3,7 +3,6 @@ export const dynamic = 'force-dynamic';
 import Sidebar from '@/components/layout/Sidebar';
 import Navbar from '@/components/layout/Navbar';
 import { createClient } from '@/lib/supabase/server';
-import { isDemoMode } from '@/lib/demo/mode';
 
 async function getAdminUser() {
   try {
@@ -38,14 +37,11 @@ export default async function AdminLayout({
     role: 'admin' as const,
     adminLevel: 'super_admin' as const,
   };
-  const demo = await isDemoMode();
-  const appEnv = process.env.NEXT_PUBLIC_APP_ENV ?? 'development';
-
   return (
     <div className="flex h-dvh min-w-0 overflow-hidden bg-background">
       <Sidebar role={user.role} adminLevel={user.adminLevel} />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <Navbar user={user} isDemoMode={demo} appEnv={appEnv} />
+        <Navbar user={user} />
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 pb-24 sm:px-4 md:p-6 md:pb-6 lg:p-8 lg:pb-8">
           <div className="mx-auto w-full min-w-0 max-w-6xl space-y-6">
             {children}
