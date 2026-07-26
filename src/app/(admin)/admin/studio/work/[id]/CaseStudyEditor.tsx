@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ArrowDown, ArrowLeft, ArrowUp, Copy, ExternalLink, Plus, Save, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -112,8 +112,8 @@ export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactE
     setBlocks((current) => current.map((block) => block.id === nextBlock.id ? nextBlock : block));
   }
 
-  async function addBlock(type: StudioCaseStudyBlockType): Promise<void> {
-    const content = emptyContentByType[type];
+  async function addBlock(type: StudioCaseStudyBlockType, contentOverride?: Record<string, unknown>): Promise<void> {
+    const content = contentOverride ?? emptyContentByType[type];
     try {
       const res = await fetch(`/api/admin/studio/case-studies/${study.id}/blocks`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, content }),
@@ -216,6 +216,8 @@ export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactE
   </div>;
 }
 
+type UploadedFile = { url: string; mediaType: 'image' | 'video'; name: string };
+
 function EmptyCanvas({
   study,
   onAdd,
@@ -223,12 +225,15 @@ function EmptyCanvas({
   saving,
 }: {
   study: StudyDraft;
-  onAdd: (type: StudioCaseStudyBlockType) => Promise<void>;
+  onAdd: (type: StudioCaseStudyBlockType, content?: Record<string, unknown>) => Promise<void>;
   onSave: () => Promise<void>;
   saving: boolean;
 }): ReactElement {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const projectName = study.client || study.title || 'Project Name';
   const category = study.tags[0] ?? study.services[0] ?? null;
@@ -237,6 +242,41 @@ function EmptyCanvas({
   const filteredTypes = (Object.keys(emptyContentByType) as StudioCaseStudyBlockType[]).filter(
     (type) => !search || blockLabels[type].toLowerCase().includes(search.toLowerCase()),
   );
+
+  async function handleFiles(fileList: FileList | File[]): Promise<void> {
+    const files = Array.from(fileList);
+    if (!files.length) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      for (const file of files) formData.append('files', file);
+      const res = await fetch(`/api/admin/studio/case-studies/${study.id}/upload`, {
+        method: 'POST', body: formData,
+      });
+      const data = await res.json().catch((): { files?: UploadedFile[]; error?: string } => ({})) as { files?: UploadedFile[]; error?: string };
+      if (!res.ok) { toast.error(data.error ?? 'Upload failed'); return; }
+      const uploaded = data.files ?? [];
+      const images = uploaded.filter((f) => f.mediaType === 'image');
+      const videos = uploaded.filter((f) => f.mediaType === 'video');
+      for (let i = 0; i < images.length; i += 2) {
+        const batch = images.slice(i, i + 2);
+        await onAdd('media_row', {
+          layout: batch.length === 2 ? 'pair' : 'single',
+          items: batch.map((f) => ({ type: 'image', url: f.url, alt: f.name.replace(/\.[^.]+$/, ''), aspectRatio: '3/2' })),
+        });
+      }
+      for (const video of videos) {
+        await onAdd('video', { url: video.url, coverUrl: null, caption: null });
+      }
+      toast.success(`${uploaded.length} file${uploaded.length !== 1 ? 's' : ''} uploaded`);
+    } catch { toast.error('Upload failed'); } finally { setUploading(false); }
+  }
+
+  function onDragOver(e: React.DragEvent): void { e.preventDefault(); setIsDragging(true); }
+  function onDragLeave(e: React.DragEvent): void {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragging(false);
+  }
+  function onDrop(e: React.DragEvent): void { e.preventDefault(); setIsDragging(false); void handleFiles(e.dataTransfer.files); }
 
   return (
     <div style={{
@@ -295,14 +335,39 @@ function EmptyCanvas({
         {/* Canvas */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
           {/* Upload zone */}
-          <div style={{
-            flex: 1, background: 'rgba(72,72,72,0.40)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            minHeight: 400,
-          }}>
-            <div style={{ border: '3px dashed #484848', padding: 16, width: 296, textAlign: 'center' }}>
-              <p style={{ color: '#ebefe0', fontSize: 12, margin: 0, lineHeight: '18px' }}>
-                Drag and drop your files here{'\n'}or click to upload
+          <div
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+            onDrop={onDrop}
+            style={{
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              minHeight: 400,
+              background: isDragging ? 'rgba(167,210,82,0.06)' : 'rgba(72,72,72,0.40)',
+              transition: 'background 0.15s',
+            }}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
+              style={{ display: 'none' }}
+              onChange={(e) => { if (e.target.files) void handleFiles(e.target.files); e.target.value = ''; }}
+            />
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => !uploading && fileInputRef.current?.click()}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
+              style={{
+                border: `3px dashed ${isDragging ? '#a7d252' : '#484848'}`,
+                padding: 16, width: 296, textAlign: 'center',
+                cursor: uploading ? 'wait' : 'pointer',
+                transition: 'border-color 0.15s',
+              }}
+            >
+              <p style={{ color: '#ebefe0', fontSize: 12, margin: 0, lineHeight: '18px', whiteSpace: 'pre-line' }}>
+                {uploading ? 'Uploading…' : isDragging ? 'Drop files here' : 'Drag and drop your files here\nor click to upload'}
               </p>
             </div>
           </div>
