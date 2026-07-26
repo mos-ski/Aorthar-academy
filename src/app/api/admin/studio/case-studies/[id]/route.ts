@@ -40,6 +40,13 @@ function stringArray(value: unknown): string[] | undefined {
   return value.map((item) => item.trim()).filter(Boolean);
 }
 
+function pendingValue<T>(updates: Record<string, unknown>, field: string, currentValue: T): T | null {
+  if (Object.prototype.hasOwnProperty.call(updates, field)) {
+    return updates[field] as T | null;
+  }
+  return currentValue;
+}
+
 export async function GET(_request: NextRequest, { params }: Params): Promise<NextResponse> {
   try {
     await requireAdminApi('content');
@@ -129,12 +136,12 @@ export async function PATCH(request: NextRequest, { params }: Params): Promise<N
       if (countError) return NextResponse.json({ error: countError.message }, { status: 500 });
 
       const issues = validateCaseStudyPublish({
-        title: (updates.title as string | null | undefined) ?? current.title,
-        slug: (updates.slug as string | null | undefined) ?? current.slug,
-        subtitle: (updates.subtitle as string | null | undefined) ?? current.subtitle,
-        cover_url: (updates.cover_url as string | null | undefined) ?? current.cover_url,
-        year: (updates.year as string | null | undefined) ?? current.year,
-        release_date: (updates.release_date as string | null | undefined) ?? current.release_date,
+        title: pendingValue(updates, 'title', current.title),
+        slug: pendingValue(updates, 'slug', current.slug),
+        subtitle: pendingValue(updates, 'subtitle', current.subtitle),
+        cover_url: pendingValue(updates, 'cover_url', current.cover_url),
+        year: pendingValue(updates, 'year', current.year),
+        release_date: pendingValue(updates, 'release_date', current.release_date),
         blockCount: count ?? 0,
       });
 

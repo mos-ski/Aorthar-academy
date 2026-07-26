@@ -19,3 +19,14 @@
 ## Scope
 
 This task adds no admin pages, list UI, editor UI, freeform JSON editing surface, or upload functionality. Case-study media remains external URL based.
+
+## Review Fixes
+
+- Publishing now validates the effective pending values with an own-property lookup. Explicit `null` updates are no longer replaced by the persisted value during validation, so publishing with `cover_url: null` correctly returns the required-cover error instead of clearing the cover on a published study.
+- Reordering now rejects duplicate IDs, reads the complete persisted block set for the case study, and requires `orderedIds` to be an exact unique match. The validated ordering is applied with one `upsert` statement, so the write is atomic rather than a series of independently successful updates.
+
+## Review Fix Verification
+
+- `bun run test src/__tests__/integration/api/admin-studio-case-studies.test.ts src/__tests__/unit/studio-case-studies.test.ts` - passed: 2 files, 7 tests.
+- `bunx eslint src/app/api/admin/studio/case-studies/[id]/route.ts src/app/api/admin/studio/case-studies/[id]/blocks/reorder/route.ts src/__tests__/integration/api/admin-studio-case-studies.test.ts` - passed.
+- `git diff --check` - passed.
