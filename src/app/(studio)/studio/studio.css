@@ -1,106 +1,367 @@
-/* Business site responsive styles */
+/* Studio site styles */
 
-.biz-nav-links {
+.studio-root {
+  background: #18191a;
+  background-image:
+    radial-gradient(ellipse 120px 68px at 85% 0%, rgba(167, 210, 82, 0.08) 0%, transparent 65%),
+    radial-gradient(ellipse 90px 55px at -10% 0%, rgba(8, 105, 74, 0.11) 0%, transparent 70%),
+    linear-gradient(180deg, #0f1112 0%, #141617 55%);
+  color: #fff;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.studio-nav {
   display: flex;
-  gap: 2rem;
-  list-style: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10.8px 64px 11.8px;
+}
+
+/* ── Hero ───────────────────────────────────────── */
+.studio-hero {
+  padding: 80px 64px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 59px;
+}
+
+.studio-hero__headline {
+  font-family: Impact, 'Arial Narrow', Arial, sans-serif;
+  font-size: 85px;
+  font-weight: 900;
+  line-height: 0.84;
+  letter-spacing: -3.825px;
+  text-transform: uppercase;
+  color: #fff;
   margin: 0;
-  padding: 0;
 }
 
-.biz-2col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 5rem;
-  align-items: start;
+.studio-hero__body {
+  color: #fff;
+  font-size: 32px;
+  line-height: 1.35;
+  letter-spacing: -0.48px;
+  max-width: 628px;
+  margin: 0;
+  font-weight: 400;
 }
 
-.biz-services-detail {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 4rem;
-  align-items: start;
-  padding-top: 5rem;
-  padding-bottom: 5rem;
-  border-top: 1px solid #1f1f1f;
+.studio-hero__ctas {
+  display: flex;
+  gap: 14.4px;
+  align-items: center;
 }
 
-.biz-contact-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6rem;
-  align-items: start;
+/* ── Case study section ─────────────────────────── */
+.studio-case-section {
+  display: flex;
+  gap: 21.6px;
+  align-items: center;
+  padding: 100.8px 64px;
 }
 
-.biz-hero {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 8rem 2rem 6rem;
+.studio-case-section__meta {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 570px;
+  max-width: 570px;
+  flex-shrink: 0;
+  height: 674px;
 }
 
+.studio-case-section__client {
+  font-size: 40px;
+  letter-spacing: -0.36px;
+  color: #fff;
+  margin: 0;
+  font-weight: 400;
+  font-family: system-ui, -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  line-height: 1.35;
+}
+
+.studio-case-section__tags {
+  color: #a6a6a6;
+  font-size: 16px;
+  letter-spacing: -0.24px;
+  margin: 0 0 0 0;
+  line-height: 1.35;
+}
+
+.studio-case-section__desc {
+  color: #fff;
+  font-size: 18px;
+  line-height: 1.4;
+  letter-spacing: -0.36px;
+  margin: 0;
+  font-weight: 400;
+}
+
+.studio-case-section__image-wrap {
+  flex: 1 0 0;
+  min-width: 1px;
+  position: relative;
+  height: 670.62px;
+  overflow: hidden;
+}
+
+.studio-case-section__saturation {
+  position: absolute;
+  inset: 0;
+  background: white;
+  mix-blend-mode: saturation;
+  pointer-events: none;
+}
+
+.studio-case-section__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.studio-case-section__cta {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #ebefe0;
+  color: #18191a;
+  font-family: Impact, 'Arial Narrow', Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  padding: 10px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── About section ──────────────────────────────── */
+.studio-about-section {
+  padding: 0 64px 64px;
+}
+
+.studio-about-section__rule {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 0 0 42px;
+}
+
+.studio-about-section__inner {
+  display: flex;
+  gap: 0;
+}
+
+.studio-about-section__label {
+  color: #a6a6a6;
+  font-size: 16px;
+  letter-spacing: -0.24px;
+  width: 589px;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+.studio-about-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: #a6a6a6;
+  font-size: 16px;
+  line-height: 1.35;
+  letter-spacing: -0.08px;
+  max-width: 683px;
+}
+
+.studio-about-section__body p {
+  margin: 0;
+}
+
+/* ── Legacy section class ───────────────────────── */
 .biz-section {
   max-width: 1200px;
   margin: 0 auto;
   padding: 6rem 2rem;
 }
 
-@media (max-width: 768px) {
-  /* Nav: hide links, keep logo + CTA */
-  .biz-nav-links {
-    display: none;
+/* ── Work index ─────────────────────────────────── */
+.studio-work-index {
+  padding: 100.8px 64px;
+}
+
+.studio-work-empty {
+  padding-top: 80px;
+}
+
+.studio-work-kicker {
+  color: #a7d252;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+}
+
+.studio-work-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+  gap: 2px;
+  margin-top: 3rem;
+}
+
+.studio-work-card {
+  position: relative;
+  display: block;
+  text-decoration: none;
+  overflow: hidden;
+  background: #111;
+  aspect-ratio: 4/3;
+}
+
+.studio-work-card__media {
+  position: absolute;
+  inset: 0;
+}
+
+.studio-work-card__media img {
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.studio-work-card:hover .studio-work-card__media img {
+  transform: scale(1.04);
+}
+
+.studio-work-card__meta {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 2rem 1.5rem 1.5rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
+}
+
+.studio-work-card__meta h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 0.25rem;
+}
+
+.studio-work-card__meta p {
+  color: #a6a6a6;
+  font-size: 0.875rem;
+  margin: 0 0 0.5rem;
+}
+
+.studio-work-card__meta span {
+  color: #a7d252;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ── Responsive ─────────────────────────────────── */
+@media (max-width: 1024px) {
+  .studio-nav {
+    padding: 10px 32px 12px;
   }
 
-  /* Hero */
-  .biz-hero {
-    padding: 4rem 1.5rem 3rem;
+  .studio-hero {
+    padding: 60px 32px 0;
+    gap: 40px;
   }
 
-  /* Inner sections */
-  .biz-section {
-    padding: 3.5rem 1.5rem;
+  .studio-hero__headline {
+    font-size: 56px;
+    letter-spacing: -2px;
   }
 
-  /* Stack 2-column grids */
-  .biz-2col {
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
+  .studio-hero__body {
+    font-size: 22px;
   }
 
-  .biz-services-detail {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-    padding-top: 3rem;
-    padding-bottom: 3rem;
-  }
-
-  /* Contact: form on top, info below */
-  .biz-contact-grid {
-    grid-template-columns: 1fr;
-    gap: 3rem;
-  }
-
-  .biz-contact-grid > :first-child {
-    order: 2;
-  }
-
-  .biz-contact-grid > :last-child {
-    order: 1;
-  }
-
-  /* CTA sections */
-  .biz-cta-section {
-    padding: 4rem 1.5rem !important;
-  }
-
-  /* Footer nav wrap */
-  .biz-footer {
+  .studio-case-section {
     flex-direction: column;
-    gap: 2rem;
+    padding: 64px 32px;
+    gap: 40px;
   }
 
-  /* Packages CTA box */
-  .biz-cta-box {
+  .studio-case-section__meta {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    gap: 32px;
+  }
+
+  .studio-case-section__image-wrap {
+    height: 400px;
+    width: 100%;
+  }
+
+  .studio-about-section {
+    padding: 0 32px 48px;
+  }
+
+  .studio-about-section__inner {
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 24px;
+  }
+
+  .studio-about-section__label {
+    width: auto;
+  }
+
+  .studio-work-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .studio-nav {
+    padding: 10px 20px 12px;
+  }
+
+  .studio-hero {
+    padding: 48px 20px 0;
+    gap: 32px;
+  }
+
+  .studio-hero__headline {
+    font-size: 40px;
+    letter-spacing: -1.5px;
+  }
+
+  .studio-hero__body {
+    font-size: 18px;
+  }
+
+  .studio-hero__ctas {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .studio-case-section {
+    padding: 48px 20px;
+  }
+
+  .studio-case-section__client {
+    font-size: 28px;
+  }
+
+  .studio-case-section__image-wrap {
+    height: 280px;
+  }
+
+  .studio-about-section {
+    padding: 0 20px 40px;
+  }
+
+  footer {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
   }
 }

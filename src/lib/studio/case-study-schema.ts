@@ -64,16 +64,9 @@ export type CaseStudyPublishInput = {
   slug: string | null;
   subtitle: string | null;
   cover_url: string | null;
-  cover_media_type?: StudioMediaType;
-  preview_video_url?: string | null;
-  og_image_url?: string | null;
   year: string | null;
   release_date: string | null;
-  blocks: StudioCaseStudyBlockRow[];
-};
-
-export type StudioCaseStudyPublishRecord = Omit<CaseStudyPublishInput, 'blocks'> & {
-  status: StudioCaseStudyStatus;
+  blockCount: number;
 };
 
 function isHttpsUrl(value: string): boolean {
@@ -89,182 +82,41 @@ const httpsUrlSchema = z.string().url().refine(
   'URL must use HTTPS.',
 );
 
-const draftMediaItemSchema = z.object({
-  type: z.enum(['image', 'video']),
-  url: z.string(),
-  alt: z.string(),
-  aspectRatio: z.string(),
-}).strict();
-
-const draftTextBlockSchema = z.object({ body: z.string() }).strict();
-const draftMediaRowBlockSchema = z.object({
-  layout: z.enum(['single', 'pair']),
-  items: z.array(draftMediaItemSchema).max(2),
-}).strict();
-const draftVideoBlockSchema = z.object({
-  url: z.string(),
-  coverUrl: z.string().nullable(),
-  caption: z.string().nullable(),
-}).strict();
-const draftQuoteBlockSchema = z.object({
-  quote: z.string(),
-  name: z.string().nullable(),
-  role: z.string().nullable(),
-}).strict();
-const draftProcessNotesBlockSchema = z.object({
-  orientation: z.enum(['horizontal', 'vertical']),
-  title: z.string(),
-  body: z.string(),
-  images: z.array(z.object({ url: z.string(), alt: z.string() }).strict()),
-}).strict();
-const draftCreditsBlockSchema = z.object({
-  items: z.array(z.object({
-    category: z.string(),
-    names: z.string().nullable(),
-    url: z.string().nullable(),
-  }).strict()),
-}).strict();
-
 const mediaItemSchema = z.object({
   type: z.enum(['image', 'video']),
   url: httpsUrlSchema,
   alt: z.string(),
   aspectRatio: z.string().default(''),
-}).strict();
+});
 
-const textBlockSchema = z.object({ body: z.string() }).strict();
+const textBlockSchema = z.object({ body: z.string() });
 const mediaRowBlockSchema = z.object({
   layout: z.enum(['single', 'pair']),
   items: z.array(mediaItemSchema),
-}).strict();
+});
 const videoBlockSchema = z.object({
   url: httpsUrlSchema,
   coverUrl: httpsUrlSchema.nullable(),
   caption: z.string().nullable(),
-}).strict();
+});
 const quoteBlockSchema = z.object({
   quote: z.string(),
   name: z.string().nullable(),
   role: z.string().nullable(),
-}).strict();
+});
 const processNotesBlockSchema = z.object({
   orientation: z.enum(['horizontal', 'vertical']),
   title: z.string(),
   body: z.string(),
-  images: z.array(z.object({ url: httpsUrlSchema, alt: z.string() }).strict()),
-}).strict();
+  images: z.array(z.object({ url: httpsUrlSchema, alt: z.string() })),
+});
 const creditsBlockSchema = z.object({
   items: z.array(z.object({
     category: z.string(),
     names: z.string().nullable(),
     url: z.string().nullable(),
-  }).strict()),
-}).strict();
-
-const draftBlockSchemas = {
-  text: draftTextBlockSchema,
-  media_row: draftMediaRowBlockSchema,
-  video: draftVideoBlockSchema,
-  quote: draftQuoteBlockSchema,
-  process_notes: draftProcessNotesBlockSchema,
-  credits: draftCreditsBlockSchema,
-} as const;
-
-const blockLabels: Record<StudioCaseStudyBlockType, string> = {
-  text: 'Text',
-  media_row: 'Media row',
-  video: 'Video',
-  quote: 'Quote',
-  process_notes: 'Process notes',
-  credits: 'Credits',
-};
-
-function isCaseStudyBlockType(value: unknown): value is StudioCaseStudyBlockType {
-  return typeof value === 'string' && Object.prototype.hasOwnProperty.call(draftBlockSchemas, value);
-}
-
-function isLikelyVideoUrl(value: string): boolean {
-  const vimeoUrl = getVimeoEmbedUrl(value);
-  if (vimeoUrl) return true;
-
-  try {
-    const pathname = new URL(value).pathname.toLowerCase();
-    return /\.(mp4|m4v|webm|ogv|ogg|mov)$/.test(pathname);
-  } catch {
-    return false;
-  }
-}
-
-function publishBlockIssues(row: StudioCaseStudyBlockRow, index: number): { errors: string[]; renderable: boolean } {
-  if (!isCaseStudyBlockType(row.type)) {
-    return { errors: [`Block ${index + 1} has an invalid type.`], renderable: false };
-  }
-
-  const label = blockLabels[row.type];
-  const parsed = draftBlockSchemas[row.type].safeParse(row.content);
-  if (!parsed.success) {
-    return { errors: [`Block ${index + 1} (${label}) has malformed content.`], renderable: false };
-  }
-
-  switch (row.type) {
-    case 'text': {
-      const content = draftTextBlockSchema.parse(row.content);
-      return content.body.trim()
-        ? { errors: [], renderable: true }
-        : { errors: [`Block ${index + 1} (${label}) must include body text before publishing.`], renderable: false };
-    }
-    case 'media_row': {
-      const content = draftMediaRowBlockSchema.parse(row.content);
-      if (content.items.length === 0) {
-        return { errors: [`Block ${index + 1} (${label}) must include media before publishing.`], renderable: false };
-      }
-      const hasInvalidMedia = content.items.some((item) => {
-        if (!isHttpsUrl(item.url)) return true;
-        return item.type === 'image' && !isCaseStudyImageUrl(item.url);
-      });
-      return hasInvalidMedia
-        ? { errors: [`Block ${index + 1} (${label}) has an invalid media URL.`], renderable: false }
-        : { errors: [], renderable: true };
-    }
-    case 'video': {
-      const content = draftVideoBlockSchema.parse(row.content);
-      if (!isHttpsUrl(content.url)) {
-        return { errors: [`Block ${index + 1} (${label}) must include an HTTPS video URL before publishing.`], renderable: false };
-      }
-      if (content.coverUrl && !isCaseStudyImageUrl(content.coverUrl)) {
-        return { errors: [`Block ${index + 1} (${label}) cover must be an HTTPS image URL.`], renderable: false };
-      }
-      return { errors: [], renderable: true };
-    }
-    case 'quote': {
-      const content = draftQuoteBlockSchema.parse(row.content);
-      return content.quote.trim()
-        ? { errors: [], renderable: true }
-        : { errors: [`Block ${index + 1} (${label}) must include quote text before publishing.`], renderable: false };
-    }
-    case 'process_notes': {
-      const content = draftProcessNotesBlockSchema.parse(row.content);
-      if (!content.title.trim() || !content.body.trim()) {
-        return { errors: [`Block ${index + 1} (${label}) must include a title and body before publishing.`], renderable: false };
-      }
-      if (content.images.some((image) => !isCaseStudyImageUrl(image.url))) {
-        return { errors: [`Block ${index + 1} (${label}) has an invalid image URL.`], renderable: false };
-      }
-      return { errors: [], renderable: true };
-    }
-    case 'credits': {
-      const content = draftCreditsBlockSchema.parse(row.content);
-      const hasInvalidCredit = content.items.length === 0 || content.items.some((item) => (
-        !item.category.trim()
-        || !item.names?.trim()
-        || Boolean(item.url && !isHttpsUrl(item.url))
-      ));
-      return hasInvalidCredit
-        ? { errors: [`Block ${index + 1} (${label}) must include complete credit entries before publishing.`], renderable: false }
-        : { errors: [], renderable: true };
-    }
-  }
-}
+  })),
+});
 
 export function normalizeCaseStudySlug(value: string): string {
   return value
@@ -272,51 +124,6 @@ export function normalizeCaseStudySlug(value: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-}
-
-export function getVimeoEmbedUrl(value: string): string | null {
-  try {
-    const url = new URL(value);
-    if (url.protocol !== 'https:') return null;
-
-    const hostname = url.hostname.toLowerCase();
-    if (hostname === 'player.vimeo.com') {
-      return /^\/video\/\d+/.test(url.pathname) ? url.toString() : null;
-    }
-    if (hostname !== 'vimeo.com' && hostname !== 'www.vimeo.com') return null;
-
-    const videoId = url.pathname.split('/').filter(Boolean).findLast((part) => /^\d+$/.test(part));
-    return videoId ? `https://player.vimeo.com/video/${videoId}` : null;
-  } catch {
-    return null;
-  }
-}
-
-export function isCaseStudyImageUrl(value: string): boolean {
-  return isHttpsUrl(value) && !isLikelyVideoUrl(value);
-}
-
-export function validateCaseStudyBlockContent(type: unknown, content: unknown): string[] {
-  if (!isCaseStudyBlockType(type)) return ['Invalid block type.'];
-  return draftBlockSchemas[type].safeParse(content).success
-    ? []
-    : ['Block content has malformed or unknown fields.'];
-}
-
-export function matchesCaseStudySearch(
-  study: Pick<StudioCaseStudyAdminSummary, 'title' | 'slug' | 'client' | 'tags' | 'services'>,
-  query: string,
-): boolean {
-  const normalizedQuery = query.trim().toLowerCase();
-  if (!normalizedQuery) return true;
-
-  return [
-    study.title,
-    study.slug,
-    study.client ?? '',
-    ...study.tags,
-    ...study.services,
-  ].some((value) => value.toLowerCase().includes(normalizedQuery));
 }
 
 export function parseCaseStudyBlock(row: StudioCaseStudyBlockRow): StudioCaseStudyBlock {
@@ -386,40 +193,13 @@ export function validateCaseStudyPublish(input: CaseStudyPublishInput): string[]
     errors.push('Cover URL is required before publishing.');
   } else if (!httpsUrlSchema.safeParse(input.cover_url.trim()).success) {
     errors.push('Cover URL must use HTTPS before publishing.');
-  } else if (!isCaseStudyImageUrl(input.cover_url.trim())) {
-    errors.push('Cover URL must be an image before publishing.');
-  }
-  if (input.preview_video_url?.trim() && !isHttpsUrl(input.preview_video_url.trim())) {
-    errors.push('Preview video URL must use HTTPS before publishing.');
-  }
-  if (input.og_image_url?.trim() && !isCaseStudyImageUrl(input.og_image_url.trim())) {
-    errors.push('Open Graph image URL must be an HTTPS image before publishing.');
   }
   if (!input.year?.trim() && !input.release_date) {
     errors.push('Year or release date is required before publishing.');
   }
-
-  let renderableBlockCount = 0;
-  input.blocks.forEach((block, index) => {
-    const result = publishBlockIssues(block, index);
-    errors.push(...result.errors);
-    if (result.renderable) renderableBlockCount += 1;
-  });
-  if (renderableBlockCount < 1) {
-    errors.push(input.blocks.length === 0
-      ? 'At least one content block is required before publishing.'
-      : 'At least one renderable content block is required before publishing.');
-  }
+  if (input.blockCount < 1) errors.push('At least one content block is required before publishing.');
 
   return errors;
-}
-
-export function validatePublishedCaseStudyState(
-  study: StudioCaseStudyPublishRecord,
-  blocks: StudioCaseStudyBlockRow[],
-): string[] {
-  if (study.status !== 'published') return [];
-  return validateCaseStudyPublish({ ...study, blocks });
 }
 
 export function resolveNextCaseStudy(
