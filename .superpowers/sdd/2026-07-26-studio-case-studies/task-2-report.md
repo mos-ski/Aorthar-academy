@@ -78,3 +78,56 @@ Completed successfully. Existing warnings reported only: Next.js selected the pa
 ## Concerns
 
 None. The full `bun run test` suite was intentionally not run because the task brief notes unrelated pre-existing validator and checkout failures; the required focused test is green.
+
+---
+
+## Review Fix: HTTPS Media Validation And Fallback Coverage
+
+### Changes
+
+- Added HTTPS-only validation for case-study cover URLs before publishing.
+- Added HTTPS-only Zod validation for media-row item URLs, video URLs and cover URLs, and process-notes image URLs. Invalid block content now uses the existing safe fallback.
+- Added unit coverage for rejecting an `http://` cover URL, malformed media-row fallback, and unknown-block fallback.
+
+### RED
+
+Command:
+
+```sh
+bun run test src/__tests__/unit/studio-case-studies.test.ts
+```
+
+Output:
+
+```text
+Test Files  1 failed (1)
+Tests  2 failed | 2 passed (4)
+
+Expected: ["Cover URL must use HTTPS before publishing."]
+Received: []
+
+Expected malformed media-row items: []
+Received: [{ url: "/relative.jpg", ... }]
+```
+
+### GREEN
+
+Command:
+
+```sh
+bun run test src/__tests__/unit/studio-case-studies.test.ts
+bunx tsc --noEmit
+```
+
+Output:
+
+```text
+Test Files  1 passed (1)
+Tests  4 passed (4)
+```
+
+TypeScript completed successfully with no output.
+
+### Concerns
+
+None.

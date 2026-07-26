@@ -28,6 +28,16 @@ describe('studio case-study helpers', () => {
       'Year or release date is required before publishing.',
       'At least one content block is required before publishing.',
     ]);
+
+    expect(validateCaseStudyPublish({
+      title: 'Sporting Lagos',
+      slug: 'sporting-lagos',
+      subtitle: 'A studio case study',
+      cover_url: 'http://example.com/cover.jpg',
+      year: '2026',
+      release_date: null,
+      blockCount: 1,
+    })).toEqual(['Cover URL must use HTTPS before publishing.']);
   });
 
   test('parses known block rows and falls back safely', () => {
@@ -46,6 +56,22 @@ describe('studio case-study helpers', () => {
       sort_order: 2,
       content: { layout: 'pair', items: [{ type: 'image', url: 'https://example.com/a.jpg', alt: 'A' }] },
     })).toMatchObject({ type: 'media_row', layout: 'pair' });
+
+    expect(parseCaseStudyBlock({
+      id: 'block-3',
+      case_study_id: 'case-1',
+      type: 'media_row',
+      sort_order: 3,
+      content: { layout: 'single', items: [{ type: 'image', url: '/relative.jpg', alt: 'Invalid' }] },
+    })).toMatchObject({ type: 'media_row', layout: 'single', items: [] });
+
+    expect(parseCaseStudyBlock({
+      id: 'block-4',
+      case_study_id: 'case-1',
+      type: 'unknown',
+      sort_order: 4,
+      content: {},
+    })).toMatchObject({ type: 'text', body: '' });
   });
 
   test('resolves the next published project by ordered list', () => {

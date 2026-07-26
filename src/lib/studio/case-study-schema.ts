@@ -69,9 +69,22 @@ export type CaseStudyPublishInput = {
   blockCount: number;
 };
 
+function isHttpsUrl(value: string): boolean {
+  try {
+    return new URL(value).protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+const httpsUrlSchema = z.string().url().refine(
+  isHttpsUrl,
+  'URL must use HTTPS.',
+);
+
 const mediaItemSchema = z.object({
   type: z.enum(['image', 'video']),
-  url: z.string(),
+  url: httpsUrlSchema,
   alt: z.string(),
   aspectRatio: z.string().default(''),
 });
@@ -82,8 +95,8 @@ const mediaRowBlockSchema = z.object({
   items: z.array(mediaItemSchema),
 });
 const videoBlockSchema = z.object({
-  url: z.string(),
-  coverUrl: z.string().nullable(),
+  url: httpsUrlSchema,
+  coverUrl: httpsUrlSchema.nullable(),
   caption: z.string().nullable(),
 });
 const quoteBlockSchema = z.object({
@@ -95,7 +108,7 @@ const processNotesBlockSchema = z.object({
   orientation: z.enum(['horizontal', 'vertical']),
   title: z.string(),
   body: z.string(),
-  images: z.array(z.object({ url: z.string(), alt: z.string() })),
+  images: z.array(z.object({ url: httpsUrlSchema, alt: z.string() })),
 });
 const creditsBlockSchema = z.object({
   items: z.array(z.object({
@@ -176,7 +189,11 @@ export function validateCaseStudyPublish(input: CaseStudyPublishInput): string[]
   if (!input.title?.trim()) errors.push('Title is required.');
   if (!input.slug?.trim()) errors.push('Slug is required.');
   if (!input.subtitle?.trim()) errors.push('Subtitle is required before publishing.');
-  if (!input.cover_url?.trim()) errors.push('Cover URL is required before publishing.');
+  if (!input.cover_url?.trim()) {
+    errors.push('Cover URL is required before publishing.');
+  } else if (!httpsUrlSchema.safeParse(input.cover_url.trim()).success) {
+    errors.push('Cover URL must use HTTPS before publishing.');
+  }
   if (!input.year?.trim() && !input.release_date) {
     errors.push('Year or release date is required before publishing.');
   }
