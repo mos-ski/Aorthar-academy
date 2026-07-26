@@ -51,12 +51,28 @@ function fieldValue(value: string | null): string { return value ?? ''; }
 export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactElement {
   const router = useRouter();
   const [draft, setDraft] = useState<StudyDraft>(() => {
-    const initial = { ...study };
-    delete initial.blocks;
-    delete initial.created_at;
-    delete initial.updated_at;
-    delete initial.published_at;
-    return initial;
+    return {
+      id: study.id,
+      slug: study.slug,
+      title: study.title,
+      subtitle: study.subtitle,
+      client: study.client,
+      year: study.year,
+      tags: study.tags,
+      services: study.services,
+      cover_url: study.cover_url,
+      cover_alt: study.cover_alt,
+      cover_media_type: study.cover_media_type,
+      is_featured: study.is_featured,
+      display_order: study.display_order,
+      release_date: study.release_date,
+      featured_in: study.featured_in,
+      preview_video_url: study.preview_video_url,
+      seo_title: study.seo_title,
+      seo_description: study.seo_description,
+      og_image_url: study.og_image_url,
+      status: study.status,
+    };
   });
   const [blocks, setBlocks] = useState<StudioCaseStudyBlock[]>(study.blocks);
   const [saving, setSaving] = useState<boolean>(false);
