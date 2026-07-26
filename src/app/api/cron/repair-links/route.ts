@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDemoStudentSnapshot, getDemoCourseDetail } from '@/lib/demo/studentSnapshot';
 import { healCourseLessons, getLinkRepairCacheSize } from '@/lib/demo/youtubeLinkResolver';
+import { pingHeartbeat } from '@/lib/checkly/heartbeat';
 
 export async function GET(req: Request) {
   const auth = req.headers.get('authorization');
@@ -9,6 +10,9 @@ export async function GET(req: Request) {
   if (!expected || auth !== `Bearer ${expected}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  // Ping Checkly heartbeat to indicate cron job started
+  await pingHeartbeat('repair-links');
 
   const snapshot = getDemoStudentSnapshot();
   const courseIds = snapshot.years.flatMap((year) =>
