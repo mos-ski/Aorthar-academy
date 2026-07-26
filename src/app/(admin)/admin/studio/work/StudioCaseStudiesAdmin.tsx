@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { matchesCaseStudySearch } from '@/lib/studio/case-study-schema';
 import type { StudioCaseStudyAdminSummary, StudioCaseStudyStatus } from '@/lib/studio/case-study-schema';
 
 type StudioCaseStudiesAdminProps = {
@@ -59,12 +60,7 @@ export default function StudioCaseStudiesAdmin({ studies }: StudioCaseStudiesAdm
 
     return studies.filter((study) => {
       const matchesStatus = status === 'all' || study.status === status;
-      const matchesQuery = !normalizedQuery || [
-        study.title,
-        study.slug,
-        study.client ?? '',
-        ...study.tags,
-      ].some((value) => value.toLowerCase().includes(normalizedQuery));
+      const matchesQuery = matchesCaseStudySearch(study, normalizedQuery);
 
       return matchesStatus && matchesQuery;
     });
@@ -118,9 +114,17 @@ export default function StudioCaseStudiesAdmin({ studies }: StudioCaseStudiesAdm
     }
   }
 
-  async function archiveStudy(id: string): Promise<void> {
+  async function archiveStudy(study: StudioCaseStudyAdminSummary): Promise<void> {
+    const willArchive = study.status === 'published' || Boolean(study.published_at);
+    const confirmed = window.confirm(
+      willArchive
+        ? `Archive "${study.title}"? It will no longer be public.`
+        : `Permanently delete "${study.title}"? This cannot be undone.`,
+    );
+    if (!confirmed) return;
+
     try {
-      const res = await fetch(`/api/admin/studio/case-studies/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/studio/case-studies/${study.id}`, { method: 'DELETE' });
       const data = await res.json().catch((): ApiResponse | null => null) as ApiResponse | null;
       if (!res.ok) {
         toast.error(data?.error ?? 'Failed to archive case study');
@@ -275,22 +279,22 @@ export default function StudioCaseStudiesAdmin({ studies }: StudioCaseStudiesAdm
                         <Button asChild variant="ghost" size="sm">
                           <Link href={`/admin/studio/work/${study.id}`}>Edit</Link>
                         </Button>
-                        <Button asChild variant="ghost" size="sm">
+                        {study.status === 'published' ? <Button asChild variant="ghost" size="sm">
                           <a href={`/studio/work/${study.slug}`} target="_blank" rel="noreferrer">
-                            Preview
+                            View live
                             <ExternalLink />
                           </a>
-                        </Button>
+                        </Button> : null}
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
                           className="text-destructive hover:text-destructive"
-                          onClick={() => void archiveStudy(study.id)}
-                          aria-label={study.status === 'published' ? `Archive ${study.title}` : `Delete ${study.title}`}
+                          onClick={() => void archiveStudy(study)}
+                          aria-label={study.status === 'published' || study.published_at ? `Archive ${study.title}` : `Delete ${study.title}`}
                         >
-                          {study.status === 'published' ? <Archive /> : <Trash2 />}
-                          {study.status === 'published' ? 'Archive' : 'Delete'}
+                          {study.status === 'published' || study.published_at ? <Archive /> : <Trash2 />}
+                          {study.status === 'published' || study.published_at ? 'Archive' : 'Delete'}
                         </Button>
                       </div>
                     </TableCell>

@@ -127,10 +127,12 @@
   min-height: calc(100svh - 83px);
 }
 
-.studio-case-hero__media video {
+.studio-case-hero__media video,
+.studio-case-hero__media iframe {
   display: block;
   width: 100%;
   height: 100%;
+  border: 0;
   object-fit: cover;
 }
 
@@ -257,10 +259,13 @@
 }
 
 .studio-case-media-row video,
-.studio-case-video video {
+.studio-case-media-row iframe,
+.studio-case-video video,
+.studio-case-video iframe {
   display: block;
   width: 100%;
   height: 100%;
+  border: 0;
   object-fit: cover;
 }
 

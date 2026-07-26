@@ -1,9 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import type {
-  StudioCaseStudyBlock,
-  StudioCaseStudyDetail,
-  StudioCaseStudySummary,
+import {
+  getVimeoEmbedUrl,
+  isCaseStudyImageUrl,
+  type StudioCaseStudyBlock,
+  type StudioCaseStudyDetail,
+  type StudioCaseStudySummary,
 } from '@/lib/studio/case-study-schema';
 
 type Props = {
@@ -11,15 +13,48 @@ type Props = {
   nextStudy: StudioCaseStudySummary | null;
 };
 
-function Media({ alt, src }: { alt: string; src: string }): React.ReactElement {
+function Media({ alt, src }: { alt: string; src: string }): React.ReactElement | null {
+  if (!isCaseStudyImageUrl(src)) return null;
   return <Image src={src} alt={alt} fill sizes="(max-width: 768px) 100vw, 1200px" unoptimized />;
 }
 
-function CoverMedia({ study }: Pick<Props, 'study'>): React.ReactElement | null {
-  if (!study.cover_url) return null;
+function VideoMedia({
+  label,
+  poster,
+  url,
+}: {
+  label: string;
+  poster?: string;
+  url: string;
+}): React.ReactElement {
+  const embedUrl = getVimeoEmbedUrl(url);
 
-  if (study.cover_media_type === 'video') {
-    return <video controls playsInline preload="metadata" src={study.cover_url} aria-label={`${study.title} project film`} />;
+  if (embedUrl) {
+    return (
+      <iframe
+        src={embedUrl}
+        title={label}
+        allow="autoplay; fullscreen; picture-in-picture"
+        allowFullScreen
+        loading="lazy"
+      />
+    );
+  }
+
+  return <video controls playsInline preload="metadata" poster={poster} src={url} aria-label={label} />;
+}
+
+function CoverMedia({ study }: Pick<Props, 'study'>): React.ReactElement | null {
+  if (!study.cover_url || !isCaseStudyImageUrl(study.cover_url)) return null;
+
+  if (study.cover_media_type === 'video' && study.preview_video_url) {
+    return (
+      <VideoMedia
+        url={study.preview_video_url}
+        poster={study.cover_url}
+        label={`${study.title} project film`}
+      />
+    );
   }
 
   return <Media src={study.cover_url} alt={study.cover_alt ?? study.title} />;
@@ -38,7 +73,9 @@ function MediaRow({ block }: { block: Extract<StudioCaseStudyBlock, { type: 'med
     <div className={`studio-case-media-row studio-case-media-row--${block.layout}`}>
       {block.items.map((item, index) => (
         <div className="studio-case-media-row__item" key={`${item.url}-${index}`} style={{ aspectRatio: item.aspectRatio || undefined }}>
-          {item.type === 'video' ? <video controls preload="metadata" src={item.url} /> : <Media src={item.url} alt={item.alt} />}
+          {item.type === 'video'
+            ? <VideoMedia url={item.url} label={item.alt || `Project video ${index + 1}`} />
+            : <Media src={item.url} alt={item.alt} />}
         </div>
       ))}
     </div>
@@ -50,7 +87,11 @@ function VideoBlock({ block }: { block: Extract<StudioCaseStudyBlock, { type: 'v
 
   return (
     <figure className="studio-case-video">
-      <video controls preload="metadata" poster={block.coverUrl ?? undefined} src={block.url} />
+      <VideoMedia
+        url={block.url}
+        poster={block.coverUrl ?? undefined}
+        label={block.caption ?? 'Project video'}
+      />
       {block.caption ? <figcaption>{block.caption}</figcaption> : null}
     </figure>
   );

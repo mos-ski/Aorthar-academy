@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { getPublishedCaseStudies } from '@/lib/studio/case-studies';
+import { isCaseStudyImageUrl } from '@/lib/studio/case-study-schema';
 import './work.css';
 
 export default async function WorkPage(): Promise<React.ReactElement> {
@@ -25,8 +26,8 @@ export default async function WorkPage(): Promise<React.ReactElement> {
       <div className="studio-work-grid" aria-labelledby="studio-work-heading">
         {studies.map((study) => (
           <Link key={study.id} href={`/studio/work/${study.slug}`} className="studio-work-card">
-            <div className="studio-work-card__media" aria-hidden={!study.cover_url}>
-              {study.cover_url ? (
+            <div className="studio-work-card__media" aria-hidden={!study.cover_url || !isCaseStudyImageUrl(study.cover_url)}>
+              {study.cover_url && isCaseStudyImageUrl(study.cover_url) ? (
                 <Image
                   src={study.cover_url}
                   alt={study.cover_alt ?? study.title}

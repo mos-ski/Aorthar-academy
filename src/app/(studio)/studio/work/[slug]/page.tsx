@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getPublishedCaseStudies, getPublishedCaseStudyBySlug } from '@/lib/studio/case-studies';
-import { resolveNextCaseStudy } from '@/lib/studio/case-study-schema';
+import { isCaseStudyImageUrl, resolveNextCaseStudy } from '@/lib/studio/case-study-schema';
 import CaseStudyRenderer from '../CaseStudyRenderer';
 import '../work.css';
 
@@ -11,6 +11,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const study = await getPublishedCaseStudyBySlug(slug);
   if (!study) return {};
+  const socialImage = [study.og_image_url, study.cover_url]
+    .find((url): url is string => Boolean(url && isCaseStudyImageUrl(url)));
 
   return {
     title: study.seo_title ?? `${study.title} - Aorthar Studio`,
@@ -18,8 +20,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: study.seo_title ?? study.title,
       description: study.seo_description ?? study.subtitle ?? undefined,
-      images: study.og_image_url || study.cover_url ? [{
-        url: study.og_image_url ?? study.cover_url!,
+      images: socialImage ? [{
+        url: socialImage,
         alt: study.cover_alt ?? study.title,
       }] : undefined,
     },
@@ -27,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: 'summary_large_image',
       title: study.seo_title ?? study.title,
       description: study.seo_description ?? study.subtitle ?? undefined,
-      images: study.og_image_url || study.cover_url ? [study.og_image_url ?? study.cover_url!] : undefined,
+      images: socialImage ? [socialImage] : undefined,
     },
   };
 }
