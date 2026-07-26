@@ -203,7 +203,7 @@ export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactE
       <TabsContent value="metadata" className="mt-6"><Card><CardContent className="grid gap-4 pt-6 md:grid-cols-2"><Field label="Year"><Input value={fieldValue(draft.year)} onChange={(event) => updateDraft('year', event.target.value || null)} /></Field><Field label="Release date"><Input type="date" value={fieldValue(draft.release_date)} onChange={(event) => updateDraft('release_date', event.target.value || null)} /></Field><Field label="Display order"><Input type="number" value={draft.display_order} onChange={(event) => updateDraft('display_order', Number(event.target.value) || 0)} /></Field><Field label="Featured"><Select value={draft.is_featured ? 'yes' : 'no'} onValueChange={(value) => updateDraft('is_featured', value === 'yes')}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="no">No</SelectItem><SelectItem value="yes">Yes</SelectItem></SelectContent></Select></Field><Field label="Tags" className="md:col-span-2"><Input value={listFields.tags} onChange={(event) => updateListField('tags', event.target.value)} placeholder="Identity, Strategy" /></Field><Field label="Services" className="md:col-span-2"><Input value={listFields.services} onChange={(event) => updateListField('services', event.target.value)} placeholder="Brand strategy, Design" /></Field><Field label="Featured in" className="md:col-span-2"><Input value={listFields.featured_in} onChange={(event) => updateListField('featured_in', event.target.value)} placeholder="Publication, Award" /></Field></CardContent></Card></TabsContent>
       <TabsContent value="story" className="mt-6 space-y-4">
         {blocks.length === 0
-          ? <EmptyCanvas study={draft} onAdd={addBlock} />
+          ? <EmptyCanvas study={draft} onAdd={addBlock} onSave={() => saveStudy()} saving={saving} />
           : <>
             <Card><CardHeader><CardTitle>Add content block</CardTitle></CardHeader><CardContent className="flex flex-wrap gap-2">{(Object.keys(emptyContentByType) as StudioCaseStudyBlockType[]).map((type) => <Button key={type} type="button" variant="outline" size="sm" onClick={() => void addBlock(type)}><Plus />{blockLabels[type]}</Button>)}</CardContent></Card>
             {blocks.map((block, index) => <BlockCard key={block.id} block={block} index={index} total={blocks.length} onChange={updateBlock} onSave={saveBlock} onDuplicate={duplicateBlock} onDelete={deleteBlock} onMove={moveBlock} />)}
@@ -216,66 +216,141 @@ export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactE
   </div>;
 }
 
-function EmptyCanvas({ study, onAdd }: { study: StudyDraft; onAdd: (type: StudioCaseStudyBlockType) => Promise<void> }): ReactElement {
+function EmptyCanvas({
+  study,
+  onAdd,
+  onSave,
+  saving,
+}: {
+  study: StudyDraft;
+  onAdd: (type: StudioCaseStudyBlockType) => Promise<void>;
+  onSave: () => Promise<void>;
+  saving: boolean;
+}): ReactElement {
   const [open, setOpen] = useState(false);
-  const meta = [study.tags[0] ?? study.services[0] ?? null, study.year].filter(Boolean).join(' · ');
+  const [search, setSearch] = useState('');
+
+  const projectName = study.client || study.title || 'Project Name';
+  const category = study.tags[0] ?? study.services[0] ?? null;
+  const year = study.year ?? null;
+
+  const filteredTypes = (Object.keys(emptyContentByType) as StudioCaseStudyBlockType[]).filter(
+    (type) => !search || blockLabels[type].toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
-    <div style={{ display: 'flex', minHeight: 600, background: '#18191a', borderRadius: 8, overflow: 'hidden', border: '1px solid #2d2d2d' }}>
-      {/* Sidebar */}
-      <div style={{ width: 180, flexShrink: 0, borderRight: '1px solid #2d2d2d', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <p style={{ color: '#ebefe0', fontSize: 13, fontWeight: 600, margin: 0 }}>{(study.client ?? study.title) || 'Project Name'}</p>
-          {meta && <p style={{ color: '#989898', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>{meta}</p>}
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 50,
+      background: '#18191a', display: 'flex', flexDirection: 'column',
+    }}>
+      {/* Header */}
+      <header style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '10.8px 28.8px', borderBottom: '1px solid rgba(255,255,255,0.08)',
+        background: '#18191a', flexShrink: 0,
+      }}>
+        <span style={{ color: '#fff', fontWeight: 700, fontSize: 16, letterSpacing: '-0.02em' }}>Aorthar</span>
+        <div style={{ display: 'flex', gap: 21.6, alignItems: 'center' }}>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => void onSave()}
+            style={{ background: 'none', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', color: 'rgba(255,255,255,0.7)', fontSize: 14.4, padding: 0 }}
+          >
+            {saving ? 'Saving…' : 'Save as draft'}
+          </button>
+          <Link href="/admin/studio/work" style={{ color: '#a7d252', fontSize: 14.4, textDecoration: 'none' }}>
+            Close
+          </Link>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <p style={{ color: '#fff', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Topics</p>
-          {study.tags.slice(0, 4).map((tag) => (
-            <p key={tag} style={{ color: '#989898', fontSize: 11, margin: 0 }}>{tag}</p>
-          ))}
-          {study.tags.length === 0 && <p style={{ color: '#484848', fontSize: 11, margin: 0 }}>No tags yet</p>}
-        </div>
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          style={{ color: '#a7d252', fontSize: 12, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left', marginTop: 'auto' }}
-        >
-          + Add block
-        </button>
-      </div>
+      </header>
 
-      {/* Canvas */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {/* Upload area */}
-        <div style={{ flex: 1, background: 'rgba(72,72,72,0.40)', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 420 }}>
-          <div style={{ border: '3px dashed #484848', borderRadius: 4, padding: '32px 24px', width: 296, textAlign: 'center' }}>
-            <p style={{ color: '#ebefe0', fontSize: 12, margin: 0, lineHeight: 1.6 }}>Drag and drop your files here<br />or click to upload</p>
+      {/* Body */}
+      <div style={{ flex: 1, display: 'flex', gap: 21.6, paddingTop: 64, paddingBottom: 64, paddingRight: 64, minHeight: 0 }}>
+        {/* Left sidebar */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 220, flexShrink: 0, overflowY: 'auto' }}>
+          {/* Project name + meta */}
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16.593, paddingTop: 62, paddingBottom: 12.444 }}>
+            <p style={{ color: '#fff', fontSize: 24.889, margin: 0, textAlign: 'center', lineHeight: '1.2' }}>{projectName}</p>
+            <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+              {category && <span style={{ color: '#989898', fontSize: 11.407, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{category}</span>}
+              {category && year && <span style={{ display: 'inline-block', width: 2.07, height: 2.07, borderRadius: '50%', background: '#989898', flexShrink: 0 }} />}
+              {year && <span style={{ color: '#989898', fontSize: 11.407, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{year}</span>}
+            </div>
+          </div>
+
+          {/* Topics */}
+          <div style={{ width: '100%' }}>
+            <p style={{ color: '#fff', fontSize: 16.593, margin: 0, textAlign: 'center', padding: '8px 12.444px', lineHeight: 1.25 }}>Topics</p>
+            {study.tags.map((tag) => (
+              <p key={tag} style={{ color: '#989898', fontSize: 16.593, margin: 0, textAlign: 'center', padding: '8px 12.444px' }}>{tag}</p>
+            ))}
+            {study.tags.length === 0 && (
+              <p style={{ color: '#484848', fontSize: 16.593, margin: 0, textAlign: 'center', padding: '8px 12.444px' }}>No topics yet</p>
+            )}
+            <p style={{ color: '#a7d252', fontSize: 16.593, margin: 0, textAlign: 'center', padding: '8px 12.444px', cursor: 'default' }}>+ Add Topic</p>
           </div>
         </div>
 
-        {/* Add Block bar */}
-        <div style={{ padding: '12px 20px', borderTop: '1px solid #2d2d2d', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            style={{ color: '#a7d252', fontSize: 14, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}
-          >
-            Add Block [/]
-          </button>
-          {open && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {(Object.keys(emptyContentByType) as StudioCaseStudyBlockType[]).map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => { void onAdd(type); setOpen(false); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#2d2d2d', border: '1px solid #484848', borderRadius: 4, color: '#ebefe0', fontSize: 12, padding: '4px 10px', cursor: 'pointer' }}
-                >
-                  <Plus size={12} />{blockLabels[type]}
-                </button>
-              ))}
+        {/* Canvas */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
+          {/* Upload zone */}
+          <div style={{
+            flex: 1, background: 'rgba(72,72,72,0.40)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            minHeight: 400,
+          }}>
+            <div style={{ border: '3px dashed #484848', padding: 16, width: 296, textAlign: 'center' }}>
+              <p style={{ color: '#ebefe0', fontSize: 12, margin: 0, lineHeight: '18px' }}>
+                Drag and drop your files here{'\n'}or click to upload
+              </p>
             </div>
-          )}
+          </div>
+
+          {/* Add Block divider + picker */}
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            {open && (
+              <div style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0 }}>
+                <div style={{
+                  width: 240, background: '#18191a', border: '1px solid #484848',
+                  borderRadius: 6, boxShadow: '0px 1.25px 4px 0px rgba(26,26,26,0.08)', overflow: 'hidden',
+                }}>
+                  <div style={{ background: '#484848', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 8, borderRadius: '6px 6px 0 0' }}>
+                    <input
+                      autoFocus
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search"
+                      style={{ background: 'none', border: 'none', outline: 'none', color: '#ebefe0', fontSize: 14, fontWeight: 500, width: '100%' }}
+                    />
+                  </div>
+                  {filteredTypes.map((type) => (
+                    <div
+                      key={type}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => { void onAdd(type); setOpen(false); setSearch(''); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { void onAdd(type); setOpen(false); setSearch(''); } }}
+                      style={{ padding: '5px 8px 5px 10px', color: '#ebefe0', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
+                    >
+                      {blockLabels[type]}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ flex: 1, height: 1, background: '#484848' }} />
+              <button
+                type="button"
+                onClick={() => setOpen((v) => !v)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a7d252', fontSize: 18, fontWeight: 600, padding: 0, lineHeight: '28px', whiteSpace: 'nowrap' }}
+              >
+                Add Block [/]
+              </button>
+              <div style={{ flex: 1, height: 1, background: '#484848' }} />
+            </div>
+          </div>
         </div>
       </div>
     </div>
