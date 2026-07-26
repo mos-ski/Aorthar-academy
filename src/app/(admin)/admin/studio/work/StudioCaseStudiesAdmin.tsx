@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Archive, ExternalLink, Plus, Search, Trash2 } from 'lucide-react';
-import type { FormEvent, ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,19 +39,9 @@ const statusVariants: Record<StudioCaseStudyStatus, 'default' | 'secondary' | 'o
   archived: 'outline',
 };
 
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
 
 export default function StudioCaseStudiesAdmin({ studies }: StudioCaseStudiesAdminProps): ReactElement {
   const router = useRouter();
-  const [creating, setCreating] = useState<boolean>(false);
-  const [newTitle, setNewTitle] = useState<string>('');
-  const [newSlug, setNewSlug] = useState<string>('');
-  const [slugEdited, setSlugEdited] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [query, setQuery] = useState<string>('');
   const [status, setStatus] = useState<StatusFilter>('all');
@@ -74,44 +64,18 @@ export default function StudioCaseStudiesAdmin({ studies }: StudioCaseStudiesAdm
     archived: studies.filter((study) => study.status === 'archived').length,
   };
 
-  function openCreate(): void {
-    setNewTitle('');
-    setNewSlug('');
-    setSlugEdited(false);
-    setCreating(true);
-  }
-
-  function closeCreate(): void {
-    setCreating(false);
-    setNewTitle('');
-    setNewSlug('');
-    setSlugEdited(false);
-  }
-
-  async function handleCreate(event: FormEvent<HTMLFormElement>): Promise<void> {
-    event.preventDefault();
+  async function openCreate(): Promise<void> {
     setSubmitting(true);
-
     try {
+      const ts = Date.now();
       const res = await fetch('/api/admin/studio/case-studies', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newTitle, slug: newSlug }),
+        body: JSON.stringify({ title: 'Untitled', slug: `untitled-${ts}` }),
       });
       const data = await res.json().catch((): ApiResponse | null => null) as ApiResponse | null;
-
-      if (!res.ok) {
-        toast.error(data?.error ?? 'Failed to create case study');
-        return;
-      }
-
-      if (data?.id) {
-        router.push(`/admin/studio/work/${data.id}?tab=story`);
-      } else {
-        toast.success('Case study created');
-        closeCreate();
-        router.refresh();
-      }
+      if (!res.ok || !data?.id) { toast.error(data?.error ?? 'Failed to create case study'); return; }
+      router.push(`/admin/studio/work/${data.id}?tab=story`);
     } catch {
       toast.error('Failed to create case study');
     } finally {
@@ -149,9 +113,9 @@ export default function StudioCaseStudiesAdmin({ studies }: StudioCaseStudiesAdm
           <h1 className="text-2xl font-semibold">Studio Work</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage case studies for studio.aorthar.com.</p>
         </div>
-        <Button type="button" onClick={openCreate} className="w-full sm:w-auto">
+        <Button type="button" onClick={() => void openCreate()} disabled={submitting} className="w-full sm:w-auto">
           <Plus />
-          New case study
+          {submitting ? 'Creating...' : 'New case study'}
         </Button>
       </div>
 
@@ -173,46 +137,6 @@ export default function StudioCaseStudiesAdmin({ studies }: StudioCaseStudiesAdm
         ))}
       </div>
 
-      {creating && (
-        <Card>
-          <CardHeader>
-            <CardTitle>New case study</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCreate} className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
-              <label className="grid gap-1.5 text-sm font-medium">
-                Title
-                <Input
-                  value={newTitle}
-                  onChange={(event) => {
-                    const title = event.target.value;
-                    setNewTitle(title);
-                    if (!slugEdited) setNewSlug(slugify(title));
-                  }}
-                  placeholder="Brand identity for Acme"
-                  required
-                />
-              </label>
-              <label className="grid gap-1.5 text-sm font-medium">
-                Slug
-                <Input
-                  value={newSlug}
-                  onChange={(event) => {
-                    setNewSlug(event.target.value);
-                    setSlugEdited(true);
-                  }}
-                  placeholder="brand-identity-for-acme"
-                  required
-                />
-              </label>
-              <div className="flex gap-2">
-                <Button type="submit" disabled={submitting}>{submitting ? 'Creating...' : 'Create'}</Button>
-                <Button type="button" variant="outline" onClick={closeCreate}>Cancel</Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
 
       <Card>
         <CardContent className="space-y-4 pt-6">
