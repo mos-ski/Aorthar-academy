@@ -51,6 +51,14 @@ One admin CMS at `admin.aorthar.com` manages all three products. Admins use the 
 | Bootcamp Detail | `/admin/bootcamps/[id]` | Lessons, pricing, settings |
 | Purchases | `/admin/bootcamps/purchases` | Purchase history |
 
+### Studio Management
+
+| Feature | Route | Description |
+|---------|-------|-------------|
+| Inquiries | `/admin/studio` | View Studio contact submissions |
+| Work | `/admin/studio/work` | Create, edit, publish, and archive Studio case studies |
+| Settings | `/admin/studio/settings` | Manage Studio contact details and social links |
+
 ---
 
 ## Admin Access Control
