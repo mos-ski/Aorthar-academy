@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getPublishedCaseStudies, getPublishedCaseStudyBySlug } from '@/lib/studio/case-studies';
 import { resolveNextCaseStudy } from '@/lib/studio/case-study-schema';
 import CaseStudyRenderer from '../CaseStudyRenderer';
+import '../work.css';
 
 type Props = { params: Promise<{ slug: string }> };
 
