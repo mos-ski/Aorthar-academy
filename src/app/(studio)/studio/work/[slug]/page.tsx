@@ -18,7 +18,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: study.seo_title ?? study.title,
       description: study.seo_description ?? study.subtitle ?? undefined,
-      images: study.og_image_url || study.cover_url ? [{ url: study.og_image_url ?? study.cover_url! }] : undefined,
+      images: study.og_image_url || study.cover_url ? [{
+        url: study.og_image_url ?? study.cover_url!,
+        alt: study.cover_alt ?? study.title,
+      }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: study.seo_title ?? study.title,
+      description: study.seo_description ?? study.subtitle ?? undefined,
+      images: study.og_image_url || study.cover_url ? [study.og_image_url ?? study.cover_url!] : undefined,
     },
   };
 }

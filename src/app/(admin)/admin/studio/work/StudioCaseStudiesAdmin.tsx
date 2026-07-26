@@ -211,6 +211,7 @@ export default function StudioCaseStudiesAdmin({ studies }: StudioCaseStudiesAdm
             <div className="relative w-full sm:max-w-sm">
               <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
+                aria-label="Search case studies"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search title, client, tag, or slug"
@@ -218,7 +219,7 @@ export default function StudioCaseStudiesAdmin({ studies }: StudioCaseStudiesAdm
               />
             </div>
             <Select value={status} onValueChange={(value) => setStatus(value as StatusFilter)}>
-              <SelectTrigger className="w-full sm:w-40">
+              <SelectTrigger className="w-full sm:w-40" aria-label="Filter by publication status">
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
               <SelectContent>
@@ -286,6 +287,7 @@ export default function StudioCaseStudiesAdmin({ studies }: StudioCaseStudiesAdm
                           size="sm"
                           className="text-destructive hover:text-destructive"
                           onClick={() => void archiveStudy(study.id)}
+                          aria-label={study.status === 'published' ? `Archive ${study.title}` : `Delete ${study.title}`}
                         >
                           {study.status === 'published' ? <Archive /> : <Trash2 />}
                           {study.status === 'published' ? 'Archive' : 'Delete'}

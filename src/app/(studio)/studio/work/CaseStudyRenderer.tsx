@@ -15,6 +15,16 @@ function Media({ alt, src }: { alt: string; src: string }): React.ReactElement {
   return <Image src={src} alt={alt} fill sizes="(max-width: 768px) 100vw, 1200px" unoptimized />;
 }
 
+function CoverMedia({ study }: Pick<Props, 'study'>): React.ReactElement | null {
+  if (!study.cover_url) return null;
+
+  if (study.cover_media_type === 'video') {
+    return <video autoPlay loop muted playsInline preload="metadata" src={study.cover_url} aria-label={`${study.title} project film`} />;
+  }
+
+  return <Media src={study.cover_url} alt={study.cover_alt ?? study.title} />;
+}
+
 function TextBlock({ body }: Pick<Extract<StudioCaseStudyBlock, { type: 'text' }>, 'body'>): React.ReactElement | null {
   if (!body) return null;
 
@@ -88,7 +98,7 @@ function CreditsBlock({ block }: { block: Extract<StudioCaseStudyBlock, { type: 
         {block.items.map((item, index) => (
           <div key={`${item.category}-${index}`}>
             <dt>{item.category}</dt>
-            <dd>{item.url && item.names ? <a href={item.url}>{item.names}</a> : item.names}</dd>
+            <dd>{item.url && item.names ? <a href={item.url} target="_blank" rel="noreferrer">{item.names}</a> : item.names}</dd>
           </div>
         ))}
       </dl>
@@ -103,11 +113,11 @@ export default function CaseStudyRenderer({ nextStudy, study }: Props): React.Re
     <article className="studio-case">
       <header className="studio-case-hero">
         <div className="studio-case-hero__media">
-          {study.cover_url ? <Media src={study.cover_url} alt={study.cover_alt ?? study.title} /> : null}
+          <CoverMedia study={study} />
         </div>
         <div className="studio-case-hero__overlay">
           <p>{[...study.tags, ...study.services].join(' / ')}</p>
-          <p>{study.year}</p>
+          <p>{study.year ?? study.release_date ?? ''}</p>
         </div>
       </header>
 

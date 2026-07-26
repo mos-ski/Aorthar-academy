@@ -8,9 +8,9 @@ export default async function WorkPage(): Promise<React.ReactElement> {
 
   if (studies.length === 0) {
     return (
-      <section className="biz-section studio-work-empty">
+      <section className="studio-work-index studio-work-empty" aria-labelledby="studio-work-heading">
         <p className="studio-work-kicker">Our Work</p>
-        <h1>Case studies coming soon.</h1>
+        <h1 id="studio-work-heading">Case studies coming soon.</h1>
         <p>We are preparing a sharper look at the brands, products, and growth systems we build.</p>
       </section>
     );
@@ -20,12 +20,12 @@ export default async function WorkPage(): Promise<React.ReactElement> {
     <section className="studio-work-index">
       <div className="studio-work-index__intro">
         <p className="studio-work-kicker">Our Work</p>
-        <h1>Selected case studies.</h1>
+        <h1 id="studio-work-heading">Selected case studies.</h1>
       </div>
-      <div className="studio-work-grid">
+      <div className="studio-work-grid" aria-labelledby="studio-work-heading">
         {studies.map((study) => (
           <Link key={study.id} href={`/studio/work/${study.slug}`} className="studio-work-card">
-            <div className="studio-work-card__media">
+            <div className="studio-work-card__media" aria-hidden={!study.cover_url}>
               {study.cover_url ? (
                 <Image
                   src={study.cover_url}
