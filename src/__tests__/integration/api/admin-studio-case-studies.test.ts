@@ -85,18 +85,23 @@ describe('admin studio case study API safeguards', () => {
     expect(builder.update).not.toHaveBeenCalled();
   });
 
-  it('writes a complete validated reorder as one upsert', async () => {
+  it('updates only sort order after validating a complete reorder', async () => {
     const blocks = [
-      { id: 'block-1', case_study_id: CASE_STUDY_ID, type: 'text', content: { body: 'One' } },
-      { id: 'block-2', case_study_id: CASE_STUDY_ID, type: 'text', content: { body: 'Two' } },
+      { id: 'block-1' },
+      { id: 'block-2' },
     ];
-    const builder = {
+    const readBuilder = {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockResolvedValue({ data: blocks, error: null }),
-      upsert: vi.fn().mockResolvedValue({ error: null }),
+    };
+    const writeBuilder = {
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
     };
     (createAdminClient as ReturnType<typeof vi.fn>).mockReturnValue({
-      from: vi.fn(() => builder),
+      from: vi.fn()
+        .mockReturnValueOnce(readBuilder)
+        .mockReturnValue(writeBuilder),
     });
 
     const response = await reorderBlocks(
@@ -105,9 +110,9 @@ describe('admin studio case study API safeguards', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(builder.upsert).toHaveBeenCalledWith([
-      { ...blocks[1], sort_order: 0 },
-      { ...blocks[0], sort_order: 1 },
-    ]);
+    expect(writeBuilder.update).toHaveBeenNthCalledWith(1, { sort_order: 0 });
+    expect(writeBuilder.update).toHaveBeenNthCalledWith(2, { sort_order: 1 });
+    expect(writeBuilder.update).toHaveBeenCalledTimes(2);
+    expect(writeBuilder).not.toHaveProperty('upsert');
   });
 });

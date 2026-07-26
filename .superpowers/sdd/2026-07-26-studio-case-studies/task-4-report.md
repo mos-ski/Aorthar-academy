@@ -30,3 +30,15 @@ This task adds no admin pages, list UI, editor UI, freeform JSON editing surface
 - `bun run test src/__tests__/integration/api/admin-studio-case-studies.test.ts src/__tests__/unit/studio-case-studies.test.ts` - passed: 2 files, 7 tests.
 - `bunx eslint src/app/api/admin/studio/case-studies/[id]/route.ts src/app/api/admin/studio/case-studies/[id]/blocks/reorder/route.ts src/__tests__/integration/api/admin-studio-case-studies.test.ts` - passed.
 - `git diff --check` - passed.
+
+## Review Fix Round 2
+
+- Reorder validation now reads only block IDs and retains the required exact, unique set check.
+- Reordering updates only `sort_order` through case-study-scoped per-row updates. It no longer writes the stale `type` or `content` snapshot, so concurrent edits cannot be overwritten and a concurrently deleted block cannot be recreated.
+- Atomicity tradeoff: without a database RPC that performs a multi-row, sort-order-only update, PostgREST cannot make these distinct updates transactional. The route therefore favors data safety over all-or-nothing ordering. A later update failure can leave a partially reordered sequence, but it cannot overwrite content or recreate deleted blocks; a subsequent complete reorder restores the requested order.
+
+## Review Fix Round 2 Verification
+
+- `bun run test src/__tests__/integration/api/admin-studio-case-studies.test.ts src/__tests__/unit/studio-case-studies.test.ts` - passed: 2 files, 7 tests.
+- `bunx eslint src/app/api/admin/studio/case-studies/[id]/blocks/reorder/route.ts src/__tests__/integration/api/admin-studio-case-studies.test.ts` - passed.
+- `git diff --check` - passed.
