@@ -26,6 +26,11 @@ type StudioCaseStudiesAdminProps = {
 
 type StatusFilter = 'all' | StudioCaseStudyStatus;
 
+type ApiResponse = {
+  archived?: boolean;
+  error?: string;
+};
+
 const statusVariants: Record<StudioCaseStudyStatus, 'default' | 'secondary' | 'outline'> = {
   draft: 'secondary',
   published: 'default',
@@ -44,6 +49,7 @@ export default function StudioCaseStudiesAdmin({ studies }: StudioCaseStudiesAdm
   const [creating, setCreating] = useState<boolean>(false);
   const [newTitle, setNewTitle] = useState<string>('');
   const [newSlug, setNewSlug] = useState<string>('');
+  const [slugEdited, setSlugEdited] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [query, setQuery] = useState<string>('');
   const [status, setStatus] = useState<StatusFilter>('all');
@@ -71,6 +77,20 @@ export default function StudioCaseStudiesAdmin({ studies }: StudioCaseStudiesAdm
     archived: studies.filter((study) => study.status === 'archived').length,
   };
 
+  function openCreate(): void {
+    setNewTitle('');
+    setNewSlug('');
+    setSlugEdited(false);
+    setCreating(true);
+  }
+
+  function closeCreate(): void {
+    setCreating(false);
+    setNewTitle('');
+    setNewSlug('');
+    setSlugEdited(false);
+  }
+
   async function handleCreate(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     setSubmitting(true);
@@ -81,33 +101,36 @@ export default function StudioCaseStudiesAdmin({ studies }: StudioCaseStudiesAdm
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: newTitle, slug: newSlug }),
       });
-      const data = await res.json();
+      const data = await res.json().catch((): ApiResponse | null => null) as ApiResponse | null;
 
       if (!res.ok) {
-        toast.error(data.error ?? 'Failed to create case study');
+        toast.error(data?.error ?? 'Failed to create case study');
         return;
       }
 
       toast.success('Case study created');
-      setCreating(false);
-      setNewTitle('');
-      setNewSlug('');
-      router.push(`/admin/studio/work/${data.id}`);
+      closeCreate();
       router.refresh();
+    } catch {
+      toast.error('Failed to create case study');
     } finally {
       setSubmitting(false);
     }
   }
 
   async function archiveStudy(id: string): Promise<void> {
-    const res = await fetch(`/api/admin/studio/case-studies/${id}`, { method: 'DELETE' });
-    const data = await res.json();
-    if (!res.ok) {
-      toast.error(data.error ?? 'Failed to archive case study');
-      return;
+    try {
+      const res = await fetch(`/api/admin/studio/case-studies/${id}`, { method: 'DELETE' });
+      const data = await res.json().catch((): ApiResponse | null => null) as ApiResponse | null;
+      if (!res.ok) {
+        toast.error(data?.error ?? 'Failed to archive case study');
+        return;
+      }
+      toast.success(data?.archived ? 'Case study archived' : 'Case study deleted');
+      router.refresh();
+    } catch {
+      toast.error('Failed to archive case study');
     }
-    toast.success(data.archived ? 'Case study archived' : 'Case study deleted');
-    router.refresh();
   }
 
   return (
@@ -117,7 +140,7 @@ export default function StudioCaseStudiesAdmin({ studies }: StudioCaseStudiesAdm
           <h1 className="text-2xl font-semibold">Studio Work</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage case studies for studio.aorthar.com.</p>
         </div>
-        <Button type="button" onClick={() => setCreating(true)} className="w-full sm:w-auto">
+        <Button type="button" onClick={openCreate} className="w-full sm:w-auto">
           <Plus />
           New case study
         </Button>
@@ -155,7 +178,7 @@ export default function StudioCaseStudiesAdmin({ studies }: StudioCaseStudiesAdm
                   onChange={(event) => {
                     const title = event.target.value;
                     setNewTitle(title);
-                    setNewSlug(slugify(title));
+                    if (!slugEdited) setNewSlug(slugify(title));
                   }}
                   placeholder="Brand identity for Acme"
                   required
@@ -165,14 +188,17 @@ export default function StudioCaseStudiesAdmin({ studies }: StudioCaseStudiesAdm
                 Slug
                 <Input
                   value={newSlug}
-                  onChange={(event) => setNewSlug(event.target.value)}
+                  onChange={(event) => {
+                    setNewSlug(event.target.value);
+                    setSlugEdited(true);
+                  }}
                   placeholder="brand-identity-for-acme"
                   required
                 />
               </label>
               <div className="flex gap-2">
                 <Button type="submit" disabled={submitting}>{submitting ? 'Creating...' : 'Create'}</Button>
-                <Button type="button" variant="outline" onClick={() => setCreating(false)}>Cancel</Button>
+                <Button type="button" variant="outline" onClick={closeCreate}>Cancel</Button>
               </div>
             </form>
           </CardContent>
