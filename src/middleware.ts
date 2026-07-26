@@ -189,7 +189,9 @@ function getSubdomainRewrite(request: NextRequest): NextResponse | null {
   }
 
   // aorthar.com (base/marketing) — redirect subdomain-specific paths to their subdomains
-  if (product === 'base' || product === 'university') {
+  // Skip in local dev so localhost:3000/admin etc. work without being bounced to production
+  const isLocalDev = hostname.startsWith('localhost') || hostname.startsWith('127.0.0.1');
+  if (!isLocalDev && (product === 'base' || product === 'university')) {
     if (pathname.startsWith('/internship')) {
       const url = new URL(`https://internship.aorthar.com${pathname}`);
       url.search = request.nextUrl.search;
