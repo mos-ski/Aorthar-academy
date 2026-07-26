@@ -44,7 +44,7 @@ describe('courseCodeSchema', () => {
 describe('registerSchema', () => {
   const valid = {
     full_name: 'Ada Okafor',
-    department: 'UI/UX Design' as const,
+    department: 'Product Design' as const,
     email: 'ada@example.com',
     password: 'Secret123',
   };

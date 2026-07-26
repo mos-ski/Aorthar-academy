@@ -130,6 +130,7 @@ const adminMarketplaceNav: NavItem[] = [
 
 const adminStudioNav: NavItem[] = [
   { href: '/admin/studio', label: 'Inquiries', icon: Inbox },
+  { href: '/admin/studio/work', label: 'Work', icon: BriefcaseBusiness },
   { href: '/admin/studio/settings', label: 'Settings', icon: Settings },
 ];
 

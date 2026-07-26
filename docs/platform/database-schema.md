@@ -353,6 +353,50 @@ Supporting tables remain `contract_field_values`, `contract_signing_tokens`, `co
 
 ---
 
+## Studio Tables
+
+### studio_case_studies
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PK, default gen_random_uuid() | Case study identifier |
+| `slug` | TEXT | UNIQUE, NOT NULL | Public URL slug |
+| `title` | TEXT | NOT NULL | Case study title |
+| `subtitle` | TEXT | NULL | Supporting title text |
+| `client` | TEXT | NULL | Client name |
+| `release_date` | DATE | NULL | Release date |
+| `year` | TEXT | NULL | Release year |
+| `status` | TEXT | NOT NULL, default 'draft' | `draft` / `published` / `archived` |
+| `is_featured` | BOOLEAN | NOT NULL, default false | Featured case study flag |
+| `display_order` | INTEGER | NOT NULL, default 0 | Display order |
+| `tags` | TEXT[] | NOT NULL, default '{}' | Case study tags |
+| `services` | TEXT[] | NOT NULL, default '{}' | Services provided |
+| `featured_in` | TEXT[] | NOT NULL, default '{}' | Featured publication or channel names |
+| `cover_media_type` | TEXT | NOT NULL, default 'image' | `image` / `video` |
+| `cover_url` | TEXT | NULL | External cover media URL |
+| `cover_alt` | TEXT | NULL | Cover media alt text |
+| `preview_video_url` | TEXT | NULL | External preview video URL |
+| `seo_title` | TEXT | NULL | Search engine title |
+| `seo_description` | TEXT | NULL | Search engine description |
+| `og_image_url` | TEXT | NULL | External Open Graph image URL |
+| `created_by` | UUID | FK → profiles.user_id, NULL | Creating admin |
+| `updated_by` | UUID | FK → profiles.user_id, NULL | Admin who last updated the record |
+| `published_at` | TIMESTAMPTZ | NULL | Publication timestamp |
+| `created_at` | TIMESTAMPTZ | NOT NULL, default now() | Creation time |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, default now() | Last update time |
+
+### studio_case_study_blocks
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PK, default gen_random_uuid() | Block identifier |
+| `case_study_id` | UUID | FK → studio_case_studies.id, NOT NULL, ON DELETE CASCADE | Parent case study |
+| `type` | TEXT | NOT NULL | `text` / `media_row` / `video` / `quote` / `process_notes` / `credits` |
+| `sort_order` | INTEGER | NOT NULL, default 0 | Block display order |
+| `content` | JSONB | NOT NULL, default '{}'::jsonb | Structured block content |
+| `created_at` | TIMESTAMPTZ | NOT NULL, default now() | Creation time |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, default now() | Last update time |
+
 ## Shared Tables
 
 ### subscriptions
