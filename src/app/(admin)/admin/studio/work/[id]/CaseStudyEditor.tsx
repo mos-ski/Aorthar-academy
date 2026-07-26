@@ -199,11 +199,81 @@ export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactE
       <TabsContent value="overview" className="mt-6"><Card><CardContent className="grid gap-4 pt-6 md:grid-cols-2"><Field label="Title"><Input value={draft.title} onChange={(event) => updateDraft('title', event.target.value)} /></Field><Field label="Slug"><Input value={draft.slug} onChange={(event) => updateDraft('slug', event.target.value)} /></Field><Field label="Subtitle" className="md:col-span-2"><Textarea value={fieldValue(draft.subtitle)} onChange={(event) => updateDraft('subtitle', event.target.value || null)} /></Field><Field label="Client"><Input value={fieldValue(draft.client)} onChange={(event) => updateDraft('client', event.target.value || null)} /></Field><Field label="Status"><Select value={draft.status} onValueChange={(value) => updateDraft('status', value as StudioCaseStudyStatus)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="draft">Draft</SelectItem><SelectItem value="published">Published</SelectItem><SelectItem value="archived">Archived</SelectItem></SelectContent></Select></Field></CardContent></Card></TabsContent>
       <TabsContent value="media" className="mt-6"><Card><CardContent className="grid gap-4 pt-6 md:grid-cols-2"><Field label="Hero media type"><Select value={draft.cover_media_type} onValueChange={(value) => updateDraft('cover_media_type', value as 'image' | 'video')}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="image">Cover image</SelectItem><SelectItem value="video">Preview video</SelectItem></SelectContent></Select></Field><Field label="Cover image URL"><Input type="url" value={fieldValue(draft.cover_url)} onChange={(event) => updateDraft('cover_url', event.target.value || null)} placeholder="https://" /></Field><Field label="Cover alt text"><Input value={fieldValue(draft.cover_alt)} onChange={(event) => updateDraft('cover_alt', event.target.value || null)} /></Field><Field label="Preview video URL"><Input type="url" value={fieldValue(draft.preview_video_url)} onChange={(event) => updateDraft('preview_video_url', event.target.value || null)} placeholder="Vimeo or direct HTTPS video URL" /></Field></CardContent></Card></TabsContent>
       <TabsContent value="metadata" className="mt-6"><Card><CardContent className="grid gap-4 pt-6 md:grid-cols-2"><Field label="Year"><Input value={fieldValue(draft.year)} onChange={(event) => updateDraft('year', event.target.value || null)} /></Field><Field label="Release date"><Input type="date" value={fieldValue(draft.release_date)} onChange={(event) => updateDraft('release_date', event.target.value || null)} /></Field><Field label="Display order"><Input type="number" value={draft.display_order} onChange={(event) => updateDraft('display_order', Number(event.target.value) || 0)} /></Field><Field label="Featured"><Select value={draft.is_featured ? 'yes' : 'no'} onValueChange={(value) => updateDraft('is_featured', value === 'yes')}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="no">No</SelectItem><SelectItem value="yes">Yes</SelectItem></SelectContent></Select></Field><Field label="Tags" className="md:col-span-2"><Input value={listFields.tags} onChange={(event) => updateListField('tags', event.target.value)} placeholder="Identity, Strategy" /></Field><Field label="Services" className="md:col-span-2"><Input value={listFields.services} onChange={(event) => updateListField('services', event.target.value)} placeholder="Brand strategy, Design" /></Field><Field label="Featured in" className="md:col-span-2"><Input value={listFields.featured_in} onChange={(event) => updateListField('featured_in', event.target.value)} placeholder="Publication, Award" /></Field></CardContent></Card></TabsContent>
-      <TabsContent value="story" className="mt-6 space-y-4"><Card><CardHeader><CardTitle>Add content block</CardTitle></CardHeader><CardContent className="flex flex-wrap gap-2">{(Object.keys(emptyContentByType) as StudioCaseStudyBlockType[]).map((type) => <Button key={type} type="button" variant="outline" size="sm" onClick={() => void addBlock(type)}><Plus />{blockLabels[type]}</Button>)}</CardContent></Card>{blocks.length === 0 ? <p className="py-10 text-center text-sm text-muted-foreground">No story blocks yet.</p> : blocks.map((block, index) => <BlockCard key={block.id} block={block} index={index} total={blocks.length} onChange={updateBlock} onSave={saveBlock} onDuplicate={duplicateBlock} onDelete={deleteBlock} onMove={moveBlock} />)}</TabsContent>
+      <TabsContent value="story" className="mt-6 space-y-4">
+        {blocks.length === 0
+          ? <EmptyCanvas study={draft} onAdd={addBlock} />
+          : <>
+              <Card><CardHeader><CardTitle>Add content block</CardTitle></CardHeader><CardContent className="flex flex-wrap gap-2">{(Object.keys(emptyContentByType) as StudioCaseStudyBlockType[]).map((type) => <Button key={type} type="button" variant="outline" size="sm" onClick={() => void addBlock(type)}><Plus />{blockLabels[type]}</Button>)}</CardContent></Card>
+              {blocks.map((block, index) => <BlockCard key={block.id} block={block} index={index} total={blocks.length} onChange={updateBlock} onSave={saveBlock} onDuplicate={duplicateBlock} onDelete={deleteBlock} onMove={moveBlock} />)}
+            </>
+        }
+      </TabsContent>
       <TabsContent value="credits" className="mt-6"><Card><CardContent className="space-y-4 pt-6"><p className="text-sm text-muted-foreground">Credits are managed as structured Credits blocks in the Story tab.</p><Button type="button" variant="outline" onClick={() => void addBlock('credits')}><Plus />Add credits block</Button></CardContent></Card></TabsContent>
       <TabsContent value="seo" className="mt-6"><Card><CardContent className="grid gap-4 pt-6"><Field label="SEO title"><Input value={fieldValue(draft.seo_title)} onChange={(event) => updateDraft('seo_title', event.target.value || null)} /></Field><Field label="SEO description"><Textarea value={fieldValue(draft.seo_description)} onChange={(event) => updateDraft('seo_description', event.target.value || null)} /></Field><Field label="Open Graph image URL"><Input type="url" value={fieldValue(draft.og_image_url)} onChange={(event) => updateDraft('og_image_url', event.target.value || null)} placeholder="https://" /></Field></CardContent></Card></TabsContent>
     </Tabs>
   </div>;
+}
+
+function EmptyCanvas({ study, onAdd }: { study: StudyDraft; onAdd: (type: StudioCaseStudyBlockType) => Promise<void> }): ReactElement {
+  const [open, setOpen] = useState(false);
+  const meta = [study.tags[0] ?? study.services[0] ?? null, study.year].filter(Boolean).join(' · ');
+
+  return (
+    <div style={{ display: 'flex', gap: 0, minHeight: 720, background: '#18191a', borderRadius: 8, overflow: 'hidden', border: '1px solid #2d2d2d' }}>
+      {/* Sidebar */}
+      <div style={{ width: 180, flexShrink: 0, borderRight: '1px solid #2d2d2d', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 48, paddingBottom: 24 }}>
+        <div style={{ textAlign: 'center', padding: '0 12px', marginBottom: 24 }}>
+          <p style={{ color: '#fff', fontSize: 18, fontWeight: 400, margin: '0 0 6px', lineHeight: 1.2 }}>{study.client ?? study.title || 'Project Name'}</p>
+          {meta && <p style={{ color: '#989898', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>{meta}</p>}
+        </div>
+        <div style={{ width: '100%', padding: '0 12px' }}>
+          <p style={{ color: '#fff', fontSize: 13, textAlign: 'center', padding: '6px 0', margin: 0 }}>Topics</p>
+          <p style={{ color: '#a7d252', fontSize: 13, textAlign: 'center', padding: '6px 0', margin: 0, cursor: 'pointer' }} onClick={() => setOpen(true)}>+ Add block</p>
+        </div>
+      </div>
+
+      {/* Canvas */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* Dark canvas area */}
+        <div style={{ flex: 1, position: 'relative', background: 'rgba(72,72,72,0.40)', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 480 }}>
+          <div style={{ border: '3px dashed #484848', padding: 16, width: 296, textAlign: 'center' }}>
+            <p style={{ color: '#ebefe0', fontSize: 12, lineHeight: '18px', margin: 0 }}>Drag and drop your files here<br />or click to upload</p>
+          </div>
+        </div>
+
+        {/* Add Block divider */}
+        <div style={{ padding: '16px 0', borderTop: '1px solid #2d2d2d' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 24px', marginBottom: open ? 16 : 0 }}>
+            <div style={{ flex: 1, height: 1, background: '#484848' }} />
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              style={{ color: '#a7d252', fontSize: 16, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', padding: 0 }}
+            >
+              Add Block [/]
+            </button>
+            <div style={{ flex: 1, height: 1, background: '#484848' }} />
+          </div>
+
+          {open && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '0 24px' }}>
+              {(Object.keys(emptyContentByType) as StudioCaseStudyBlockType[]).map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => { void onAdd(type); setOpen(false); }}
+                  style={{ background: '#2d2d2d', border: '1px solid #484848', borderRadius: 4, color: '#ebefe0', fontSize: 13, padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Plus size={13} />
+                  {blockLabels[type]}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function Field({ label, className, children }: { label: string; className?: string; children: ReactElement }): ReactElement { return <label className={`grid gap-1.5 text-sm font-medium ${className ?? ''}`}>{label}{children}</label>; }
