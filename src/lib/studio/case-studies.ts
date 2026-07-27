@@ -6,11 +6,13 @@ import {
   type StudioCaseStudyAdminSummary,
   type StudioCaseStudyDetail,
   type StudioCaseStudySummary,
+  type StudioCaseStudyTopic,
 } from '@/lib/studio/case-study-schema';
 
 const summaryFields = 'id, slug, title, subtitle, client, year, tags, services, cover_url, cover_alt, cover_media_type, is_featured, display_order, published_at';
 const detailFields = `${summaryFields}, release_date, featured_in, preview_video_url, seo_title, seo_description, og_image_url`;
-const blockFields = 'id, case_study_id, type, sort_order, content';
+const blockFields = 'id, case_study_id, type, sort_order, topic_id, content';
+const topicFields = 'id, case_study_id, title, sort_order, created_at';
 
 export async function getPublishedCaseStudies(): Promise<StudioCaseStudySummary[]> {
   const supabase = await createClient();
@@ -37,14 +39,13 @@ export async function getPublishedCaseStudyBySlug(slug: string): Promise<StudioC
 
   if (error || !caseStudy) return null;
 
-  const { data: blocks, error: blocksError } = await supabase
-    .from('studio_case_study_blocks')
-    .select(blockFields)
-    .eq('case_study_id', caseStudy.id)
-    .order('sort_order', { ascending: true });
+  const [{ data: topics, error: topicsError }, { data: blocks, error: blocksError }] = await Promise.all([
+    supabase.from('studio_case_study_topics').select(topicFields).eq('case_study_id', caseStudy.id).order('sort_order', { ascending: true }),
+    supabase.from('studio_case_study_blocks').select(blockFields).eq('case_study_id', caseStudy.id).order('sort_order', { ascending: true }),
+  ]);
 
-  if (blocksError) return null;
-  return { ...caseStudy, blocks: (blocks ?? []).map(parseCaseStudyBlock) } as StudioCaseStudyDetail;
+  if (topicsError || blocksError) return null;
+  return { ...caseStudy, topics: (topics ?? []) as StudioCaseStudyTopic[], blocks: (blocks ?? []).map(parseCaseStudyBlock) } as StudioCaseStudyDetail;
 }
 
 export async function getAdminCaseStudies(): Promise<StudioCaseStudyAdminSummary[]> {
@@ -70,12 +71,11 @@ export async function getAdminCaseStudyById(id: string): Promise<StudioCaseStudy
 
   if (error || !caseStudy) return null;
 
-  const { data: blocks, error: blocksError } = await admin
-    .from('studio_case_study_blocks')
-    .select(blockFields)
-    .eq('case_study_id', caseStudy.id)
-    .order('sort_order', { ascending: true });
+  const [{ data: topics, error: topicsError }, { data: blocks, error: blocksError }] = await Promise.all([
+    admin.from('studio_case_study_topics').select(topicFields).eq('case_study_id', caseStudy.id).order('sort_order', { ascending: true }),
+    admin.from('studio_case_study_blocks').select(blockFields).eq('case_study_id', caseStudy.id).order('sort_order', { ascending: true }),
+  ]);
 
-  if (blocksError) return null;
-  return { ...caseStudy, blocks: (blocks ?? []).map(parseCaseStudyBlock) } as StudioCaseStudyAdminDetail;
+  if (topicsError || blocksError) return null;
+  return { ...caseStudy, topics: (topics ?? []) as StudioCaseStudyTopic[], blocks: (blocks ?? []).map(parseCaseStudyBlock) } as StudioCaseStudyAdminDetail;
 }

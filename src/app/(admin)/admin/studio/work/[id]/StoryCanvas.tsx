@@ -54,10 +54,10 @@ async function apiUpload(studyId: string, files: File[]): Promise<UploadedFile[]
   return data.files ?? [];
 }
 
-async function apiCreateBlock(studyId: string, type: StudioCaseStudyBlockType, content: Record<string, unknown>): Promise<StudioCaseStudyBlock> {
+async function apiCreateBlock(studyId: string, type: StudioCaseStudyBlockType, content: Record<string, unknown>, topicId?: string | null): Promise<StudioCaseStudyBlock> {
   const res = await fetch(`/api/admin/studio/case-studies/${studyId}/blocks`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ type, content }),
+    body: JSON.stringify({ type, content, topic_id: topicId ?? null }),
   });
   const data = await res.json().catch(() => ({})) as { data?: Record<string, unknown>; error?: string };
   if (!res.ok || !data.data) throw new Error(data.error ?? 'Failed to create block');
@@ -491,11 +491,12 @@ function GenericBlock({ block }: { block: StudioCaseStudyBlock }): ReactElement 
 // ─── AddBlockBar ───────────────────────────────────────────────────────────────
 
 function AddBlockBar({
-  studyId, onBlockAdded,
+  studyId, topicId, onBlockAdded,
   imgDragSrc, onImgExtract,
   aboveBlock, onAboveResized,
 }: {
   studyId: string;
+  topicId?: string | null;
   onBlockAdded: (block: StudioCaseStudyBlock) => void;
   imgDragSrc: ImgDragSrc;
   onImgExtract: () => void;
@@ -551,10 +552,10 @@ function AddBlockBar({
       const videos = uploaded.filter((f) => f.mediaType === 'video');
       for (let i = 0; i < images.length; i += 2) {
         const batch = images.slice(i, i + 2);
-        const block = await apiCreateBlock(studyId, 'media_row', { layout: batch.length === 2 ? 'pair' : 'single', items: batch.map((f) => ({ type: 'image', url: f.url, alt: f.name.replace(/\.[^.]+$/, ''), aspectRatio: '3/2' })) });
+        const block = await apiCreateBlock(studyId, 'media_row', { layout: batch.length === 2 ? 'pair' : 'single', items: batch.map((f) => ({ type: 'image', url: f.url, alt: f.name.replace(/\.[^.]+$/, ''), aspectRatio: '3/2' })) }, topicId);
         onBlockAdded(block);
       }
-      for (const v of videos) { const block = await apiCreateBlock(studyId, 'video', { url: v.url, coverUrl: null, caption: null }); onBlockAdded(block); }
+      for (const v of videos) { const block = await apiCreateBlock(studyId, 'video', { url: v.url, coverUrl: null, caption: null }, topicId); onBlockAdded(block); }
       toast.success(`${uploaded.length} file${uploaded.length !== 1 ? 's' : ''} added`);
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Upload failed'); }
     finally { setUploading(false); }
@@ -563,7 +564,7 @@ function AddBlockBar({
   async function handleAdd(type: StudioCaseStudyBlockType): Promise<void> {
     setOpen(false);
     const content: Record<string, unknown> = type === 'text' ? { body: '' } : type === 'video' ? { url: '', coverUrl: null, caption: null } : type === 'quote' ? { quote: '', name: null, role: null } : { layout: 'single', items: [] };
-    try { const block = await apiCreateBlock(studyId, type, content); onBlockAdded(block); }
+    try { const block = await apiCreateBlock(studyId, type, content, topicId); onBlockAdded(block); }
     catch (e) { toast.error(e instanceof Error ? e.message : 'Failed'); }
   }
 
@@ -667,8 +668,9 @@ function BlockRenderer({ block, studyId, onUpdated, onDeleted, imgDragSrc, onImg
 
 // ─── StoryCanvas ───────────────────────────────────────────────────────────────
 
-export default function StoryCanvas({ studyId, blocks, onBlockAdded, onBlockUpdated, onBlockDeleted, onBlocksReordered }: {
+export default function StoryCanvas({ studyId, topicId, blocks, onBlockAdded, onBlockUpdated, onBlockDeleted, onBlocksReordered }: {
   studyId: string;
+  topicId?: string | null;
   blocks: StudioCaseStudyBlock[];
   onBlockAdded: (block: StudioCaseStudyBlock) => void;
   onBlockUpdated: (block: StudioCaseStudyBlock) => void;
@@ -819,7 +821,7 @@ export default function StoryCanvas({ studyId, blocks, onBlockAdded, onBlockUpda
         onDragEnd={(e) => void handleDragEnd(e)}>
         <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
           <div style={{ maxWidth: 960, margin: '0 auto' }}>
-            <AddBlockBar studyId={studyId} onBlockAdded={onBlockAdded}
+            <AddBlockBar studyId={studyId} topicId={topicId} onBlockAdded={onBlockAdded}
               imgDragSrc={imgDragSrc} onImgExtract={() => void handleImgExtract(-1)} />
             {blocks.map((block, blockIndex) => (
               <div key={block.id}>
@@ -832,7 +834,7 @@ export default function StoryCanvas({ studyId, blocks, onBlockAdded, onBlockUpda
                     onImgDrop={(targetId, side) => void handleImgMerge(targetId, side)}
                   />
                 </SortableBlock>
-                <AddBlockBar studyId={studyId} onBlockAdded={onBlockAdded}
+                <AddBlockBar studyId={studyId} topicId={topicId} onBlockAdded={onBlockAdded}
                   imgDragSrc={imgDragSrc} onImgExtract={() => void handleImgExtract(blockIndex)}
                   aboveBlock={block.type === 'media_row' ? block : undefined}
                   onAboveResized={onBlockUpdated}

@@ -11,7 +11,7 @@ import {
 
 type Params = { params: Promise<{ id: string }> };
 const blockTypes = ['text', 'media_row', 'video', 'quote', 'process_notes', 'credits'] as const;
-const blockFields = 'id, case_study_id, type, sort_order, content';
+const blockFields = 'id, case_study_id, type, sort_order, content, topic_id';
 const publishFields = 'title, slug, subtitle, cover_url, cover_media_type, preview_video_url, og_image_url, year, release_date, status';
 const uuidSchema = z.string().uuid();
 
@@ -25,10 +25,13 @@ export async function POST(request: NextRequest, { params }: Params): Promise<Ne
   try {
     await requireAdminApi('content');
     const { id: caseStudyId } = await params;
-    const body = await request.json() as { type?: unknown; content?: unknown };
+    const body = await request.json() as { type?: unknown; content?: unknown; topic_id?: string | null };
 
     if (!uuidSchema.safeParse(caseStudyId).success) {
       return NextResponse.json({ error: 'Invalid case study ID.' }, { status: 400 });
+    }
+    if (body.topic_id != null && !uuidSchema.safeParse(body.topic_id).success) {
+      return NextResponse.json({ error: 'Invalid topic ID.' }, { status: 400 });
     }
     if (!blockTypes.includes(body.type as typeof blockTypes[number])) {
       return NextResponse.json({ error: 'Invalid block type.' }, { status: 400 });
@@ -67,6 +70,7 @@ export async function POST(request: NextRequest, { params }: Params): Promise<Ne
       type: body.type as typeof blockTypes[number],
       sort_order: nextSortOrder,
       content: body.content,
+      topic_id: body.topic_id ?? null,
     };
     const publishIssues = validatePublishedCaseStudyState(
       caseStudy as StudioCaseStudyPublishRecord,
@@ -83,6 +87,7 @@ export async function POST(request: NextRequest, { params }: Params): Promise<Ne
         type: body.type,
         content: body.content,
         sort_order: nextSortOrder,
+        topic_id: body.topic_id ?? null,
       })
       .select(blockFields)
       .single();

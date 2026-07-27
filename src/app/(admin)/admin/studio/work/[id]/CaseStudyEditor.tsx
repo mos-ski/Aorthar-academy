@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useRef, useState } from 'react';
-import { ArrowDown, ArrowLeft, ArrowUp, Copy, ExternalLink, Plus, Save, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ArrowDown, ArrowLeft, ArrowUp, Copy, ExternalLink, Plus, Redo, Save, Trash2, Undo, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,11 +17,11 @@ import {
   type CaseStudyListFields,
 } from '@/lib/studio/case-study-editor';
 import type { ReactElement } from 'react';
-import type { StudioCaseStudyAdminDetail, StudioCaseStudyBlock, StudioCaseStudyBlockType, StudioCaseStudyStatus } from '@/lib/studio/case-study-schema';
+import type { StudioCaseStudyAdminDetail, StudioCaseStudyBlock, StudioCaseStudyBlockType, StudioCaseStudyStatus, StudioCaseStudyTopic } from '@/lib/studio/case-study-schema';
 import StoryCanvas from './StoryCanvas';
 
 type CaseStudyEditorProps = { study: StudioCaseStudyAdminDetail };
-type StudyDraft = Omit<StudioCaseStudyAdminDetail, 'blocks' | 'created_at' | 'updated_at' | 'published_at'>;
+type StudyDraft = Omit<StudioCaseStudyAdminDetail, 'blocks' | 'topics' | 'created_at' | 'updated_at' | 'published_at'>;
 type BlockEditorProps<T extends StudioCaseStudyBlock> = { block: T; onChange: (block: T) => void };
 
 const emptyContentByType = {
@@ -37,7 +37,7 @@ const blockLabels: Record<StudioCaseStudyBlockType, string> = {
   text: 'Text', media_row: 'Media row', video: 'Video', quote: 'Quote', process_notes: 'Process notes', credits: 'Credits',
 };
 
-function contentForBlock(block: StudioCaseStudyBlock): Omit<StudioCaseStudyBlock, 'id' | 'sort_order' | 'type'> {
+function contentForBlock(block: StudioCaseStudyBlock): Record<string, unknown> {
   switch (block.type) {
     case 'text': return { body: block.body };
     case 'media_row': return { layout: block.layout, items: block.items };
@@ -80,7 +80,55 @@ export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactE
   });
   const [listFields, setListFields] = useState<CaseStudyListFields>(() => createCaseStudyListFields(study));
   const [blocks, setBlocks] = useState<StudioCaseStudyBlock[]>(study.blocks);
+  const [topics, setTopics] = useState<StudioCaseStudyTopic[]>(study.topics ?? []);
+  const [activeTopic, setActiveTopic] = useState<string | null>(() => (study.topics ?? [])[0]?.id ?? null);
   const [saving, setSaving] = useState<boolean>(false);
+
+  // ── undo / redo ────────────────────────────────────────────────────────────
+  const historyRef = useRef<StudioCaseStudyBlock[][]>([study.blocks]);
+  const pointerRef = useRef<number>(0);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+
+  const pushHistory = useCallback((next: StudioCaseStudyBlock[]): void => {
+    const pointer = pointerRef.current;
+    const trimmed = historyRef.current.slice(0, pointer + 1);
+    trimmed.push(next);
+    if (trimmed.length > 100) trimmed.shift();
+    historyRef.current = trimmed;
+    pointerRef.current = trimmed.length - 1;
+    setCanUndo(trimmed.length > 1);
+    setCanRedo(false);
+  }, []);
+
+  const undo = useCallback((): void => {
+    if (pointerRef.current <= 0) return;
+    pointerRef.current -= 1;
+    const snapshot = historyRef.current[pointerRef.current];
+    setBlocks(snapshot);
+    setCanUndo(pointerRef.current > 0);
+    setCanRedo(true);
+  }, []);
+
+  const redo = useCallback((): void => {
+    if (pointerRef.current >= historyRef.current.length - 1) return;
+    pointerRef.current += 1;
+    const snapshot = historyRef.current[pointerRef.current];
+    setBlocks(snapshot);
+    setCanUndo(true);
+    setCanRedo(pointerRef.current < historyRef.current.length - 1);
+  }, []);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent): void {
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+      if (mod && e.key === 'z' && e.shiftKey) { e.preventDefault(); redo(); }
+      if (mod && e.key === 'y') { e.preventDefault(); redo(); }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [undo, redo]);
 
   function updateDraft<K extends keyof StudyDraft>(key: K, value: StudyDraft[K]): void {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -88,6 +136,14 @@ export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactE
 
   function updateListField(key: keyof CaseStudyListFields, value: string): void {
     setListFields((current) => ({ ...current, [key]: value }));
+  }
+
+  function setBlocksWithHistory(updater: StudioCaseStudyBlock[] | ((prev: StudioCaseStudyBlock[]) => StudioCaseStudyBlock[])): void {
+    setBlocks((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      pushHistory(next);
+      return next;
+    });
   }
 
   async function saveStudy(nextStatus?: StudioCaseStudyStatus): Promise<void> {
@@ -110,19 +166,19 @@ export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactE
   }
 
   function updateBlock(nextBlock: StudioCaseStudyBlock): void {
-    setBlocks((current) => current.map((block) => block.id === nextBlock.id ? nextBlock : block));
+    setBlocksWithHistory((current) => current.map((block) => block.id === nextBlock.id ? nextBlock : block));
   }
 
-  async function addBlock(type: StudioCaseStudyBlockType, contentOverride?: Record<string, unknown>): Promise<void> {
+  async function addBlock(type: StudioCaseStudyBlockType, contentOverride?: Record<string, unknown>, topicId?: string | null): Promise<void> {
     const content = contentOverride ?? emptyContentByType[type];
     try {
       const res = await fetch(`/api/admin/studio/case-studies/${study.id}/blocks`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, content }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, content, topic_id: topicId ?? null }),
       });
       const data = await res.json().catch((): { data?: { id: string; sort_order: number } & Record<string, unknown>; error?: string } => ({}));
       if (!res.ok || !data.data) { toast.error(data.error ?? 'Failed to add block'); return; }
       const newBlock = { id: data.data.id, sort_order: data.data.sort_order, type, ...content } as StudioCaseStudyBlock;
-      setBlocks((current) => [...current, newBlock]);
+      setBlocksWithHistory((current) => [...current, newBlock]);
       toast.success(`${blockLabels[type]} block added`);
     } catch { toast.error('Failed to add block'); }
   }
@@ -146,7 +202,7 @@ export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactE
         type: block.type,
         ...content,
       } as StudioCaseStudyBlock;
-      setBlocks((current) => [...current, duplicate]);
+      setBlocksWithHistory((current) => [...current, duplicate]);
       toast.success('Block duplicated');
     } catch {
       toast.error('Failed to duplicate block');
@@ -170,7 +226,7 @@ export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactE
       const res = await fetch(`/api/admin/studio/case-studies/${study.id}/blocks/${blockId}`, { method: 'DELETE' });
       const data = await res.json().catch((): { error?: string } => ({}));
       if (!res.ok) { toast.error(data.error ?? 'Failed to delete block'); return; }
-      setBlocks((current) => current.filter((block) => block.id !== blockId));
+      setBlocksWithHistory((current) => current.filter((block) => block.id !== blockId));
       toast.success('Block deleted'); router.refresh();
     } catch { toast.error('Failed to delete block'); }
   }
@@ -181,15 +237,43 @@ export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactE
     const reordered = [...blocks];
     [reordered[index], reordered[destination]] = [reordered[destination], reordered[index]];
     const ordered = reordered.map((block, sortOrder) => ({ ...block, sort_order: sortOrder }));
-    setBlocks(ordered);
+    setBlocksWithHistory(ordered);
     try {
       const res = await fetch(`/api/admin/studio/case-studies/${study.id}/blocks/reorder`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderedIds: ordered.map((block) => block.id) }),
       });
       const data = await res.json().catch((): { error?: string } => ({}));
-      if (!res.ok) { setBlocks(blocks); toast.error(data.error ?? 'Failed to reorder blocks'); return; }
+      if (!res.ok) { setBlocksWithHistory(blocks); toast.error(data.error ?? 'Failed to reorder blocks'); return; }
       toast.success('Block order updated'); router.refresh();
-    } catch { setBlocks(blocks); toast.error('Failed to reorder blocks'); }
+    } catch { setBlocksWithHistory(blocks); toast.error('Failed to reorder blocks'); }
+  }
+
+  async function addTopic(title: string): Promise<void> {
+    const res = await fetch(`/api/admin/studio/case-studies/${study.id}/topics`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title }),
+    });
+    const data = await res.json().catch((): { data?: StudioCaseStudyTopic; error?: string } => ({}));
+    if (!res.ok || !data.data) { toast.error(data.error ?? 'Failed to add topic'); return; }
+    if (topics.length === 0) setActiveTopic(data.data.id);
+    setTopics((curr) => [...curr, data.data!]);
+  }
+
+  async function deleteTopic(id: string): Promise<void> {
+    const res = await fetch(`/api/admin/studio/case-studies/${study.id}/topics/${id}`, { method: 'DELETE' });
+    const data = await res.json().catch((): { error?: string } => ({}));
+    if (!res.ok) { toast.error(data.error ?? 'Failed to delete topic'); return; }
+    const remaining = topics.filter((t) => t.id !== id);
+    setTopics(remaining);
+    if (activeTopic === id) setActiveTopic(remaining[0]?.id ?? null);
+  }
+
+  async function renameTopic(id: string, title: string): Promise<void> {
+    const res = await fetch(`/api/admin/studio/case-studies/${study.id}/topics/${id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title }),
+    });
+    const data = await res.json().catch((): { error?: string } => ({}));
+    if (!res.ok) { toast.error(data.error ?? 'Failed to rename topic'); return; }
+    setTopics((curr) => curr.map((t) => t.id === id ? { ...t, title } : t));
   }
 
   return <div className="space-y-6">
@@ -208,12 +292,22 @@ export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactE
           studyId={study.id}
           blocks={blocks}
           saving={saving}
+          topics={topics}
+          activeTopic={activeTopic}
           onAdd={addBlock}
           onSave={() => saveStudy()}
-          onBlockAdded={(b) => setBlocks((curr) => [...curr, b])}
-          onBlockUpdated={(b) => setBlocks((curr) => curr.map((x) => x.id === b.id ? b : x))}
-          onBlockDeleted={(id) => setBlocks((curr) => curr.filter((x) => x.id !== id))}
-          onBlocksReordered={setBlocks}
+          onBlockAdded={(b) => setBlocksWithHistory((curr) => [...curr, b])}
+          onBlockUpdated={(b) => setBlocksWithHistory((curr) => curr.map((x) => x.id === b.id ? b : x))}
+          onBlockDeleted={(id) => setBlocksWithHistory((curr) => curr.filter((x) => x.id !== id))}
+          onBlocksReordered={setBlocksWithHistory}
+          onTopicChange={setActiveTopic}
+          onTopicAdd={addTopic}
+          onTopicDelete={deleteTopic}
+          onTopicRename={renameTopic}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          onUndo={undo}
+          onRedo={redo}
         />
       </TabsContent>
       <TabsContent value="credits" className="mt-6"><Card><CardContent className="space-y-4 pt-6"><p className="text-sm text-muted-foreground">Credits are managed as structured Credits blocks in the Story tab.</p><Button type="button" variant="outline" onClick={() => void addBlock('credits')}><Plus />Add credits block</Button></CardContent></Card></TabsContent>
@@ -229,34 +323,60 @@ function StudioCanvas({
   studyId,
   blocks,
   saving,
+  topics,
+  activeTopic,
   onAdd,
   onSave,
   onBlockAdded,
   onBlockUpdated,
   onBlockDeleted,
   onBlocksReordered,
+  onTopicChange,
+  onTopicAdd,
+  onTopicDelete,
+  onTopicRename,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
 }: {
   study: StudyDraft;
   studyId: string;
   blocks: StudioCaseStudyBlock[];
   saving: boolean;
-  onAdd: (type: StudioCaseStudyBlockType, content?: Record<string, unknown>) => Promise<void>;
+  topics: StudioCaseStudyTopic[];
+  activeTopic: string | null;
+  onAdd: (type: StudioCaseStudyBlockType, content?: Record<string, unknown>, topicId?: string | null) => Promise<void>;
   onSave: () => Promise<void>;
   onBlockAdded: (block: StudioCaseStudyBlock) => void;
   onBlockUpdated: (block: StudioCaseStudyBlock) => void;
   onBlockDeleted: (id: string) => void;
   onBlocksReordered: (blocks: StudioCaseStudyBlock[]) => void;
+  onTopicChange: (id: string | null) => void;
+  onTopicAdd: (title: string) => Promise<void>;
+  onTopicDelete: (id: string) => Promise<void>;
+  onTopicRename: (id: string, title: string) => Promise<void>;
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
 }): ReactElement {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadLabel, setUploadLabel] = useState('');
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [addingNew, setAddingNew] = useState(false);
+  const [newTopicInput, setNewTopicInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const projectName = study.client || study.title || 'Project Name';
   const category = study.tags[0] ?? study.services[0] ?? null;
   const year = study.year ?? null;
+
+  const topicBlocks = activeTopic != null ? blocks.filter((b) => b.topic_id === activeTopic) : blocks;
+  const otherBlocks = activeTopic != null ? blocks.filter((b) => b.topic_id !== activeTopic) : [];
 
   const filteredTypes = (Object.keys(emptyContentByType) as StudioCaseStudyBlockType[]).filter(
     (type) => !search || blockLabels[type].toLowerCase().includes(search.toLowerCase()),
@@ -284,10 +404,10 @@ function StudioCanvas({
         await onAdd('media_row', {
           layout: batch.length === 2 ? 'pair' : 'single',
           items: batch.map((f) => ({ type: 'image', url: f.url, alt: f.name.replace(/\.[^.]+$/, ''), aspectRatio: '3/2' })),
-        });
+        }, activeTopic);
       }
       for (const video of videos) {
-        await onAdd('video', { url: video.url, coverUrl: null, caption: null });
+        await onAdd('video', { url: video.url, coverUrl: null, caption: null }, activeTopic);
       }
       toast.success(`${uploaded.length} file${uploaded.length !== 1 ? 's' : ''} added`);
     } catch { toast.error('Upload failed'); } finally { setUploading(false); setUploadLabel(''); }
@@ -314,6 +434,19 @@ function StudioCanvas({
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 28px', borderBottom: '1px solid rgba(255,255,255,0.08)', background: '#18191a', flexShrink: 0 }}>
         <span style={{ color: '#fff', fontWeight: 700, fontSize: 16, letterSpacing: '-0.02em' }}>Aorthar</span>
         <div style={{ display: 'flex', gap: 22, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <button type="button" onClick={onUndo} disabled={!canUndo}
+              title="Undo (⌘Z)"
+              style={{ background: 'none', border: 'none', cursor: canUndo ? 'pointer' : 'default', color: canUndo ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.2)', padding: 0, display: 'flex' }}>
+              <Undo size={16} />
+            </button>
+            <button type="button" onClick={onRedo} disabled={!canRedo}
+              title="Redo (⌘⇧Z)"
+              style={{ background: 'none', border: 'none', cursor: canRedo ? 'pointer' : 'default', color: canRedo ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.2)', padding: 0, display: 'flex' }}>
+              <Redo size={16} />
+            </button>
+          </div>
+          <Link href={`/admin/studio/work/${studyId}/preview`} style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, textDecoration: 'none' }}>Preview</Link>
           <button type="button" disabled={saving} onClick={() => void onSave()}
             style={{ background: 'none', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', color: 'rgba(255,255,255,0.6)', fontSize: 14, padding: 0 }}>
             {saving ? 'Saving…' : 'Save as draft'}
@@ -326,34 +459,78 @@ function StudioCanvas({
       <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
 
         {/* Left sidebar */}
-        <div style={{ width: 220, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, paddingTop: 56, paddingBottom: 16 }}>
-            <p style={{ color: '#fff', fontSize: 22, margin: 0, textAlign: 'center', lineHeight: 1.2 }}>{projectName}</p>
-            <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+        <div style={{ width: 220, flexShrink: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+          {/* Project header */}
+          <div style={{ padding: '40px 16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <p style={{ color: '#fff', fontSize: 18, margin: '0 0 6px', lineHeight: 1.2, fontWeight: 600 }}>{projectName}</p>
+            <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap' }}>
               {category && <span style={{ color: '#989898', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{category}</span>}
               {category && year && <span style={{ width: 2, height: 2, borderRadius: '50%', background: '#989898', flexShrink: 0 }} />}
               {year && <span style={{ color: '#989898', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{year}</span>}
             </div>
           </div>
-          <div style={{ width: '100%', marginTop: 8 }}>
-            <p style={{ color: '#fff', fontSize: 15, margin: 0, textAlign: 'center', padding: '6px 12px', lineHeight: 1.3 }}>Topics</p>
-            {study.tags.map((tag) => (
-              <p key={tag} style={{ color: '#989898', fontSize: 14, margin: 0, textAlign: 'center', padding: '5px 12px' }}>{tag}</p>
+
+          {/* Topics navigation */}
+          <div style={{ flex: 1, paddingTop: 16 }}>
+            <p style={{ color: '#555', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 6px', padding: '0 16px', fontWeight: 600 }}>Topics</p>
+            {topics.map((topic) => (
+              <div key={topic.id}
+                onClick={() => onTopicChange(topic.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onTopicChange(topic.id); }}
+                style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '7px 16px', cursor: 'pointer', background: activeTopic === topic.id ? 'rgba(167,210,82,0.08)' : 'transparent', borderLeft: `2px solid ${activeTopic === topic.id ? '#a7d252' : 'transparent'}` }}>
+                {renamingId === topic.id
+                  ? <input autoFocus defaultValue={topic.title}
+                      style={{ flex: 1, background: 'none', border: 'none', borderBottom: '1px solid #a7d252', outline: 'none', color: '#ebefe0', fontSize: 14, padding: 0, fontFamily: 'inherit', minWidth: 0 }}
+                      onBlur={(e) => { void onTopicRename(topic.id, e.target.value.trim() || topic.title); setRenamingId(null); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setRenamingId(null); }}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  : <>
+                      <span style={{ flex: 1, color: activeTopic === topic.id ? '#ebefe0' : '#989898', fontSize: 14, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                        onDoubleClick={(e) => { e.stopPropagation(); setRenamingId(topic.id); }}>
+                        {topic.title}
+                      </span>
+                      <button type="button"
+                        onClick={(e) => { e.stopPropagation(); void onTopicDelete(topic.id); }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#444', padding: '2px', display: 'flex', flexShrink: 0, lineHeight: 1 }}>
+                        <X size={11} />
+                      </button>
+                    </>
+                }
+              </div>
             ))}
-            {study.tags.length === 0 && (
-              <p style={{ color: '#3a3a3a', fontSize: 14, margin: 0, textAlign: 'center', padding: '5px 12px' }}>No topics yet</p>
+            {topics.length === 0 && !addingNew && (
+              <p style={{ color: '#3a3a3a', fontSize: 13, margin: 0, padding: '4px 16px' }}>No topics yet</p>
             )}
-            <p style={{ color: '#a7d252', fontSize: 14, margin: 0, textAlign: 'center', padding: '5px 12px', cursor: 'default' }}>+ Add Topic</p>
+            {addingNew
+              ? <div style={{ padding: '6px 16px' }}>
+                  <input autoFocus value={newTopicInput} onChange={(e) => setNewTopicInput(e.target.value)}
+                    placeholder="Topic name"
+                    style={{ width: '100%', background: 'none', border: 'none', borderBottom: '1px solid #a7d252', outline: 'none', color: '#ebefe0', fontSize: 14, padding: '2px 0', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && newTopicInput.trim()) { void onTopicAdd(newTopicInput.trim()); setNewTopicInput(''); setAddingNew(false); }
+                      if (e.key === 'Escape') { setNewTopicInput(''); setAddingNew(false); }
+                    }}
+                    onBlur={() => { if (newTopicInput.trim()) void onTopicAdd(newTopicInput.trim()); setNewTopicInput(''); setAddingNew(false); }}
+                  />
+                </div>
+              : <button type="button" onClick={() => setAddingNew(true)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a7d252', fontSize: 14, margin: 0, textAlign: 'left', padding: '7px 16px', width: '100%', fontFamily: 'inherit' }}>
+                  + Add Topic
+                </button>
+            }
           </div>
         </div>
 
         {/* Canvas area */}
         <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}
-          onDragOver={blocks.length === 0 ? onDragOver : undefined}
-          onDragLeave={blocks.length === 0 ? onDragLeave : undefined}
-          onDrop={blocks.length === 0 ? onDrop : undefined}
+          onDragOver={topicBlocks.length === 0 ? onDragOver : undefined}
+          onDragLeave={topicBlocks.length === 0 ? onDragLeave : undefined}
+          onDrop={topicBlocks.length === 0 ? onDrop : undefined}
         >
-          {blocks.length === 0 ? (
+          {topicBlocks.length === 0 ? (
             /* ── Empty state: upload zone ── */
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, padding: '48px 48px 48px 40px' }}>
               <div style={{
@@ -388,8 +565,8 @@ function StudioCanvas({
                       </div>
                       {filteredTypes.map((type) => (
                         <div key={type} role="button" tabIndex={0}
-                          onClick={() => { void onAdd(type); setOpen(false); setSearch(''); }}
-                          onKeyDown={(e) => { if (e.key === 'Enter') { void onAdd(type); setOpen(false); setSearch(''); } }}
+                          onClick={() => { void onAdd(type, undefined, activeTopic); setOpen(false); setSearch(''); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { void onAdd(type, undefined, activeTopic); setOpen(false); setSearch(''); } }}
                           style={{ padding: '6px 10px', color: '#ebefe0', fontSize: 14, cursor: 'pointer' }}>
                           {blockLabels[type]}
                         </div>
@@ -411,11 +588,12 @@ function StudioCanvas({
             /* ── Has blocks: visual canvas ── */
             <StoryCanvas
               studyId={studyId}
-              blocks={blocks}
+              topicId={activeTopic}
+              blocks={topicBlocks}
               onBlockAdded={onBlockAdded}
               onBlockUpdated={onBlockUpdated}
               onBlockDeleted={onBlockDeleted}
-              onBlocksReordered={onBlocksReordered}
+              onBlocksReordered={(reordered) => onBlocksReordered([...reordered, ...otherBlocks])}
             />
           )}
         </div>

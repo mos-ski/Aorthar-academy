@@ -4,11 +4,20 @@ export type StudioCaseStudyStatus = 'draft' | 'published' | 'archived';
 export type StudioMediaType = 'image' | 'video';
 export type StudioCaseStudyBlockType = 'text' | 'media_row' | 'video' | 'quote' | 'process_notes' | 'credits';
 
+export type StudioCaseStudyTopic = {
+  id: string;
+  case_study_id: string;
+  title: string;
+  sort_order: number;
+  created_at: string;
+};
+
 export type StudioCaseStudyBlockRow = {
   id: string;
   case_study_id: string;
   type: string;
   sort_order: number;
+  topic_id: string | null;
   content: unknown;
 };
 
@@ -41,6 +50,7 @@ export type StudioCaseStudyDetail = StudioCaseStudySummary & {
   seo_title: string | null;
   seo_description: string | null;
   og_image_url: string | null;
+  topics: StudioCaseStudyTopic[];
   blocks: StudioCaseStudyBlock[];
 };
 
@@ -52,12 +62,12 @@ export type StudioCaseStudyAdminDetail = StudioCaseStudyDetail & {
 };
 
 export type StudioCaseStudyBlock =
-  | { id: string; type: 'text'; sort_order: number; body: string }
-  | { id: string; type: 'media_row'; sort_order: number; layout: 'single' | 'pair' | 'trio-left' | 'trio-right'; height?: number; items: Array<{ type: StudioMediaType; url: string; alt: string; aspectRatio: string; objectPosition?: string }> }
-  | { id: string; type: 'video'; sort_order: number; url: string; coverUrl: string | null; caption: string | null }
-  | { id: string; type: 'quote'; sort_order: number; quote: string; name: string | null; role: string | null }
-  | { id: string; type: 'process_notes'; sort_order: number; orientation: 'horizontal' | 'vertical'; title: string; body: string; images: Array<{ url: string; alt: string }> }
-  | { id: string; type: 'credits'; sort_order: number; items: Array<{ category: string; names: string | null; url: string | null }> };
+  | { id: string; type: 'text'; sort_order: number; topic_id?: string | null; body: string }
+  | { id: string; type: 'media_row'; sort_order: number; topic_id?: string | null; layout: 'single' | 'pair' | 'trio-left' | 'trio-right'; height?: number; items: Array<{ type: StudioMediaType; url: string; alt: string; aspectRatio: string; objectPosition?: string }> }
+  | { id: string; type: 'video'; sort_order: number; topic_id?: string | null; url: string; coverUrl: string | null; caption: string | null }
+  | { id: string; type: 'quote'; sort_order: number; topic_id?: string | null; quote: string; name: string | null; role: string | null }
+  | { id: string; type: 'process_notes'; sort_order: number; topic_id?: string | null; orientation: 'horizontal' | 'vertical'; title: string; body: string; images: Array<{ url: string; alt: string }> }
+  | { id: string; type: 'credits'; sort_order: number; topic_id?: string | null; items: Array<{ category: string; names: string | null; url: string | null }> };
 
 export type CaseStudyPublishInput = {
   title: string | null;
@@ -324,7 +334,7 @@ export function matchesCaseStudySearch(
 }
 
 export function parseCaseStudyBlock(row: StudioCaseStudyBlockRow): StudioCaseStudyBlock {
-  const base = { id: row.id, sort_order: row.sort_order };
+  const base = { id: row.id, sort_order: row.sort_order, topic_id: row.topic_id ?? null };
 
   switch (row.type) {
     case 'text': {
