@@ -240,45 +240,12 @@ function MediaBlock({
 }): ReactElement {
   const [uploading, setUploading] = useState(false);
   const [dropSide, setDropSide] = useState<'left' | 'right' | null>(null);
-  const [liveH, setLiveH] = useState<number | null>(null);
-  const resizeRef = useRef<{ startY: number; startH: number } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const rowH = liveH ?? block.height ?? ROW_H;
+  const rowH = block.height ?? ROW_H;
 
   const isDropTarget = imgDragSrc !== null && imgDragSrc.blockId !== block.id && block.items.length < 3;
   const isTrio = block.layout === 'trio-left' || block.layout === 'trio-right';
-
-  // ── vertical resize ───────────────────────────────────────────────────────
-
-  function startResize(e: React.MouseEvent): void {
-    e.preventDefault();
-    e.stopPropagation();
-    resizeRef.current = { startY: e.clientY, startH: rowH };
-    setLiveH(rowH);
-
-    function onMove(ev: MouseEvent): void {
-      if (!resizeRef.current) return;
-      const next = Math.max(80, Math.min(1200, resizeRef.current.startH + (ev.clientY - resizeRef.current.startY)));
-      setLiveH(next);
-    }
-
-    async function onUp(): Promise<void> {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-      resizeRef.current = null;
-      setLiveH((h) => {
-        if (h !== null) {
-          const updated = { ...block, height: Math.round(h) } as Extract<StudioCaseStudyBlock, { type: 'media_row' }>;
-          void apiPatchBlock(studyId, updated).then(() => onUpdated(updated)).catch((err: unknown) => toast.error(err instanceof Error ? err.message : 'Failed to save'));
-        }
-        return null;
-      });
-    }
-
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  }
 
   // ── remove item ──────────────────────────────────────────────────────────
 
@@ -412,19 +379,6 @@ function MediaBlock({
     <div style={{ background: BLOCK_BG, position: 'relative' }}>
       {content}
 
-      {/* Vertical resize handle */}
-      <div
-        onMouseDown={startResize}
-        title="Drag to resize"
-        style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0, height: 8,
-          cursor: 'ns-resize', zIndex: 15, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: liveH !== null ? 'rgba(167,210,82,0.25)' : 'transparent',
-        }}
-      >
-        <div style={{ width: 32, height: 3, borderRadius: 2, background: liveH !== null ? ACCENT : 'rgba(255,255,255,0.15)', transition: 'background 0.15s' }} />
-      </div>
-
       {/* Drop-zone overlay — when another image is being dragged */}
       {isDropTarget && (
         <div onDragLeave={onContainerDragLeave}
@@ -539,16 +493,54 @@ function GenericBlock({ block }: { block: StudioCaseStudyBlock }): ReactElement 
 function AddBlockBar({
   studyId, onBlockAdded,
   imgDragSrc, onImgExtract,
+  aboveBlock, onAboveResized,
 }: {
   studyId: string;
   onBlockAdded: (block: StudioCaseStudyBlock) => void;
   imgDragSrc: ImgDragSrc;
   onImgExtract: () => void;
+  aboveBlock?: Extract<StudioCaseStudyBlock, { type: 'media_row' }>;
+  onAboveResized?: (updated: StudioCaseStudyBlock) => void;
 }): ReactElement {
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [liveH, setLiveH] = useState<number | null>(null);
+  const resizeRef = useRef<{ startY: number; startH: number } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const canResize = !!aboveBlock && !imgDragSrc;
+
+  function startResize(e: React.MouseEvent): void {
+    if (!aboveBlock || !onAboveResized) return;
+    e.preventDefault();
+    const startH = aboveBlock.height ?? ROW_H;
+    resizeRef.current = { startY: e.clientY, startH };
+    setLiveH(startH);
+
+    function onMove(ev: MouseEvent): void {
+      if (!resizeRef.current) return;
+      setLiveH(Math.max(80, Math.min(1200, resizeRef.current.startH + (ev.clientY - resizeRef.current.startY))));
+    }
+
+    function onUp(): void {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      resizeRef.current = null;
+      setLiveH((h) => {
+        if (h !== null && aboveBlock && onAboveResized) {
+          const updated = { ...aboveBlock, height: Math.round(h) } as Extract<StudioCaseStudyBlock, { type: 'media_row' }>;
+          void apiPatchBlock(studyId, updated)
+            .then(() => onAboveResized(updated))
+            .catch((err: unknown) => toast.error(err instanceof Error ? err.message : 'Failed to save'));
+        }
+        return null;
+      });
+    }
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }
 
   async function handleUpload(files: FileList | null): Promise<void> {
     if (!files?.length) return;
@@ -595,6 +587,8 @@ function AddBlockBar({
     onImgExtract();
   }
 
+  const resizing = liveH !== null;
+
   return (
     <div
       onDragOver={onDragOver}
@@ -602,12 +596,16 @@ function AddBlockBar({
       onDrop={onDrop}
       style={{
         position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        height: isExtractTarget ? 48 : 36,
-        transition: 'height 0.15s',
-        background: dragOver ? 'rgba(167,210,82,0.1)' : 'transparent',
+        height: isExtractTarget ? 48 : 12,
+        transition: isExtractTarget ? 'height 0.15s' : undefined,
+        background: dragOver ? 'rgba(167,210,82,0.1)' : resizing ? 'rgba(167,210,82,0.06)' : 'transparent',
         borderTop: dragOver ? `1px dashed ${ACCENT}` : '1px solid transparent',
         borderBottom: dragOver ? `1px dashed ${ACCENT}` : '1px solid transparent',
-      }}>
+        cursor: canResize ? 'ns-resize' : 'default',
+        userSelect: 'none',
+      }}
+      onMouseDown={canResize ? startResize : undefined}
+    >
       {isExtractTarget
         ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: dragOver ? ACCENT : TEXT_MUTED, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', pointerEvents: 'none', transition: 'color 0.1s' }}>
@@ -616,11 +614,18 @@ function AddBlockBar({
           </div>
         )
         : <>
-            <div style={{ position: 'absolute', left: 0, right: 0, height: 1, background: BORDER }} />
+            {/* The line — doubles as the resize affordance */}
+            <div style={{ position: 'absolute', left: 0, right: 0, height: resizing ? 2 : 1, background: resizing ? ACCENT : BORDER, transition: 'background 0.1s, height 0.1s' }} />
+            {/* + button — only show when not a resize target or not hovering for resize */}
             <input ref={fileRef} type="file" multiple accept="image/*,video/*" style={{ display: 'none' }} onChange={(e) => void handleUpload(e.target.files)} />
-            <button type="button" onClick={() => setOpen((v) => !v)} disabled={uploading} title="Add block"
-              style={{ position: 'relative', zIndex: 1, background: BLOCK_BG, border: `1px solid ${BORDER}`, borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: TEXT_MUTED }}>
-              {uploading ? <span style={{ fontSize: 10 }}>…</span> : <Plus size={13} />}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+              disabled={uploading}
+              title="Add block"
+              onMouseDown={(e) => e.stopPropagation()}
+              style={{ position: 'relative', zIndex: 1, background: BLOCK_BG, border: `1px solid ${BORDER}`, borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: TEXT_MUTED, opacity: resizing ? 0 : 1, transition: 'opacity 0.1s' }}>
+              {uploading ? <span style={{ fontSize: 9 }}>…</span> : <Plus size={11} />}
             </button>
             {open && (
               <div style={{ position: 'absolute', top: 'calc(100% + 2px)', zIndex: 30, background: BLOCK_BG, border: `1px solid ${BORDER}`, padding: 6, display: 'flex', gap: 4 }}>
@@ -630,7 +635,7 @@ function AddBlockBar({
                   { icon: <Film size={14} />, label: 'Video', action: () => void handleAdd('video') },
                   { icon: <Quote size={14} />, label: 'Quote', action: () => void handleAdd('quote') },
                 ].map((btn) => (
-                  <button key={btn.label} type="button" onClick={btn.action}
+                  <button key={btn.label} type="button" onClick={btn.action} onMouseDown={(e) => e.stopPropagation()}
                     style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}`, padding: '8px 12px', cursor: 'pointer', color: TEXT_PRIMARY, fontSize: 11 }}>
                     <span style={{ color: TEXT_MUTED }}>{btn.icon}</span>{btn.label}
                   </button>
@@ -817,7 +822,7 @@ export default function StoryCanvas({ studyId, blocks, onBlockAdded, onBlockUpda
             <AddBlockBar studyId={studyId} onBlockAdded={onBlockAdded}
               imgDragSrc={imgDragSrc} onImgExtract={() => void handleImgExtract(-1)} />
             {blocks.map((block, blockIndex) => (
-              <div key={block.id} style={{ marginBottom: 2 }}>
+              <div key={block.id}>
                 <SortableBlock block={block} onDelete={() => void handleDelete(block)}>
                   <BlockRenderer block={block} studyId={studyId}
                     onUpdated={onBlockUpdated} onDeleted={onBlockDeleted}
@@ -828,7 +833,10 @@ export default function StoryCanvas({ studyId, blocks, onBlockAdded, onBlockUpda
                   />
                 </SortableBlock>
                 <AddBlockBar studyId={studyId} onBlockAdded={onBlockAdded}
-                  imgDragSrc={imgDragSrc} onImgExtract={() => void handleImgExtract(blockIndex)} />
+                  imgDragSrc={imgDragSrc} onImgExtract={() => void handleImgExtract(blockIndex)}
+                  aboveBlock={block.type === 'media_row' ? block : undefined}
+                  onAboveResized={onBlockUpdated}
+                />
               </div>
             ))}
             {blocks.length === 0 && (
