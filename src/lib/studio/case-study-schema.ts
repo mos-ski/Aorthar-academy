@@ -53,7 +53,7 @@ export type StudioCaseStudyAdminDetail = StudioCaseStudyDetail & {
 
 export type StudioCaseStudyBlock =
   | { id: string; type: 'text'; sort_order: number; body: string }
-  | { id: string; type: 'media_row'; sort_order: number; layout: 'single' | 'pair'; items: Array<{ type: StudioMediaType; url: string; alt: string; aspectRatio: string; objectPosition?: string }> }
+  | { id: string; type: 'media_row'; sort_order: number; layout: 'single' | 'pair' | 'trio-left' | 'trio-right'; items: Array<{ type: StudioMediaType; url: string; alt: string; aspectRatio: string; objectPosition?: string }> }
   | { id: string; type: 'video'; sort_order: number; url: string; coverUrl: string | null; caption: string | null }
   | { id: string; type: 'quote'; sort_order: number; quote: string; name: string | null; role: string | null }
   | { id: string; type: 'process_notes'; sort_order: number; orientation: 'horizontal' | 'vertical'; title: string; body: string; images: Array<{ url: string; alt: string }> }
@@ -99,8 +99,8 @@ const draftMediaItemSchema = z.object({
 
 const draftTextBlockSchema = z.object({ body: z.string() }).strict();
 const draftMediaRowBlockSchema = z.object({
-  layout: z.enum(['single', 'pair']),
-  items: z.array(draftMediaItemSchema).max(2),
+  layout: z.enum(['single', 'pair', 'trio-left', 'trio-right']),
+  items: z.array(draftMediaItemSchema).max(3),
 }).strict();
 const draftVideoBlockSchema = z.object({
   url: z.string(),
@@ -136,7 +136,7 @@ const mediaItemSchema = z.object({
 
 const textBlockSchema = z.object({ body: z.string() }).strict();
 const mediaRowBlockSchema = z.object({
-  layout: z.enum(['single', 'pair']),
+  layout: z.enum(['single', 'pair', 'trio-left', 'trio-right']),
   items: z.array(mediaItemSchema),
 }).strict();
 const videoBlockSchema = z.object({
@@ -335,7 +335,7 @@ export function parseCaseStudyBlock(row: StudioCaseStudyBlockRow): StudioCaseStu
         ...base,
         type: 'media_row',
         layout: parsed.success ? parsed.data.layout : 'single',
-        items: parsed.success ? parsed.data.items : [],
+        items: parsed.success ? (parsed.data.items as Array<{ type: StudioMediaType; url: string; alt: string; aspectRatio: string; objectPosition?: string }>) : [],
       };
     }
     case 'video': {
