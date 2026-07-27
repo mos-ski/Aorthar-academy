@@ -22,7 +22,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { toast } from 'sonner';
-import { GripVertical, Plus, Trash2, Upload, Type, Film, Quote, X, Move } from 'lucide-react';
+import { GripVertical, Plus, Trash2, Upload, Type, Film, Quote, X, Move, RotateCcw } from 'lucide-react';
 import type { ReactElement, CSSProperties } from 'react';
 import type { StudioCaseStudyBlock, StudioCaseStudyBlockType } from '@/lib/studio/case-study-schema';
 
@@ -162,7 +162,9 @@ function ImageCell({
   const [cropping, setCropping] = useState(false);
   const cropRef = useRef<{ startX: number; startY: number; px: number; py: number } | null>(null);
 
-  const objectPos = livePos ?? item?.objectPosition ?? '50% 50%';
+  const savedPos = item?.objectPosition ?? '50% 50%';
+  const objectPos = livePos ?? savedPos;
+  const isOffCenter = savedPos !== '50% 50%' && savedPos !== '';
 
   function startCrop(e: React.MouseEvent): void {
     e.preventDefault();
@@ -194,6 +196,11 @@ function ImageCell({
     window.addEventListener('mouseup', onUp);
   }
 
+  function resetPos(): void {
+    setLivePos(null);
+    onUpdated('50% 50%');
+  }
+
   return (
     <div style={{ position: 'relative', overflow: 'hidden', background: '#080808', ...style }}>
       {item?.url
@@ -205,11 +212,19 @@ function ImageCell({
               onDragEnd={onDragEnd}
               style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: objectPos, display: 'block', cursor: cropping ? 'move' : 'grab', userSelect: 'none' }}
             />
-            {/* Crop */}
-            <button type="button" onMouseDown={startCrop} title="Drag to reposition"
-              style={{ position: 'absolute', bottom: 8, left: 8, background: cropping ? ACCENT : 'rgba(0,0,0,0.65)', border: 'none', borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'move', color: cropping ? '#111' : '#fff', zIndex: 5 }}>
-              <Move size={13} />
-            </button>
+            {/* Bottom-left controls: Move + Reset */}
+            <div style={{ position: 'absolute', bottom: 8, left: 8, display: 'flex', gap: 4, zIndex: 5 }}>
+              <button type="button" onMouseDown={startCrop} title="Drag to reposition"
+                style={{ background: cropping ? ACCENT : 'rgba(0,0,0,0.65)', border: 'none', borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'move', color: cropping ? '#111' : '#fff' }}>
+                <Move size={13} />
+              </button>
+              {(isOffCenter || cropping) && (
+                <button type="button" onClick={resetPos} title="Reset to center"
+                  style={{ background: 'rgba(0,0,0,0.65)', border: `1px solid ${ACCENT}`, borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: ACCENT }}>
+                  <RotateCcw size={12} />
+                </button>
+              )}
+            </div>
             {cropping && <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(167,210,82,0.9)', color: '#111', fontSize: 10, padding: '2px 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', pointerEvents: 'none' }}>Drag to reposition</div>}
             {/* Remove */}
             <button type="button" onClick={onRemove}
