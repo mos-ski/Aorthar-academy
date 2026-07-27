@@ -22,7 +22,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { toast } from 'sonner';
-import { GripVertical, Plus, Trash2, Upload, Type, Film, Quote, X, Move, RotateCcw } from 'lucide-react';
+import { GripVertical, Plus, Trash2, Upload, Type, Film, Quote, X, Move } from 'lucide-react';
 import type { ReactElement, CSSProperties } from 'react';
 import type { StudioCaseStudyBlock, StudioCaseStudyBlockType } from '@/lib/studio/case-study-schema';
 
@@ -162,9 +162,7 @@ function ImageCell({
   const [cropping, setCropping] = useState(false);
   const cropRef = useRef<{ startX: number; startY: number; px: number; py: number } | null>(null);
 
-  const savedPos = item?.objectPosition ?? '50% 50%';
-  const objectPos = livePos ?? savedPos;
-  const isOffCenter = savedPos !== '50% 50%' && savedPos !== '';
+  const objectPos = livePos ?? item?.objectPosition ?? '50% 50%';
 
   function startCrop(e: React.MouseEvent): void {
     e.preventDefault();
@@ -196,11 +194,6 @@ function ImageCell({
     window.addEventListener('mouseup', onUp);
   }
 
-  function resetPos(): void {
-    setLivePos(null);
-    onUpdated('50% 50%');
-  }
-
   return (
     <div style={{ position: 'relative', overflow: 'hidden', background: '#080808', ...style }}>
       {item?.url
@@ -212,19 +205,11 @@ function ImageCell({
               onDragEnd={onDragEnd}
               style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: objectPos, display: 'block', cursor: cropping ? 'move' : 'grab', userSelect: 'none' }}
             />
-            {/* Bottom-left controls: Move + Reset */}
-            <div style={{ position: 'absolute', bottom: 8, left: 8, display: 'flex', gap: 4, zIndex: 5 }}>
-              <button type="button" onMouseDown={startCrop} title="Drag to reposition"
-                style={{ background: cropping ? ACCENT : 'rgba(0,0,0,0.65)', border: 'none', borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'move', color: cropping ? '#111' : '#fff' }}>
-                <Move size={13} />
-              </button>
-              {(isOffCenter || cropping) && (
-                <button type="button" onClick={resetPos} title="Reset to center"
-                  style={{ background: 'rgba(0,0,0,0.65)', border: `1px solid ${ACCENT}`, borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: ACCENT }}>
-                  <RotateCcw size={12} />
-                </button>
-              )}
-            </div>
+            {/* Move handle */}
+            <button type="button" onMouseDown={startCrop} title="Drag to reposition"
+              style={{ position: 'absolute', bottom: 8, left: 8, background: cropping ? ACCENT : 'rgba(0,0,0,0.65)', border: 'none', borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'move', color: cropping ? '#111' : '#fff', zIndex: 5 }}>
+              <Move size={13} />
+            </button>
             {cropping && <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(167,210,82,0.9)', color: '#111', fontSize: 10, padding: '2px 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', pointerEvents: 'none' }}>Drag to reposition</div>}
             {/* Remove */}
             <button type="button" onClick={onRemove}
@@ -255,10 +240,45 @@ function MediaBlock({
 }): ReactElement {
   const [uploading, setUploading] = useState(false);
   const [dropSide, setDropSide] = useState<'left' | 'right' | null>(null);
+  const [liveH, setLiveH] = useState<number | null>(null);
+  const resizeRef = useRef<{ startY: number; startH: number } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const rowH = liveH ?? block.height ?? ROW_H;
 
   const isDropTarget = imgDragSrc !== null && imgDragSrc.blockId !== block.id && block.items.length < 3;
   const isTrio = block.layout === 'trio-left' || block.layout === 'trio-right';
+
+  // ── vertical resize ───────────────────────────────────────────────────────
+
+  function startResize(e: React.MouseEvent): void {
+    e.preventDefault();
+    e.stopPropagation();
+    resizeRef.current = { startY: e.clientY, startH: rowH };
+    setLiveH(rowH);
+
+    function onMove(ev: MouseEvent): void {
+      if (!resizeRef.current) return;
+      const next = Math.max(80, Math.min(1200, resizeRef.current.startH + (ev.clientY - resizeRef.current.startY)));
+      setLiveH(next);
+    }
+
+    async function onUp(): Promise<void> {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      resizeRef.current = null;
+      setLiveH((h) => {
+        if (h !== null) {
+          const updated = { ...block, height: Math.round(h) } as Extract<StudioCaseStudyBlock, { type: 'media_row' }>;
+          void apiPatchBlock(studyId, updated).then(() => onUpdated(updated)).catch((err: unknown) => toast.error(err instanceof Error ? err.message : 'Failed to save'));
+        }
+        return null;
+      });
+    }
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }
 
   // ── remove item ──────────────────────────────────────────────────────────
 
@@ -346,21 +366,18 @@ function MediaBlock({
   if (isTrio) {
     const isLeft = block.layout === 'trio-left';
     content = (
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: `${ROW_H}px ${ROW_H}px`, gap: 2 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: `${rowH}px ${rowH}px`, gap: 2 }}>
         {isLeft ? (
           <>
-            {/* Tall image on left, spans both rows */}
-            {cell(0, { gridRow: '1 / 3', gridColumn: '1', height: ROW_H * 2 + 2 })}
-            {cell(1, { height: ROW_H })}
-            {cell(2, { height: ROW_H })}
+            {cell(0, { gridRow: '1 / 3', gridColumn: '1', height: rowH * 2 + 2 })}
+            {cell(1, { height: rowH })}
+            {cell(2, { height: rowH })}
           </>
         ) : (
           <>
-            {/* Two stacked on left, tall on right */}
-            {cell(1, { height: ROW_H, gridRow: '1', gridColumn: '1' })}
-            {/* Tall image on right, spans both rows */}
-            {cell(0, { gridRow: '1 / 3', gridColumn: '2', height: ROW_H * 2 + 2 })}
-            {cell(2, { height: ROW_H, gridRow: '2', gridColumn: '1' })}
+            {cell(1, { height: rowH, gridRow: '1', gridColumn: '1' })}
+            {cell(0, { gridRow: '1 / 3', gridColumn: '2', height: rowH * 2 + 2 })}
+            {cell(2, { height: rowH, gridRow: '2', gridColumn: '1' })}
           </>
         )}
       </div>
@@ -368,19 +385,19 @@ function MediaBlock({
   } else if (block.layout === 'pair') {
     content = (
       <div style={{ display: 'flex', gap: 2 }}>
-        {cell(0, { flex: '1', height: ROW_H })}
-        {cell(1, { flex: '1', height: ROW_H })}
+        {cell(0, { flex: '1', height: rowH })}
+        {cell(1, { flex: '1', height: rowH })}
       </div>
     );
   } else {
     // single
     content = (
       <div style={{ display: 'flex', gap: 2 }}>
-        {cell(0, { flex: '1', height: ROW_H })}
+        {cell(0, { flex: '1', height: rowH })}
         {/* + Pair slot */}
         {block.items.length < 2 && (
           <div onClick={() => !uploading && fileRef.current?.click()}
-            style={{ width: 52, background: 'rgba(255,255,255,0.025)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: uploading ? 'wait' : 'pointer', flexShrink: 0, height: ROW_H, borderLeft: `1px dashed ${BORDER}` }}
+            style={{ width: 52, background: 'rgba(255,255,255,0.025)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: uploading ? 'wait' : 'pointer', flexShrink: 0, height: rowH, borderLeft: `1px dashed ${BORDER}` }}
             title="Add second image (pair)">
             <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => void addImage(e.target.files)} />
             {uploading ? <span style={{ color: TEXT_MUTED, fontSize: 10 }}>…</span>
@@ -394,6 +411,19 @@ function MediaBlock({
   return (
     <div style={{ background: BLOCK_BG, position: 'relative' }}>
       {content}
+
+      {/* Vertical resize handle */}
+      <div
+        onMouseDown={startResize}
+        title="Drag to resize"
+        style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: 8,
+          cursor: 'ns-resize', zIndex: 15, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: liveH !== null ? 'rgba(167,210,82,0.25)' : 'transparent',
+        }}
+      >
+        <div style={{ width: 32, height: 3, borderRadius: 2, background: liveH !== null ? ACCENT : 'rgba(255,255,255,0.15)', transition: 'background 0.15s' }} />
+      </div>
 
       {/* Drop-zone overlay — when another image is being dragged */}
       {isDropTarget && (
