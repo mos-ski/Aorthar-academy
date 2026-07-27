@@ -491,9 +491,18 @@ function GenericBlock({ block }: { block: StudioCaseStudyBlock }): ReactElement 
 
 // ─── AddBlockBar ───────────────────────────────────────────────────────────────
 
-function AddBlockBar({ studyId, onBlockAdded }: { studyId: string; onBlockAdded: (block: StudioCaseStudyBlock) => void }): ReactElement {
+function AddBlockBar({
+  studyId, onBlockAdded,
+  imgDragSrc, onImgExtract,
+}: {
+  studyId: string;
+  onBlockAdded: (block: StudioCaseStudyBlock) => void;
+  imgDragSrc: ImgDragSrc;
+  onImgExtract: () => void;
+}): ReactElement {
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function handleUpload(files: FileList | null): Promise<void> {
@@ -521,29 +530,70 @@ function AddBlockBar({ studyId, onBlockAdded }: { studyId: string; onBlockAdded:
     catch (e) { toast.error(e instanceof Error ? e.message : 'Failed'); }
   }
 
+  // ── drag-to-extract drop zone ────────────────────────────────────────────────
+  const isExtractTarget = imgDragSrc !== null;
+
+  function onDragOver(e: React.DragEvent): void {
+    if (!isExtractTarget) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOver(true);
+  }
+
+  function onDragLeave(e: React.DragEvent): void {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOver(false);
+  }
+
+  function onDrop(e: React.DragEvent): void {
+    e.preventDefault();
+    setDragOver(false);
+    onImgExtract();
+  }
+
   return (
-    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', height: 36 }}>
-      <div style={{ position: 'absolute', left: 0, right: 0, height: 1, background: BORDER }} />
-      <input ref={fileRef} type="file" multiple accept="image/*,video/*" style={{ display: 'none' }} onChange={(e) => void handleUpload(e.target.files)} />
-      <button type="button" onClick={() => setOpen((v) => !v)} disabled={uploading} title="Add block"
-        style={{ position: 'relative', zIndex: 1, background: BLOCK_BG, border: `1px solid ${BORDER}`, borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: TEXT_MUTED }}>
-        {uploading ? <span style={{ fontSize: 10 }}>…</span> : <Plus size={13} />}
-      </button>
-      {open && (
-        <div style={{ position: 'absolute', top: 'calc(100% + 2px)', zIndex: 30, background: BLOCK_BG, border: `1px solid ${BORDER}`, padding: 6, display: 'flex', gap: 4 }}>
-          {[
-            { icon: <Upload size={14} color={ACCENT} />, label: 'Upload', action: () => fileRef.current?.click() },
-            { icon: <Type size={14} />, label: 'Text', action: () => void handleAdd('text') },
-            { icon: <Film size={14} />, label: 'Video', action: () => void handleAdd('video') },
-            { icon: <Quote size={14} />, label: 'Quote', action: () => void handleAdd('quote') },
-          ].map((btn) => (
-            <button key={btn.label} type="button" onClick={btn.action}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}`, padding: '8px 12px', cursor: 'pointer', color: TEXT_PRIMARY, fontSize: 11 }}>
-              <span style={{ color: TEXT_MUTED }}>{btn.icon}</span>{btn.label}
+    <div
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      style={{
+        position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        height: isExtractTarget ? 48 : 36,
+        transition: 'height 0.15s',
+        background: dragOver ? 'rgba(167,210,82,0.1)' : 'transparent',
+        borderTop: dragOver ? `1px dashed ${ACCENT}` : '1px solid transparent',
+        borderBottom: dragOver ? `1px dashed ${ACCENT}` : '1px solid transparent',
+      }}>
+      {isExtractTarget
+        ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: dragOver ? ACCENT : TEXT_MUTED, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', pointerEvents: 'none', transition: 'color 0.1s' }}>
+            <span style={{ fontSize: 18, lineHeight: 1, fontWeight: 700 }}>+</span>
+            <span>New block here</span>
+          </div>
+        )
+        : <>
+            <div style={{ position: 'absolute', left: 0, right: 0, height: 1, background: BORDER }} />
+            <input ref={fileRef} type="file" multiple accept="image/*,video/*" style={{ display: 'none' }} onChange={(e) => void handleUpload(e.target.files)} />
+            <button type="button" onClick={() => setOpen((v) => !v)} disabled={uploading} title="Add block"
+              style={{ position: 'relative', zIndex: 1, background: BLOCK_BG, border: `1px solid ${BORDER}`, borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: TEXT_MUTED }}>
+              {uploading ? <span style={{ fontSize: 10 }}>…</span> : <Plus size={13} />}
             </button>
-          ))}
-        </div>
-      )}
+            {open && (
+              <div style={{ position: 'absolute', top: 'calc(100% + 2px)', zIndex: 30, background: BLOCK_BG, border: `1px solid ${BORDER}`, padding: 6, display: 'flex', gap: 4 }}>
+                {[
+                  { icon: <Upload size={14} color={ACCENT} />, label: 'Upload', action: () => fileRef.current?.click() },
+                  { icon: <Type size={14} />, label: 'Text', action: () => void handleAdd('text') },
+                  { icon: <Film size={14} />, label: 'Video', action: () => void handleAdd('video') },
+                  { icon: <Quote size={14} />, label: 'Quote', action: () => void handleAdd('quote') },
+                ].map((btn) => (
+                  <button key={btn.label} type="button" onClick={btn.action}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}`, padding: '8px 12px', cursor: 'pointer', color: TEXT_PRIMARY, fontSize: 11 }}>
+                    <span style={{ color: TEXT_MUTED }}>{btn.icon}</span>{btn.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+      }
     </div>
   );
 }
@@ -590,6 +640,66 @@ export default function StoryCanvas({ studyId, blocks, onBlockAdded, onBlockUpda
     onBlocksReordered(reordered);
     try { await apiReorder(studyId, reordered.map((b) => b.id)); }
     catch (e) { toast.error(e instanceof Error ? e.message : 'Reorder failed'); onBlocksReordered(blocks); }
+  }
+
+  // ── image drag-to-extract (drop on AddBlockBar gap) ────────────────────────
+
+  async function handleImgExtract(insertAfterIndex: number): Promise<void> {
+    if (!imgDragSrc) return;
+    const { blockId: srcId, idx: srcIdx } = imgDragSrc;
+    setImgDragSrc(null);
+
+    const srcBlock = blocks.find((b) => b.id === srcId);
+    if (!srcBlock || srcBlock.type !== 'media_row') return;
+
+    const dragged = srcBlock.items[srcIdx];
+    if (!dragged) return;
+
+    const newSrcItems = srcBlock.items.filter((_, i) => i !== srcIdx);
+    const updatedSrc = { ...srcBlock, layout: deriveLayout(newSrcItems.length, srcBlock.layout), items: newSrcItems } as Extract<StudioCaseStudyBlock, { type: 'media_row' }>;
+
+    // Optimistically insert placeholder then replace with real block after API
+    const srcBlockIndex = blocks.findIndex((b) => b.id === srcId);
+    const targetIndex = insertAfterIndex >= srcBlockIndex ? insertAfterIndex : insertAfterIndex; // insert after given position
+
+    // Build updated blocks without src (or shrunk) then splice new block in
+    const withoutExtracted = newSrcItems.length === 0
+      ? blocks.filter((b) => b.id !== srcId)
+      : blocks.map((b) => b.id === srcId ? updatedSrc : b);
+
+    // Find where to insert: insertAfterIndex is the index in the original array
+    const insertPos = Math.min(insertAfterIndex + 1, withoutExtracted.length);
+    const reordered = [
+      ...withoutExtracted.slice(0, insertPos),
+      { id: '__placeholder__', type: 'media_row' as const, sort_order: insertPos, layout: 'single' as const, items: [dragged] },
+      ...withoutExtracted.slice(insertPos),
+    ].map((b, i) => ({ ...b, sort_order: i }));
+
+    onBlocksReordered(reordered);
+
+    try {
+      // 1. Patch/delete source
+      if (newSrcItems.length === 0) {
+        await apiDeleteBlock(studyId, srcId);
+      } else {
+        await apiPatchBlock(studyId, updatedSrc);
+      }
+
+      // 2. Create the new block
+      const newBlock = await apiCreateBlock(studyId, 'media_row', { layout: 'single', items: [dragged] });
+
+      // 3. Replace placeholder with real block, keep ordering
+      const final = reordered
+        .map((b) => b.id === '__placeholder__' ? newBlock : b)
+        .map((b, i) => ({ ...b, sort_order: i }));
+      onBlocksReordered(final);
+
+      // 4. Persist the order
+      await apiReorder(studyId, final.map((b) => b.id));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to extract block');
+      onBlocksReordered(blocks);
+    }
   }
 
   // ── image drag-to-merge ─────────────────────────────────────────────────────
@@ -659,8 +769,9 @@ export default function StoryCanvas({ studyId, blocks, onBlockAdded, onBlockUpda
         onDragEnd={(e) => void handleDragEnd(e)}>
         <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
           <div style={{ maxWidth: 960, margin: '0 auto' }}>
-            <AddBlockBar studyId={studyId} onBlockAdded={onBlockAdded} />
-            {blocks.map((block) => (
+            <AddBlockBar studyId={studyId} onBlockAdded={onBlockAdded}
+              imgDragSrc={imgDragSrc} onImgExtract={() => void handleImgExtract(-1)} />
+            {blocks.map((block, blockIndex) => (
               <div key={block.id} style={{ marginBottom: 2 }}>
                 <SortableBlock block={block} onDelete={() => void handleDelete(block)}>
                   <BlockRenderer block={block} studyId={studyId}
@@ -671,7 +782,8 @@ export default function StoryCanvas({ studyId, blocks, onBlockAdded, onBlockUpda
                     onImgDrop={(targetId, side) => void handleImgMerge(targetId, side)}
                   />
                 </SortableBlock>
-                <AddBlockBar studyId={studyId} onBlockAdded={onBlockAdded} />
+                <AddBlockBar studyId={studyId} onBlockAdded={onBlockAdded}
+                  imgDragSrc={imgDragSrc} onImgExtract={() => void handleImgExtract(blockIndex)} />
               </div>
             ))}
             {blocks.length === 0 && (
