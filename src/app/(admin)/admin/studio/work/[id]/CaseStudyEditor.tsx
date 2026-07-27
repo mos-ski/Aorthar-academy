@@ -202,18 +202,19 @@ export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactE
       <TabsContent value="overview" className="mt-6"><Card><CardContent className="grid gap-4 pt-6 md:grid-cols-2"><Field label="Title"><Input value={draft.title} onChange={(event) => updateDraft('title', event.target.value)} /></Field><Field label="Slug"><Input value={draft.slug} onChange={(event) => updateDraft('slug', event.target.value)} /></Field><Field label="Subtitle" className="md:col-span-2"><Textarea value={fieldValue(draft.subtitle)} onChange={(event) => updateDraft('subtitle', event.target.value || null)} /></Field><Field label="Client"><Input value={fieldValue(draft.client)} onChange={(event) => updateDraft('client', event.target.value || null)} /></Field><Field label="Status"><Select value={draft.status} onValueChange={(value) => updateDraft('status', value as StudioCaseStudyStatus)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="draft">Draft</SelectItem><SelectItem value="published">Published</SelectItem><SelectItem value="archived">Archived</SelectItem></SelectContent></Select></Field></CardContent></Card></TabsContent>
       <TabsContent value="media" className="mt-6"><Card><CardContent className="grid gap-4 pt-6 md:grid-cols-2"><Field label="Hero media type"><Select value={draft.cover_media_type} onValueChange={(value) => updateDraft('cover_media_type', value as 'image' | 'video')}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="image">Cover image</SelectItem><SelectItem value="video">Preview video</SelectItem></SelectContent></Select></Field><Field label="Cover image URL"><Input type="url" value={fieldValue(draft.cover_url)} onChange={(event) => updateDraft('cover_url', event.target.value || null)} placeholder="https://" /></Field><Field label="Cover alt text"><Input value={fieldValue(draft.cover_alt)} onChange={(event) => updateDraft('cover_alt', event.target.value || null)} /></Field><Field label="Preview video URL"><Input type="url" value={fieldValue(draft.preview_video_url)} onChange={(event) => updateDraft('preview_video_url', event.target.value || null)} placeholder="Vimeo or direct HTTPS video URL" /></Field></CardContent></Card></TabsContent>
       <TabsContent value="metadata" className="mt-6"><Card><CardContent className="grid gap-4 pt-6 md:grid-cols-2"><Field label="Year"><Input value={fieldValue(draft.year)} onChange={(event) => updateDraft('year', event.target.value || null)} /></Field><Field label="Release date"><Input type="date" value={fieldValue(draft.release_date)} onChange={(event) => updateDraft('release_date', event.target.value || null)} /></Field><Field label="Display order"><Input type="number" value={draft.display_order} onChange={(event) => updateDraft('display_order', Number(event.target.value) || 0)} /></Field><Field label="Featured"><Select value={draft.is_featured ? 'yes' : 'no'} onValueChange={(value) => updateDraft('is_featured', value === 'yes')}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="no">No</SelectItem><SelectItem value="yes">Yes</SelectItem></SelectContent></Select></Field><Field label="Tags" className="md:col-span-2"><Input value={listFields.tags} onChange={(event) => updateListField('tags', event.target.value)} placeholder="Identity, Strategy" /></Field><Field label="Services" className="md:col-span-2"><Input value={listFields.services} onChange={(event) => updateListField('services', event.target.value)} placeholder="Brand strategy, Design" /></Field><Field label="Featured in" className="md:col-span-2"><Input value={listFields.featured_in} onChange={(event) => updateListField('featured_in', event.target.value)} placeholder="Publication, Award" /></Field></CardContent></Card></TabsContent>
-      <TabsContent value="story" className="mt-6">
-        {blocks.length === 0
-          ? <EmptyCanvas study={draft} onAdd={addBlock} onSave={() => saveStudy()} saving={saving} />
-          : <StoryCanvas
-              studyId={study.id}
-              blocks={blocks}
-              onBlockAdded={(b) => setBlocks((curr) => [...curr, b])}
-              onBlockUpdated={(b) => setBlocks((curr) => curr.map((x) => x.id === b.id ? b : x))}
-              onBlockDeleted={(id) => setBlocks((curr) => curr.filter((x) => x.id !== id))}
-              onBlocksReordered={setBlocks}
-            />
-        }
+      <TabsContent value="story" className="mt-0 p-0">
+        <StudioCanvas
+          study={draft}
+          studyId={study.id}
+          blocks={blocks}
+          saving={saving}
+          onAdd={addBlock}
+          onSave={() => saveStudy()}
+          onBlockAdded={(b) => setBlocks((curr) => [...curr, b])}
+          onBlockUpdated={(b) => setBlocks((curr) => curr.map((x) => x.id === b.id ? b : x))}
+          onBlockDeleted={(id) => setBlocks((curr) => curr.filter((x) => x.id !== id))}
+          onBlocksReordered={setBlocks}
+        />
       </TabsContent>
       <TabsContent value="credits" className="mt-6"><Card><CardContent className="space-y-4 pt-6"><p className="text-sm text-muted-foreground">Credits are managed as structured Credits blocks in the Story tab.</p><Button type="button" variant="outline" onClick={() => void addBlock('credits')}><Plus />Add credits block</Button></CardContent></Card></TabsContent>
       <TabsContent value="seo" className="mt-6"><Card><CardContent className="grid gap-4 pt-6"><Field label="SEO title"><Input value={fieldValue(draft.seo_title)} onChange={(event) => updateDraft('seo_title', event.target.value || null)} /></Field><Field label="SEO description"><Textarea value={fieldValue(draft.seo_description)} onChange={(event) => updateDraft('seo_description', event.target.value || null)} /></Field><Field label="Open Graph image URL"><Input type="url" value={fieldValue(draft.og_image_url)} onChange={(event) => updateDraft('og_image_url', event.target.value || null)} placeholder="https://" /></Field></CardContent></Card></TabsContent>
@@ -223,21 +224,34 @@ export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactE
 
 type UploadedFile = { url: string; mediaType: 'image' | 'video'; name: string };
 
-function EmptyCanvas({
+function StudioCanvas({
   study,
+  studyId,
+  blocks,
+  saving,
   onAdd,
   onSave,
-  saving,
+  onBlockAdded,
+  onBlockUpdated,
+  onBlockDeleted,
+  onBlocksReordered,
 }: {
   study: StudyDraft;
+  studyId: string;
+  blocks: StudioCaseStudyBlock[];
+  saving: boolean;
   onAdd: (type: StudioCaseStudyBlockType, content?: Record<string, unknown>) => Promise<void>;
   onSave: () => Promise<void>;
-  saving: boolean;
+  onBlockAdded: (block: StudioCaseStudyBlock) => void;
+  onBlockUpdated: (block: StudioCaseStudyBlock) => void;
+  onBlockDeleted: (id: string) => void;
+  onBlocksReordered: (blocks: StudioCaseStudyBlock[]) => void;
 }): ReactElement {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadLabel, setUploadLabel] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const projectName = study.client || study.title || 'Project Name';
@@ -252,10 +266,11 @@ function EmptyCanvas({
     const files = Array.from(fileList);
     if (!files.length) return;
     setUploading(true);
+    setUploadLabel(`Uploading ${files.length} file${files.length !== 1 ? 's' : ''}…`);
     try {
       const formData = new FormData();
       for (const file of files) formData.append('files', file);
-      const res = await fetch(`/api/admin/studio/case-studies/${study.id}/upload`, {
+      const res = await fetch(`/api/admin/studio/case-studies/${studyId}/upload`, {
         method: 'POST', body: formData,
       });
       const data = await res.json().catch((): { files?: UploadedFile[]; error?: string } => ({})) as { files?: UploadedFile[]; error?: string };
@@ -263,6 +278,7 @@ function EmptyCanvas({
       const uploaded = data.files ?? [];
       const images = uploaded.filter((f) => f.mediaType === 'image');
       const videos = uploaded.filter((f) => f.mediaType === 'video');
+      setUploadLabel('Creating blocks…');
       for (let i = 0; i < images.length; i += 2) {
         const batch = images.slice(i, i + 2);
         await onAdd('media_row', {
@@ -273,8 +289,8 @@ function EmptyCanvas({
       for (const video of videos) {
         await onAdd('video', { url: video.url, coverUrl: null, caption: null });
       }
-      toast.success(`${uploaded.length} file${uploaded.length !== 1 ? 's' : ''} uploaded`);
-    } catch { toast.error('Upload failed'); } finally { setUploading(false); }
+      toast.success(`${uploaded.length} file${uploaded.length !== 1 ? 's' : ''} added`);
+    } catch { toast.error('Upload failed'); } finally { setUploading(false); setUploadLabel(''); }
   }
 
   function onDragOver(e: React.DragEvent): void { e.preventDefault(); setIsDragging(true); }
@@ -284,143 +300,124 @@ function EmptyCanvas({
   function onDrop(e: React.DragEvent): void { e.preventDefault(); setIsDragging(false); void handleFiles(e.dataTransfer.files); }
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 50,
-      background: '#18191a', display: 'flex', flexDirection: 'column',
-    }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: '#18191a', display: 'flex', flexDirection: 'column' }}>
+
+      {/* Upload loading overlay */}
+      {uploading && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 60, background: 'rgba(15,17,18,0.88)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
+          <div style={{ width: 44, height: 44, border: '3px solid rgba(167,210,82,0.25)', borderTopColor: '#a7d252', borderRadius: '50%', animation: 'spin 0.75s linear infinite' }} />
+          <p style={{ color: '#ebefe0', fontSize: 15, margin: 0, letterSpacing: '-0.01em' }}>{uploadLabel}</p>
+        </div>
+      )}
+
       {/* Header */}
-      <header style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10.8px 28.8px', borderBottom: '1px solid rgba(255,255,255,0.08)',
-        background: '#18191a', flexShrink: 0,
-      }}>
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 28px', borderBottom: '1px solid rgba(255,255,255,0.08)', background: '#18191a', flexShrink: 0 }}>
         <span style={{ color: '#fff', fontWeight: 700, fontSize: 16, letterSpacing: '-0.02em' }}>Aorthar</span>
-        <div style={{ display: 'flex', gap: 21.6, alignItems: 'center' }}>
-          <button
-            type="button"
-            disabled={saving}
-            onClick={() => void onSave()}
-            style={{ background: 'none', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', color: 'rgba(255,255,255,0.7)', fontSize: 14.4, padding: 0 }}
-          >
+        <div style={{ display: 'flex', gap: 22, alignItems: 'center' }}>
+          <button type="button" disabled={saving} onClick={() => void onSave()}
+            style={{ background: 'none', border: 'none', cursor: saving ? 'not-allowed' : 'pointer', color: 'rgba(255,255,255,0.6)', fontSize: 14, padding: 0 }}>
             {saving ? 'Saving…' : 'Save as draft'}
           </button>
-          <Link href="/admin/studio/work" style={{ color: '#a7d252', fontSize: 14.4, textDecoration: 'none' }}>
-            Close
-          </Link>
+          <Link href="/admin/studio/work" style={{ color: '#a7d252', fontSize: 14, textDecoration: 'none' }}>Close</Link>
         </div>
       </header>
 
       {/* Body */}
-      <div style={{ flex: 1, display: 'flex', gap: 21.6, paddingTop: 64, paddingBottom: 64, paddingRight: 64, minHeight: 0 }}>
+      <div style={{ flex: 1, display: 'flex', minHeight: 0, overflow: 'hidden' }}>
+
         {/* Left sidebar */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 220, flexShrink: 0, overflowY: 'auto' }}>
-          {/* Project name + meta */}
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16.593, paddingTop: 62, paddingBottom: 12.444 }}>
-            <p style={{ color: '#fff', fontSize: 24.889, margin: 0, textAlign: 'center', lineHeight: '1.2' }}>{projectName}</p>
+        <div style={{ width: 220, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, paddingTop: 56, paddingBottom: 16 }}>
+            <p style={{ color: '#fff', fontSize: 22, margin: 0, textAlign: 'center', lineHeight: 1.2 }}>{projectName}</p>
             <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-              {category && <span style={{ color: '#989898', fontSize: 11.407, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{category}</span>}
-              {category && year && <span style={{ display: 'inline-block', width: 2.07, height: 2.07, borderRadius: '50%', background: '#989898', flexShrink: 0 }} />}
-              {year && <span style={{ color: '#989898', fontSize: 11.407, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{year}</span>}
+              {category && <span style={{ color: '#989898', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{category}</span>}
+              {category && year && <span style={{ width: 2, height: 2, borderRadius: '50%', background: '#989898', flexShrink: 0 }} />}
+              {year && <span style={{ color: '#989898', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{year}</span>}
             </div>
           </div>
-
-          {/* Topics */}
-          <div style={{ width: '100%' }}>
-            <p style={{ color: '#fff', fontSize: 16.593, margin: 0, textAlign: 'center', padding: '8px 12.444px', lineHeight: 1.25 }}>Topics</p>
+          <div style={{ width: '100%', marginTop: 8 }}>
+            <p style={{ color: '#fff', fontSize: 15, margin: 0, textAlign: 'center', padding: '6px 12px', lineHeight: 1.3 }}>Topics</p>
             {study.tags.map((tag) => (
-              <p key={tag} style={{ color: '#989898', fontSize: 16.593, margin: 0, textAlign: 'center', padding: '8px 12.444px' }}>{tag}</p>
+              <p key={tag} style={{ color: '#989898', fontSize: 14, margin: 0, textAlign: 'center', padding: '5px 12px' }}>{tag}</p>
             ))}
             {study.tags.length === 0 && (
-              <p style={{ color: '#484848', fontSize: 16.593, margin: 0, textAlign: 'center', padding: '8px 12.444px' }}>No topics yet</p>
+              <p style={{ color: '#3a3a3a', fontSize: 14, margin: 0, textAlign: 'center', padding: '5px 12px' }}>No topics yet</p>
             )}
-            <p style={{ color: '#a7d252', fontSize: 16.593, margin: 0, textAlign: 'center', padding: '8px 12.444px', cursor: 'default' }}>+ Add Topic</p>
+            <p style={{ color: '#a7d252', fontSize: 14, margin: 0, textAlign: 'center', padding: '5px 12px', cursor: 'default' }}>+ Add Topic</p>
           </div>
         </div>
 
-        {/* Canvas */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
-          {/* Upload zone */}
-          <div
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            onDrop={onDrop}
-            style={{
-              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              minHeight: 400,
-              background: isDragging ? 'rgba(167,210,82,0.06)' : 'rgba(72,72,72,0.40)',
-              transition: 'background 0.15s',
-            }}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
-              style={{ display: 'none' }}
-              onChange={(e) => { if (e.target.files) void handleFiles(e.target.files); e.target.value = ''; }}
-            />
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() => !uploading && fileInputRef.current?.click()}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
-              style={{
-                border: `3px dashed ${isDragging ? '#a7d252' : '#484848'}`,
-                padding: 16, width: 296, textAlign: 'center',
-                cursor: uploading ? 'wait' : 'pointer',
-                transition: 'border-color 0.15s',
-              }}
-            >
-              <p style={{ color: '#ebefe0', fontSize: 12, margin: 0, lineHeight: '18px', whiteSpace: 'pre-line' }}>
-                {uploading ? 'Uploading…' : isDragging ? 'Drop files here' : 'Drag and drop your files here\nor click to upload'}
-              </p>
-            </div>
-          </div>
-
-          {/* Add Block divider + picker */}
-          <div style={{ position: 'relative', flexShrink: 0 }}>
-            {open && (
-              <div style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0 }}>
-                <div style={{
-                  width: 240, background: '#18191a', border: '1px solid #484848',
-                  borderRadius: 6, boxShadow: '0px 1.25px 4px 0px rgba(26,26,26,0.08)', overflow: 'hidden',
-                }}>
-                  <div style={{ background: '#484848', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 8, borderRadius: '6px 6px 0 0' }}>
-                    <input
-                      autoFocus
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search"
-                      style={{ background: 'none', border: 'none', outline: 'none', color: '#ebefe0', fontSize: 14, fontWeight: 500, width: '100%' }}
-                    />
-                  </div>
-                  {filteredTypes.map((type) => (
-                    <div
-                      key={type}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => { void onAdd(type); setOpen(false); setSearch(''); }}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { void onAdd(type); setOpen(false); setSearch(''); } }}
-                      style={{ padding: '5px 8px 5px 10px', color: '#ebefe0', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}
-                    >
-                      {blockLabels[type]}
-                    </div>
-                  ))}
+        {/* Canvas area */}
+        <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}
+          onDragOver={blocks.length === 0 ? onDragOver : undefined}
+          onDragLeave={blocks.length === 0 ? onDragLeave : undefined}
+          onDrop={blocks.length === 0 ? onDrop : undefined}
+        >
+          {blocks.length === 0 ? (
+            /* ── Empty state: upload zone ── */
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, padding: '48px 48px 48px 40px' }}>
+              <div style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 360,
+                background: isDragging ? 'rgba(167,210,82,0.06)' : 'rgba(72,72,72,0.25)',
+                border: isDragging ? '2px dashed #a7d252' : '2px dashed transparent',
+                transition: 'all 0.15s',
+              }}>
+                <input ref={fileInputRef} type="file" multiple
+                  accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
+                  style={{ display: 'none' }}
+                  onChange={(e) => { if (e.target.files) void handleFiles(e.target.files); e.target.value = ''; }}
+                />
+                <div role="button" tabIndex={0}
+                  onClick={() => fileInputRef.current?.click()}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
+                  style={{ border: `2px dashed ${isDragging ? '#a7d252' : '#484848'}`, padding: '24px 32px', textAlign: 'center', cursor: 'pointer', transition: 'border-color 0.15s' }}>
+                  <p style={{ color: '#ebefe0', fontSize: 13, margin: 0, lineHeight: '20px', whiteSpace: 'pre-line' }}>
+                    {isDragging ? 'Drop files here' : 'Drag and drop your files here\nor click to upload'}
+                  </p>
                 </div>
               </div>
-            )}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ flex: 1, height: 1, background: '#484848' }} />
-              <button
-                type="button"
-                onClick={() => setOpen((v) => !v)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a7d252', fontSize: 18, fontWeight: 600, padding: 0, lineHeight: '28px', whiteSpace: 'nowrap' }}
-              >
-                Add Block [/]
-              </button>
-              <div style={{ flex: 1, height: 1, background: '#484848' }} />
+
+              {/* Add Block bar */}
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                {open && (
+                  <div style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0 }}>
+                    <div style={{ width: 240, background: '#18191a', border: '1px solid #484848', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
+                      <div style={{ background: '#484848', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search"
+                          style={{ background: 'none', border: 'none', outline: 'none', color: '#ebefe0', fontSize: 14, fontWeight: 500, width: '100%' }} />
+                      </div>
+                      {filteredTypes.map((type) => (
+                        <div key={type} role="button" tabIndex={0}
+                          onClick={() => { void onAdd(type); setOpen(false); setSearch(''); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { void onAdd(type); setOpen(false); setSearch(''); } }}
+                          style={{ padding: '6px 10px', color: '#ebefe0', fontSize: 14, cursor: 'pointer' }}>
+                          {blockLabels[type]}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ flex: 1, height: 1, background: '#484848' }} />
+                  <button type="button" onClick={() => setOpen((v) => !v)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a7d252', fontSize: 16, fontWeight: 600, padding: 0, whiteSpace: 'nowrap' }}>
+                    Add Block [/]
+                  </button>
+                  <div style={{ flex: 1, height: 1, background: '#484848' }} />
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            /* ── Has blocks: visual canvas ── */
+            <StoryCanvas
+              studyId={studyId}
+              blocks={blocks}
+              onBlockAdded={onBlockAdded}
+              onBlockUpdated={onBlockUpdated}
+              onBlockDeleted={onBlockDeleted}
+              onBlocksReordered={onBlocksReordered}
+            />
+          )}
         </div>
       </div>
     </div>

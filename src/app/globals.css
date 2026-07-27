@@ -48,7 +48,7 @@
 }
 
 :root {
-  --font-geist-sans: "Helvetica", "Helvetica Neue", Arial, sans-serif;
+  --font-geist-sans: "Helvetica Neue", "Neue Haas Grotesk Display Pro", Helvetica, Arial, sans-serif;
   --font-geist-mono: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --radius: 0.625rem;
   --background: #ffffff;
@@ -389,6 +389,10 @@
     50% {
       transform: translateY(-8px);
     }
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
   .coupon-pulse {
