@@ -366,10 +366,26 @@ function StudioCanvas({
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadLabel, setUploadLabel] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const progressRef = useRef(0);
+  const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [addingNew, setAddingNew] = useState(false);
   const [newTopicInput, setNewTopicInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+    if (!uploading) { progressRef.current = 0; setUploadProgress(0); return; }
+    const ceiling = uploadLabel.startsWith('Uploading') ? 62 : 91;
+    progressTimerRef.current = setInterval(() => {
+      const cur = progressRef.current;
+      const next = Math.min(cur + (ceiling - cur) * 0.045 + 0.25, ceiling);
+      progressRef.current = next;
+      setUploadProgress(Math.round(next));
+    }, 40);
+    return () => { if (progressTimerRef.current) clearInterval(progressTimerRef.current); };
+  }, [uploading, uploadLabel]);
 
   const projectName = study.client || study.title || 'Project Name';
   const category = study.tags[0] ?? study.services[0] ?? null;
@@ -420,13 +436,14 @@ function StudioCanvas({
   function onDrop(e: React.DragEvent): void { e.preventDefault(); setIsDragging(false); void handleFiles(e.dataTransfer.files); }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: '#18191a', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: '#18191a', display: 'flex', flexDirection: 'column', fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
 
       {/* Upload loading overlay */}
       {uploading && (
-        <div style={{ position: 'absolute', inset: 0, zIndex: 60, background: 'rgba(15,17,18,0.88)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
+        <div style={{ position: 'absolute', inset: 0, zIndex: 60, background: 'rgba(15,17,18,0.88)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
           <div style={{ width: 44, height: 44, border: '3px solid rgba(167,210,82,0.25)', borderTopColor: '#a7d252', borderRadius: '50%', animation: 'spin 0.75s linear infinite' }} />
           <p style={{ color: '#ebefe0', fontSize: 15, margin: 0, letterSpacing: '-0.01em' }}>{uploadLabel}</p>
+          <p style={{ color: '#a7d252', fontSize: 36, fontWeight: 700, margin: 0, letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{uploadProgress}%</p>
         </div>
       )}
 
@@ -437,12 +454,12 @@ function StudioCanvas({
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
             <button type="button" onClick={onUndo} disabled={!canUndo}
               title="Undo (⌘Z)"
-              style={{ background: 'none', border: 'none', cursor: canUndo ? 'pointer' : 'default', color: canUndo ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.2)', padding: 0, display: 'flex' }}>
+              style={{ background: 'none', border: 'none', borderRadius: 0, cursor: canUndo ? 'pointer' : 'default', color: canUndo ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.2)', padding: 0, display: 'flex' }}>
               <Undo size={16} />
             </button>
             <button type="button" onClick={onRedo} disabled={!canRedo}
               title="Redo (⌘⇧Z)"
-              style={{ background: 'none', border: 'none', cursor: canRedo ? 'pointer' : 'default', color: canRedo ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.2)', padding: 0, display: 'flex' }}>
+              style={{ background: 'none', border: 'none', borderRadius: 0, cursor: canRedo ? 'pointer' : 'default', color: canRedo ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.2)', padding: 0, display: 'flex' }}>
               <Redo size={16} />
             </button>
           </div>
