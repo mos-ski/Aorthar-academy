@@ -18,6 +18,7 @@ import {
 } from '@/lib/studio/case-study-editor';
 import type { ReactElement } from 'react';
 import type { StudioCaseStudyAdminDetail, StudioCaseStudyBlock, StudioCaseStudyBlockType, StudioCaseStudyStatus } from '@/lib/studio/case-study-schema';
+import StoryCanvas from './StoryCanvas';
 
 type CaseStudyEditorProps = { study: StudioCaseStudyAdminDetail };
 type StudyDraft = Omit<StudioCaseStudyAdminDetail, 'blocks' | 'created_at' | 'updated_at' | 'published_at'>;
@@ -201,13 +202,17 @@ export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactE
       <TabsContent value="overview" className="mt-6"><Card><CardContent className="grid gap-4 pt-6 md:grid-cols-2"><Field label="Title"><Input value={draft.title} onChange={(event) => updateDraft('title', event.target.value)} /></Field><Field label="Slug"><Input value={draft.slug} onChange={(event) => updateDraft('slug', event.target.value)} /></Field><Field label="Subtitle" className="md:col-span-2"><Textarea value={fieldValue(draft.subtitle)} onChange={(event) => updateDraft('subtitle', event.target.value || null)} /></Field><Field label="Client"><Input value={fieldValue(draft.client)} onChange={(event) => updateDraft('client', event.target.value || null)} /></Field><Field label="Status"><Select value={draft.status} onValueChange={(value) => updateDraft('status', value as StudioCaseStudyStatus)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="draft">Draft</SelectItem><SelectItem value="published">Published</SelectItem><SelectItem value="archived">Archived</SelectItem></SelectContent></Select></Field></CardContent></Card></TabsContent>
       <TabsContent value="media" className="mt-6"><Card><CardContent className="grid gap-4 pt-6 md:grid-cols-2"><Field label="Hero media type"><Select value={draft.cover_media_type} onValueChange={(value) => updateDraft('cover_media_type', value as 'image' | 'video')}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="image">Cover image</SelectItem><SelectItem value="video">Preview video</SelectItem></SelectContent></Select></Field><Field label="Cover image URL"><Input type="url" value={fieldValue(draft.cover_url)} onChange={(event) => updateDraft('cover_url', event.target.value || null)} placeholder="https://" /></Field><Field label="Cover alt text"><Input value={fieldValue(draft.cover_alt)} onChange={(event) => updateDraft('cover_alt', event.target.value || null)} /></Field><Field label="Preview video URL"><Input type="url" value={fieldValue(draft.preview_video_url)} onChange={(event) => updateDraft('preview_video_url', event.target.value || null)} placeholder="Vimeo or direct HTTPS video URL" /></Field></CardContent></Card></TabsContent>
       <TabsContent value="metadata" className="mt-6"><Card><CardContent className="grid gap-4 pt-6 md:grid-cols-2"><Field label="Year"><Input value={fieldValue(draft.year)} onChange={(event) => updateDraft('year', event.target.value || null)} /></Field><Field label="Release date"><Input type="date" value={fieldValue(draft.release_date)} onChange={(event) => updateDraft('release_date', event.target.value || null)} /></Field><Field label="Display order"><Input type="number" value={draft.display_order} onChange={(event) => updateDraft('display_order', Number(event.target.value) || 0)} /></Field><Field label="Featured"><Select value={draft.is_featured ? 'yes' : 'no'} onValueChange={(value) => updateDraft('is_featured', value === 'yes')}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="no">No</SelectItem><SelectItem value="yes">Yes</SelectItem></SelectContent></Select></Field><Field label="Tags" className="md:col-span-2"><Input value={listFields.tags} onChange={(event) => updateListField('tags', event.target.value)} placeholder="Identity, Strategy" /></Field><Field label="Services" className="md:col-span-2"><Input value={listFields.services} onChange={(event) => updateListField('services', event.target.value)} placeholder="Brand strategy, Design" /></Field><Field label="Featured in" className="md:col-span-2"><Input value={listFields.featured_in} onChange={(event) => updateListField('featured_in', event.target.value)} placeholder="Publication, Award" /></Field></CardContent></Card></TabsContent>
-      <TabsContent value="story" className="mt-6 space-y-4">
+      <TabsContent value="story" className="mt-6">
         {blocks.length === 0
           ? <EmptyCanvas study={draft} onAdd={addBlock} onSave={() => saveStudy()} saving={saving} />
-          : <>
-            <Card><CardHeader><CardTitle>Add content block</CardTitle></CardHeader><CardContent className="flex flex-wrap gap-2">{(Object.keys(emptyContentByType) as StudioCaseStudyBlockType[]).map((type) => <Button key={type} type="button" variant="outline" size="sm" onClick={() => void addBlock(type)}><Plus />{blockLabels[type]}</Button>)}</CardContent></Card>
-            {blocks.map((block, index) => <BlockCard key={block.id} block={block} index={index} total={blocks.length} onChange={updateBlock} onSave={saveBlock} onDuplicate={duplicateBlock} onDelete={deleteBlock} onMove={moveBlock} />)}
-          </>
+          : <StoryCanvas
+              studyId={study.id}
+              blocks={blocks}
+              onBlockAdded={(b) => setBlocks((curr) => [...curr, b])}
+              onBlockUpdated={(b) => setBlocks((curr) => curr.map((x) => x.id === b.id ? b : x))}
+              onBlockDeleted={(id) => setBlocks((curr) => curr.filter((x) => x.id !== id))}
+              onBlocksReordered={setBlocks}
+            />
         }
       </TabsContent>
       <TabsContent value="credits" className="mt-6"><Card><CardContent className="space-y-4 pt-6"><p className="text-sm text-muted-foreground">Credits are managed as structured Credits blocks in the Story tab.</p><Button type="button" variant="outline" onClick={() => void addBlock('credits')}><Plus />Add credits block</Button></CardContent></Card></TabsContent>
