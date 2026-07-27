@@ -22,7 +22,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { toast } from 'sonner';
-import { GripVertical, Plus, Trash2, Upload, Type, Film, Quote, X } from 'lucide-react';
+import { GripVertical, Plus, Trash2, Upload, Type, Film, Quote, X, Move } from 'lucide-react';
 import type { ReactElement } from 'react';
 import type { StudioCaseStudyBlock, StudioCaseStudyBlockType } from '@/lib/studio/case-study-schema';
 
@@ -37,8 +37,15 @@ const ACCENT = '#a7d252';
 
 // ─── types ─────────────────────────────────────────────────────────────────────
 
-type MediaItem = { type: 'image' | 'video'; url: string; alt: string; aspectRatio: string };
+type MediaItem = {
+  type: 'image' | 'video';
+  url: string;
+  alt: string;
+  aspectRatio: string;
+  objectPosition?: string;
+};
 
+type ImgDragSrc = { blockId: string; idx: number } | null;
 type UploadedFile = { url: string; mediaType: 'image' | 'video'; name: string };
 
 // ─── API helpers ───────────────────────────────────────────────────────────────
@@ -131,20 +138,18 @@ function SortableBlock({
       onMouseLeave={() => setHovered(false)}
       style={{ position: 'relative', transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.35 : 1 }}
     >
-      {/* grip */}
       <div
         {...attributes}
         {...listeners}
-        style={{ position: 'absolute', left: -28, top: '50%', transform: 'translateY(-50%)', opacity: hovered ? 1 : 0, transition: 'opacity 0.15s', cursor: 'grab', color: TEXT_MUTED, padding: '4px 2px', display: 'flex' }}
+        style={{ position: 'absolute', left: -32, top: '50%', transform: 'translateY(-50%)', opacity: hovered ? 1 : 0, transition: 'opacity 0.15s', cursor: 'grab', color: TEXT_MUTED, padding: '4px 2px', display: 'flex' }}
       >
         <GripVertical size={16} />
       </div>
 
-      {/* delete */}
       <button
         type="button"
         onClick={onDelete}
-        style={{ position: 'absolute', top: 8, right: 8, zIndex: 10, opacity: hovered ? 1 : 0, transition: 'opacity 0.15s', background: 'rgba(0,0,0,0.7)', border: '1px solid #3a3a3a', borderRadius: 4, color: '#e55', cursor: 'pointer', padding: '3px 8px', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11 }}
+        style={{ position: 'absolute', top: 8, right: 8, zIndex: 10, opacity: hovered ? 1 : 0, transition: 'opacity 0.15s', background: 'rgba(0,0,0,0.7)', border: '1px solid #3a3a3a', color: '#e55', cursor: 'pointer', padding: '3px 8px', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11 }}
       >
         <Trash2 size={11} /> Delete
       </button>
@@ -161,14 +166,84 @@ function MediaBlock({
   studyId,
   onUpdated,
   onDeleted,
+  imgDragSrc,
+  onImgDragStart,
+  onImgDragEnd,
+  onImgDrop,
 }: {
   block: Extract<StudioCaseStudyBlock, { type: 'media_row' }>;
   studyId: string;
   onUpdated: (b: StudioCaseStudyBlock) => void;
   onDeleted: (id: string) => void;
+  imgDragSrc: ImgDragSrc;
+  onImgDragStart: (blockId: string, idx: number) => void;
+  onImgDragEnd: () => void;
+  onImgDrop: (targetBlockId: string, side: 'left' | 'right') => void;
 }): ReactElement {
   const [uploading, setUploading] = useState(false);
+  const [dropSide, setDropSide] = useState<'left' | 'right' | null>(null);
+  const [cropIdx, setCropIdx] = useState<number | null>(null);
+  const [livePos, setLivePos] = useState<Record<number, string>>({});
   const fileRef = useRef<HTMLInputElement>(null);
+  const cropRef = useRef<{ startX: number; startY: number; px: number; py: number } | null>(null);
+
+  // Is this block a valid drop target?
+  const isDropTarget = imgDragSrc !== null
+    && imgDragSrc.blockId !== block.id
+    && block.items.length < 2;
+
+  function getObjectPos(idx: number): string {
+    return livePos[idx] ?? block.items[idx]?.objectPosition ?? '50% 50%';
+  }
+
+  // ── crop / position drag ─────────────────────────────────────────────────
+
+  function startCrop(e: React.MouseEvent, idx: number): void {
+    e.preventDefault();
+    e.stopPropagation();
+    const pos = getObjectPos(idx);
+    const parts = pos.split(' ');
+    const px = parseFloat(parts[0] ?? '50');
+    const py = parseFloat(parts[1] ?? '50');
+    cropRef.current = { startX: e.clientX, startY: e.clientY, px, py };
+    setCropIdx(idx);
+
+    function onMove(ev: MouseEvent): void {
+      if (!cropRef.current) return;
+      const dx = ev.clientX - cropRef.current.startX;
+      const dy = ev.clientY - cropRef.current.startY;
+      const nx = Math.max(0, Math.min(100, cropRef.current.px - dx * 0.4));
+      const ny = Math.max(0, Math.min(100, cropRef.current.py - dy * 0.4));
+      setLivePos((prev) => ({ ...prev, [idx]: `${nx.toFixed(1)}% ${ny.toFixed(1)}%` }));
+    }
+
+    async function onUp(): Promise<void> {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      if (!cropRef.current) return;
+      cropRef.current = null;
+      setCropIdx(null);
+      // Save position
+      setLivePos((prev) => {
+        const finalPos = prev[idx];
+        if (finalPos !== undefined) {
+          const newItems = block.items.map((item, i) =>
+            i === idx ? { ...item, objectPosition: finalPos } : item
+          );
+          const updated: Extract<StudioCaseStudyBlock, { type: 'media_row' }> = { ...block, items: newItems };
+          void apiPatchBlock(studyId, updated)
+            .then(() => onUpdated(updated))
+            .catch((err: unknown) => toast.error(err instanceof Error ? err.message : 'Save failed'));
+        }
+        return {};
+      });
+    }
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }
+
+  // ── add paired image ─────────────────────────────────────────────────────
 
   async function addImage(files: FileList | null): Promise<void> {
     if (!files?.length || block.items.length >= 2) return;
@@ -184,6 +259,8 @@ function MediaBlock({
     finally { setUploading(false); }
   }
 
+  // ── remove image ─────────────────────────────────────────────────────────
+
   async function removeItem(index: number): Promise<void> {
     if (block.items.length === 1) {
       try { await apiDeleteBlock(studyId, block.id); onDeleted(block.id); }
@@ -196,26 +273,100 @@ function MediaBlock({
     catch (e) { toast.error(e instanceof Error ? e.message : 'Failed'); }
   }
 
+  // ── drag-over helpers ─────────────────────────────────────────────────────
+
+  function onDragOver(e: React.DragEvent, side: 'left' | 'right'): void {
+    if (!isDropTarget) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDropSide(side);
+  }
+
+  function onDragLeave(e: React.DragEvent): void {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropSide(null);
+  }
+
+  function onDrop(e: React.DragEvent, side: 'left' | 'right'): void {
+    e.preventDefault();
+    setDropSide(null);
+    onImgDrop(block.id, side);
+  }
+
   return (
-    <div style={{ background: BLOCK_BG, borderRadius: 4, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', gap: 2 }}>
+    <div style={{ background: BLOCK_BG, position: 'relative' }}>
+      <div style={{ display: 'flex', gap: 2, minHeight: 280 }}>
         {block.items.map((item, idx) => (
-          <div key={idx} style={{ flex: 1, position: 'relative', minHeight: 300, background: '#080808' }}>
+          <div key={idx} style={{ flex: 1, position: 'relative', background: '#080808', overflow: 'hidden' }}>
             {item.url
-              // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={item.url} alt={item.alt} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: TEXT_MUTED, fontSize: 12 }}>No image</div>}
-            <button type="button" onClick={() => void removeItem(idx)}
-              style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.65)', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}>
-              <X size={12} />
-            </button>
+              ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={item.url}
+                      alt={item.alt}
+                      draggable={cropIdx !== idx}
+                      onDragStart={(e) => {
+                        e.dataTransfer.effectAllowed = 'move';
+                        onImgDragStart(block.id, idx);
+                      }}
+                      onDragEnd={onImgDragEnd}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        minHeight: 280,
+                        objectFit: 'cover',
+                        objectPosition: getObjectPos(idx),
+                        display: 'block',
+                        cursor: cropIdx === idx ? 'move' : 'grab',
+                        userSelect: 'none',
+                      }}
+                    />
+
+                    {/* Crop button */}
+                    <button
+                      type="button"
+                      title="Drag to reposition"
+                      onMouseDown={(e) => startCrop(e, idx)}
+                      style={{
+                        position: 'absolute', bottom: 8, left: 8,
+                        background: cropIdx === idx ? ACCENT : 'rgba(0,0,0,0.65)',
+                        border: 'none', borderRadius: '50%', width: 26, height: 26,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'move', color: cropIdx === idx ? '#111' : '#fff',
+                        zIndex: 5,
+                      }}
+                    >
+                      <Move size={13} />
+                    </button>
+
+                    {/* Remove button */}
+                    <button
+                      type="button"
+                      onClick={() => void removeItem(idx)}
+                      style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.65)', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', zIndex: 5 }}
+                    >
+                      <X size={12} />
+                    </button>
+
+                    {/* Crop mode label */}
+                    {cropIdx === idx && (
+                      <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(167,210,82,0.9)', color: '#111', fontSize: 10, padding: '2px 6px', letterSpacing: '0.05em', fontWeight: 600, textTransform: 'uppercase', pointerEvents: 'none' }}>
+                        Drag to reposition
+                      </div>
+                    )}
+                  </>
+                )
+              : <div style={{ width: '100%', height: '100%', minHeight: 280, display: 'flex', alignItems: 'center', justifyContent: 'center', color: TEXT_MUTED, fontSize: 12 }}>No image</div>}
           </div>
         ))}
 
+        {/* Pair + slot */}
         {block.items.length < 2 && (
-          <div onClick={() => !uploading && fileRef.current?.click()}
-            style={{ width: 52, background: 'rgba(255,255,255,0.025)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: uploading ? 'wait' : 'pointer', flexShrink: 0, minHeight: 300, borderLeft: `1px dashed ${BORDER}` }}
-            title="Add image to pair">
+          <div
+            onClick={() => !uploading && fileRef.current?.click()}
+            style={{ width: 52, background: 'rgba(255,255,255,0.025)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: uploading ? 'wait' : 'pointer', flexShrink: 0, minHeight: 280, borderLeft: `1px dashed ${BORDER}` }}
+            title="Add image to pair"
+          >
             <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => void addImage(e.target.files)} />
             {uploading
               ? <span style={{ color: TEXT_MUTED, fontSize: 10 }}>…</span>
@@ -223,6 +374,48 @@ function MediaBlock({
           </div>
         )}
       </div>
+
+      {/* Drop zone overlay — shown when another image is being dragged */}
+      {isDropTarget && (
+        <div
+          onDragLeave={onDragLeave}
+          style={{ position: 'absolute', inset: 0, zIndex: 20, display: 'flex', pointerEvents: 'all' }}
+        >
+          {/* Left drop zone */}
+          <div
+            onDragOver={(e) => onDragOver(e, 'left')}
+            onDrop={(e) => onDrop(e, 'left')}
+            style={{
+              flex: 1,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: dropSide === 'left' ? 'rgba(167,210,82,0.28)' : 'rgba(0,0,0,0.45)',
+              borderRight: `1px solid rgba(167,210,82,${dropSide === 'left' ? '0.6' : '0.2'})`,
+              transition: 'background 0.1s, border-color 0.1s',
+            }}
+          >
+            {dropSide === 'left' && (
+              <span style={{ color: ACCENT, fontSize: 28, fontWeight: 700, lineHeight: 1 }}>+</span>
+            )}
+          </div>
+
+          {/* Right drop zone */}
+          <div
+            onDragOver={(e) => onDragOver(e, 'right')}
+            onDrop={(e) => onDrop(e, 'right')}
+            style={{
+              flex: 1,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: dropSide === 'right' ? 'rgba(167,210,82,0.28)' : 'rgba(0,0,0,0.45)',
+              borderLeft: `1px solid rgba(167,210,82,${dropSide === 'right' ? '0.6' : '0.2'})`,
+              transition: 'background 0.1s, border-color 0.1s',
+            }}
+          >
+            {dropSide === 'right' && (
+              <span style={{ color: ACCENT, fontSize: 28, fontWeight: 700, lineHeight: 1 }}>+</span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -260,7 +453,7 @@ function TextBlock({
   });
 
   return (
-    <div style={{ background: BLOCK_BG, borderRadius: 4 }}>
+    <div style={{ background: BLOCK_BG }}>
       {editor && (
         <div style={{ display: 'flex', gap: 4, padding: '6px 12px', borderBottom: `1px solid ${BORDER}`, flexWrap: 'wrap' }}>
           {[
@@ -270,7 +463,7 @@ function TextBlock({
             { label: 'H2', title: 'Heading 2', cmd: () => editor.chain().focus().toggleHeading({ level: 2 }).run(), active: editor.isActive('heading', { level: 2 }) },
           ].map((btn) => (
             <button key={btn.label} type="button" onClick={btn.cmd} title={btn.title}
-              style={{ background: btn.active ? 'rgba(167,210,82,0.15)' : 'none', border: `1px solid ${btn.active ? ACCENT : BORDER}`, borderRadius: 3, color: btn.active ? ACCENT : TEXT_MUTED, cursor: 'pointer', fontWeight: btn.label === 'B' ? 700 : 600, fontStyle: btn.label === 'I' ? 'italic' : 'normal', fontSize: 11, padding: '2px 7px' }}>
+              style={{ background: btn.active ? 'rgba(167,210,82,0.15)' : 'none', border: `1px solid ${btn.active ? ACCENT : BORDER}`, color: btn.active ? ACCENT : TEXT_MUTED, cursor: 'pointer', fontWeight: btn.label === 'B' ? 700 : 600, fontStyle: btn.label === 'I' ? 'italic' : 'normal', fontSize: 11, padding: '2px 7px' }}>
               {btn.label}
             </button>
           ))}
@@ -281,7 +474,6 @@ function TextBlock({
         .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); float: left; color: ${TEXT_MUTED}; pointer-events: none; height: 0; }
         .ProseMirror h1 { font-size: 2rem; font-weight: 700; margin: 0.5em 0 0.25em; color: ${TEXT_PRIMARY}; }
         .ProseMirror h2 { font-size: 1.4rem; font-weight: 700; margin: 0.5em 0 0.25em; color: ${TEXT_PRIMARY}; }
-        .ProseMirror h3 { font-size: 1.15rem; font-weight: 600; margin: 0.5em 0 0.25em; color: ${TEXT_PRIMARY}; }
         .ProseMirror strong { font-weight: 700; }
         .ProseMirror em { font-style: italic; }
         .ProseMirror ul { list-style: disc; padding-left: 1.5rem; margin: 0.25rem 0; }
@@ -310,7 +502,7 @@ function QuoteBlock({
   }
 
   return (
-    <div style={{ background: BLOCK_BG, borderRadius: 4, padding: '32px 40px', borderLeft: `3px solid ${ACCENT}` }}>
+    <div style={{ background: BLOCK_BG, padding: '32px 40px', borderLeft: `3px solid ${ACCENT}` }}>
       <textarea
         defaultValue={block.quote}
         onBlur={(e) => void save({ quote: e.target.value })}
@@ -336,15 +528,14 @@ function VideoBlock({ block }: { block: Extract<StudioCaseStudyBlock, { type: 'v
   const isDirectVideo = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(block.url);
 
   return (
-    <div style={{ background: BLOCK_BG, borderRadius: 4, overflow: 'hidden', aspectRatio: '16/9' }}>
+    <div style={{ background: BLOCK_BG, overflow: 'hidden', aspectRatio: '16/9' }}>
       {embedUrl
         ? <iframe src={embedUrl} style={{ width: '100%', height: '100%', border: 'none' }} allow="autoplay; fullscreen" allowFullScreen title="Video" />
         : isDirectVideo
           // eslint-disable-next-line jsx-a11y/media-has-caption
           ? <video src={block.url} controls style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           : <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, color: TEXT_MUTED }}>
-              <Film size={36} />
-              <span style={{ fontSize: 12 }}>{block.url || 'No video URL set'}</span>
+              <Film size={36} /><span style={{ fontSize: 12 }}>{block.url || 'No video URL'}</span>
             </div>}
     </div>
   );
@@ -354,9 +545,9 @@ function VideoBlock({ block }: { block: Extract<StudioCaseStudyBlock, { type: 'v
 
 function GenericBlock({ block }: { block: StudioCaseStudyBlock }): ReactElement {
   return (
-    <div style={{ background: BLOCK_BG, borderRadius: 4, padding: 20, color: TEXT_MUTED, fontSize: 13 }}>
+    <div style={{ background: BLOCK_BG, padding: 20, color: TEXT_MUTED, fontSize: 13 }}>
       <strong style={{ color: TEXT_PRIMARY, textTransform: 'capitalize' }}>{block.type.replace('_', ' ')}</strong>
-      <span style={{ marginLeft: 8 }}>— switch to Overview/Metadata to edit this block type</span>
+      <span style={{ marginLeft: 8 }}>— edit via Overview / Metadata tabs</span>
     </div>
   );
 }
@@ -420,12 +611,13 @@ function AddBlockBar({
         onClick={() => setOpen((v) => !v)}
         disabled={uploading}
         title="Add block"
-        style={{ position: 'relative', zIndex: 1, background: BLOCK_BG, border: `1px solid ${BORDER}`, borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: TEXT_MUTED }}>
+        style={{ position: 'relative', zIndex: 1, background: BLOCK_BG, border: `1px solid ${BORDER}`, borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: TEXT_MUTED }}
+      >
         {uploading ? <span style={{ fontSize: 10 }}>…</span> : <Plus size={13} />}
       </button>
 
       {open && (
-        <div style={{ position: 'absolute', top: 'calc(100% + 2px)', zIndex: 30, background: BLOCK_BG, border: `1px solid ${BORDER}`, borderRadius: 6, padding: 6, display: 'flex', gap: 4 }}>
+        <div style={{ position: 'absolute', top: 'calc(100% + 2px)', zIndex: 30, background: BLOCK_BG, border: `1px solid ${BORDER}`, padding: 6, display: 'flex', gap: 4 }}>
           <PillBtn icon={<Upload size={14} color={ACCENT} />} label="Upload" onClick={() => fileRef.current?.click()} />
           <PillBtn icon={<Type size={14} />} label="Text" onClick={() => void handleAdd('text')} />
           <PillBtn icon={<Film size={14} />} label="Video" onClick={() => void handleAdd('video')} />
@@ -439,7 +631,7 @@ function AddBlockBar({
 function PillBtn({ icon, label, onClick }: { icon: ReactElement; label: string; onClick: () => void }): ReactElement {
   return (
     <button type="button" onClick={onClick}
-      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}`, borderRadius: 5, padding: '8px 12px', cursor: 'pointer', color: TEXT_PRIMARY, fontSize: 11 }}>
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}`, padding: '8px 12px', cursor: 'pointer', color: TEXT_PRIMARY, fontSize: 11 }}>
       <span style={{ color: TEXT_MUTED }}>{icon}</span>
       {label}
     </button>
@@ -453,14 +645,33 @@ function BlockRenderer({
   studyId,
   onUpdated,
   onDeleted,
+  imgDragSrc,
+  onImgDragStart,
+  onImgDragEnd,
+  onImgDrop,
 }: {
   block: StudioCaseStudyBlock;
   studyId: string;
   onUpdated: (b: StudioCaseStudyBlock) => void;
   onDeleted: (id: string) => void;
+  imgDragSrc: ImgDragSrc;
+  onImgDragStart: (blockId: string, idx: number) => void;
+  onImgDragEnd: () => void;
+  onImgDrop: (targetBlockId: string, side: 'left' | 'right') => void;
 }): ReactElement {
   switch (block.type) {
-    case 'media_row': return <MediaBlock block={block} studyId={studyId} onUpdated={onUpdated} onDeleted={onDeleted} />;
+    case 'media_row': return (
+      <MediaBlock
+        block={block}
+        studyId={studyId}
+        onUpdated={onUpdated}
+        onDeleted={onDeleted}
+        imgDragSrc={imgDragSrc}
+        onImgDragStart={onImgDragStart}
+        onImgDragEnd={onImgDragEnd}
+        onImgDrop={onImgDrop}
+      />
+    );
     case 'text': return <TextBlock block={block} studyId={studyId} onUpdated={onUpdated} />;
     case 'video': return <VideoBlock block={block} />;
     case 'quote': return <QuoteBlock block={block} studyId={studyId} onUpdated={onUpdated} />;
@@ -486,7 +697,10 @@ export default function StoryCanvas({
   onBlocksReordered: (blocks: StudioCaseStudyBlock[]) => void;
 }): ReactElement {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [imgDragSrc, setImgDragSrc] = useState<ImgDragSrc>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
+  // ── block-level drag-to-reorder (dnd-kit) ────────────────────────────────
 
   function handleDragStart({ active }: DragStartEvent): void {
     setActiveId(active.id as string);
@@ -507,6 +721,55 @@ export default function StoryCanvas({
     }
   }
 
+  // ── image-level drag-to-merge ─────────────────────────────────────────────
+
+  async function handleImgMerge(targetBlockId: string, side: 'left' | 'right'): Promise<void> {
+    if (!imgDragSrc) return;
+    const { blockId: srcId, idx: srcIdx } = imgDragSrc;
+    setImgDragSrc(null);
+
+    if (srcId === targetBlockId) return;
+
+    const srcBlock = blocks.find((b) => b.id === srcId);
+    const tgtBlock = blocks.find((b) => b.id === targetBlockId);
+    if (!srcBlock || !tgtBlock || srcBlock.type !== 'media_row' || tgtBlock.type !== 'media_row') return;
+    if (tgtBlock.items.length >= 2) return;
+
+    const dragged = srcBlock.items[srcIdx];
+    if (!dragged) return;
+
+    const newSrcItems = srcBlock.items.filter((_, i) => i !== srcIdx);
+    const newTgtItems = side === 'left'
+      ? [dragged, ...tgtBlock.items]
+      : [...tgtBlock.items, dragged];
+
+    const updatedSrc: Extract<StudioCaseStudyBlock, { type: 'media_row' }> = { ...srcBlock, layout: newSrcItems.length > 1 ? 'pair' : 'single', items: newSrcItems };
+    const updatedTgt: Extract<StudioCaseStudyBlock, { type: 'media_row' }> = { ...tgtBlock, layout: newTgtItems.length > 1 ? 'pair' : 'single', items: newTgtItems };
+
+    // Optimistic update
+    const newBlocks = blocks
+      .map((b) => {
+        if (b.id === srcId) return updatedSrc;
+        if (b.id === targetBlockId) return updatedTgt;
+        return b;
+      })
+      .filter((b) => !(b.id === srcId && newSrcItems.length === 0));
+
+    onBlocksReordered(newBlocks);
+
+    try {
+      await apiPatchBlock(studyId, updatedTgt);
+      if (newSrcItems.length === 0) {
+        await apiDeleteBlock(studyId, srcId);
+      } else {
+        await apiPatchBlock(studyId, updatedSrc);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Merge failed');
+      onBlocksReordered(blocks); // rollback
+    }
+  }
+
   async function handleDelete(block: StudioCaseStudyBlock): Promise<void> {
     try {
       await apiDeleteBlock(studyId, block.id);
@@ -517,7 +780,7 @@ export default function StoryCanvas({
   const activeBlock = blocks.find((b) => b.id === activeId);
 
   return (
-    <div style={{ background: CANVAS_BG, minHeight: 'calc(100vh - 220px)', padding: '24px 48px 80px 56px' }}>
+    <div style={{ background: CANVAS_BG, minHeight: '100%', padding: '0 48px 80px 56px' }}>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -531,7 +794,16 @@ export default function StoryCanvas({
             {blocks.map((block) => (
               <div key={block.id} style={{ marginBottom: 2 }}>
                 <SortableBlock block={block} onDelete={() => void handleDelete(block)}>
-                  <BlockRenderer block={block} studyId={studyId} onUpdated={onBlockUpdated} onDeleted={onBlockDeleted} />
+                  <BlockRenderer
+                    block={block}
+                    studyId={studyId}
+                    onUpdated={onBlockUpdated}
+                    onDeleted={onBlockDeleted}
+                    imgDragSrc={imgDragSrc}
+                    onImgDragStart={(blockId, idx) => setImgDragSrc({ blockId, idx })}
+                    onImgDragEnd={() => setImgDragSrc(null)}
+                    onImgDrop={(targetId, side) => void handleImgMerge(targetId, side)}
+                  />
                 </SortableBlock>
                 <AddBlockBar studyId={studyId} onBlockAdded={onBlockAdded} />
               </div>
@@ -548,7 +820,16 @@ export default function StoryCanvas({
         <DragOverlay>
           {activeBlock
             ? <div style={{ opacity: 0.75, pointerEvents: 'none', maxWidth: 960, filter: 'brightness(1.15)' }}>
-                <BlockRenderer block={activeBlock} studyId={studyId} onUpdated={() => undefined} onDeleted={() => undefined} />
+                <BlockRenderer
+                  block={activeBlock}
+                  studyId={studyId}
+                  onUpdated={() => undefined}
+                  onDeleted={() => undefined}
+                  imgDragSrc={null}
+                  onImgDragStart={() => undefined}
+                  onImgDragEnd={() => undefined}
+                  onImgDrop={() => undefined}
+                />
               </div>
             : null}
         </DragOverlay>

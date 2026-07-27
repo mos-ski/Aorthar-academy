@@ -53,7 +53,7 @@ export type StudioCaseStudyAdminDetail = StudioCaseStudyDetail & {
 
 export type StudioCaseStudyBlock =
   | { id: string; type: 'text'; sort_order: number; body: string }
-  | { id: string; type: 'media_row'; sort_order: number; layout: 'single' | 'pair'; items: Array<{ type: StudioMediaType; url: string; alt: string; aspectRatio: string }> }
+  | { id: string; type: 'media_row'; sort_order: number; layout: 'single' | 'pair'; items: Array<{ type: StudioMediaType; url: string; alt: string; aspectRatio: string; objectPosition?: string }> }
   | { id: string; type: 'video'; sort_order: number; url: string; coverUrl: string | null; caption: string | null }
   | { id: string; type: 'quote'; sort_order: number; quote: string; name: string | null; role: string | null }
   | { id: string; type: 'process_notes'; sort_order: number; orientation: 'horizontal' | 'vertical'; title: string; body: string; images: Array<{ url: string; alt: string }> }
@@ -94,6 +94,7 @@ const draftMediaItemSchema = z.object({
   url: z.string(),
   alt: z.string(),
   aspectRatio: z.string(),
+  objectPosition: z.string().optional(),
 }).strict();
 
 const draftTextBlockSchema = z.object({ body: z.string() }).strict();
@@ -130,6 +131,7 @@ const mediaItemSchema = z.object({
   url: httpsUrlSchema,
   alt: z.string(),
   aspectRatio: z.string().default(''),
+  objectPosition: z.string().optional(),
 }).strict();
 
 const textBlockSchema = z.object({ body: z.string() }).strict();
