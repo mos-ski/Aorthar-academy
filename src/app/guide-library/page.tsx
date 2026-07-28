@@ -1,27 +1,120 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from 'sonner';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Avatar, AvatarFallback, AvatarGroup, AvatarGroupCount, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { AlertCircle, ChevronDown, Info, PanelRight, Settings, Trash2, User } from 'lucide-react';
 
-const NAV = [
-  { id: 'colors', label: 'Colors' },
-  { id: 'typography', label: 'Typography' },
-  { id: 'buttons', label: 'Buttons' },
-  { id: 'forms', label: 'Forms' },
-  { id: 'cards', label: 'Cards' },
-  { id: 'tabs', label: 'Tabs' },
-  { id: 'badges', label: 'Badges' },
-  { id: 'tables', label: 'Tables' },
-  { id: 'dialogs', label: 'Dialogs' },
+const NAV_GROUPS = [
+  {
+    group: 'Foundations',
+    items: [
+      { id: 'colors', label: 'Colors' },
+      { id: 'typography', label: 'Typography' },
+      { id: 'logos', label: 'Logos' },
+      { id: 'icons', label: 'Icons' },
+      { id: 'misc-icons', label: 'Misc icons' },
+      { id: 'effect-styles', label: 'Effect styles' },
+      { id: 'spacing', label: 'Spacing, radius & grids' },
+      { id: 'portfolio-mockups', label: 'Portfolio mockups' },
+      { id: 'design-annotations', label: 'Design annotations' },
+    ],
+  },
+  {
+    group: 'Shared Components',
+    items: [
+      { id: 'buttons', label: 'Buttons' },
+      { id: 'button-groups', label: 'Button groups' },
+      { id: 'badges', label: 'Badges' },
+      { id: 'tags', label: 'Tags' },
+      { id: 'dropdowns', label: 'Dropdowns' },
+      { id: 'inputs', label: 'Inputs' },
+      { id: 'toggles', label: 'Toggles' },
+      { id: 'checkboxes', label: 'Checkboxes' },
+      { id: 'checkbox-groups', label: 'Checkbox groups' },
+      { id: 'avatars', label: 'Avatars' },
+      { id: 'tooltips', label: 'Tooltips' },
+      { id: 'progress-indicators', label: 'Progress indicators' },
+      { id: 'sliders', label: 'Sliders' },
+    ],
+  },
+  {
+    group: 'Shared Assets',
+    items: [
+      { id: 'login-signup', label: 'Log in and sign up pages' },
+      { id: '404', label: '404 pages' },
+      { id: 'email-templates', label: 'Email templates' },
+      { id: 'misc-assets', label: 'Miscellaneous assets' },
+      { id: 'background-elements', label: 'Background elements' },
+    ],
+  },
+  {
+    group: 'Marketing Website Components',
+    items: [
+      { id: 'header-navigation', label: 'Header navigation' },
+      { id: 'header-sections', label: 'Header sections' },
+      { id: 'features-sections', label: 'Features sections' },
+      { id: 'pricing-sections', label: 'Pricing sections' },
+      { id: 'cta-sections', label: 'CTA sections' },
+      { id: 'metrics-sections', label: 'Metrics sections' },
+      { id: 'newsletter-cta', label: 'Newsletter CTA sections' },
+      { id: 'testimonial-sections', label: 'Testimonial sections' },
+      { id: 'social-proof', label: 'Social proof sections' },
+      { id: 'blog-sections', label: 'Blog sections' },
+      { id: 'content', label: 'Content' },
+      { id: 'contact-sections', label: 'Contact sections' },
+      { id: 'team-sections', label: 'Team sections' },
+      { id: 'careers-sections', label: 'Careers sections' },
+      { id: 'faq-sections', label: 'FAQ sections' },
+      { id: 'footers', label: 'Footers' },
+      { id: 'banners', label: 'Banners' },
+    ],
+  },
+  {
+    group: 'Application Components',
+    items: [
+      { id: 'page-headers', label: 'Page headers' },
+      { id: 'card-headers', label: 'Card headers' },
+      { id: 'section-headers', label: 'Section headers' },
+      { id: 'section-footers', label: 'Section footers' },
+      { id: 'app-navigation', label: 'Application navigation' },
+      { id: 'modals', label: 'Modals' },
+      { id: 'command-menus', label: 'Command menus' },
+      { id: 'charts', label: 'Charts' },
+      { id: 'metrics', label: 'Metrics' },
+      { id: 'slideout-menus', label: 'Slideout menus' },
+      { id: 'inline-ctas', label: 'Inline CTAs' },
+      { id: 'pagination', label: 'Pagination' },
+      { id: 'progress-steps', label: 'Progress steps' },
+      { id: 'activity-feeds', label: 'Activity feeds' },
+      { id: 'messaging', label: 'Messaging' },
+      { id: 'tabs', label: 'Tabs' },
+      { id: 'tables', label: 'Tables' },
+      { id: 'breadcrumbs', label: 'Breadcrumbs' },
+      { id: 'alerts-notifications', label: 'Alerts & notifications' },
+      { id: 'date-pickers', label: 'Date pickers' },
+      { id: 'file-upload', label: 'File upload' },
+      { id: 'content-dividers', label: 'Content dividers' },
+      { id: 'loading-indicators', label: 'Loading indicators' },
+      { id: 'empty-states', label: 'Empty states' },
+      { id: 'code-snippets', label: 'Code snippets' },
+    ],
+  },
 ];
 
 const COLORS = [
@@ -67,9 +160,43 @@ function Preview({ label, children }: { label?: string; children: React.ReactNod
   return (
     <div className="mb-6">
       {label && <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">{label}</p>}
-      <div className="rounded-none border border-border bg-muted/20 p-6">
+      <div className="border border-border bg-muted/20 p-6">
         {children}
       </div>
+    </div>
+  );
+}
+
+function AnimatedProgress() {
+  const [value, setValue] = useState(0);
+  const [running, setRunning] = useState(false);
+
+  function start() {
+    if (running) return;
+    setRunning(true);
+    setValue(0);
+    let v = 0;
+    const id = setInterval(() => {
+      v += Math.floor(Math.random() * 12) + 4;
+      if (v >= 100) {
+        v = 100;
+        clearInterval(id);
+        setRunning(false);
+      }
+      setValue(v);
+    }, 120);
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-sm text-muted-foreground">Upload progress</span>
+        <span className="font-mono text-sm text-primary">{value}%</span>
+      </div>
+      <Progress value={value} />
+      <Button size="sm" variant="outline" onClick={start} disabled={running}>
+        {running ? 'Running…' : value === 100 ? 'Run again' : 'Start'}
+      </Button>
     </div>
   );
 }
@@ -86,16 +213,23 @@ export default function GuideLibraryPage() {
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Aorthar</p>
           <h1 className="mt-1 text-base font-bold">Design System</h1>
         </div>
-        <nav className="space-y-0.5">
-          {NAV.map(({ id, label }) => (
-            <a
-              key={id}
-              href={`#${id}`}
-              onClick={() => setActiveNav(id)}
-              className={`block rounded-none px-3 py-2 text-sm transition-colors ${activeNav === id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
-            >
-              {label}
-            </a>
+        <nav className="space-y-4">
+          {NAV_GROUPS.map(({ group, items }) => (
+            <div key={group}>
+              <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">{group}</p>
+              <div className="space-y-0.5">
+                {items.map(({ id, label }) => (
+                  <a
+                    key={id}
+                    href={`#${id}`}
+                    onClick={() => setActiveNav(id)}
+                    className={`block rounded-none px-3 py-1.5 text-[13px] transition-colors ${activeNav === id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+                  >
+                    {label}
+                  </a>
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
         <div className="mt-12 border-t border-border pt-6">
@@ -133,8 +267,41 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── TYPOGRAPHY ── */}
-        <Section id="typography" title="Typography" description="Type scale using system sans-serif stack.">
-          <Preview>
+        <Section id="typography" title="Typography" description="Type scale. Impact for H1 display; system sans-serif for everything else.">
+          <Preview label="Impact H1 — website display">
+            <div>
+              <p className="mb-3 font-mono text-[10px] text-muted-foreground">font-family: Impact · 85px · weight 400 · line-height 71.4px · letter-spacing -3.825px · uppercase</p>
+              <p style={{
+                color: '#FFF',
+                fontFamily: 'Impact, "Arial Narrow", sans-serif',
+                fontSize: 85,
+                fontStyle: 'normal',
+                fontWeight: 400,
+                lineHeight: '71.4px',
+                letterSpacing: '-3.825px',
+                textTransform: 'uppercase',
+              }}>
+                Build Sharp
+              </p>
+            </div>
+          </Preview>
+          <Preview label="Impact H1 — on lemon">
+            <div style={{ background: '#a7d252', padding: '24px 32px', display: 'inline-block' }}>
+              <p style={{
+                color: '#101112',
+                fontFamily: 'Impact, "Arial Narrow", sans-serif',
+                fontSize: 85,
+                fontStyle: 'normal',
+                fontWeight: 400,
+                lineHeight: '71.4px',
+                letterSpacing: '-3.825px',
+                textTransform: 'uppercase',
+              }}>
+                Aorthar
+              </p>
+            </div>
+          </Preview>
+          <Preview label="Body type scale">
             <div className="space-y-6">
               <div><p className="mb-1 font-mono text-[10px] text-muted-foreground">text-4xl / font-bold</p><p className="text-4xl font-bold leading-none">Display heading</p></div>
               <div><p className="mb-1 font-mono text-[10px] text-muted-foreground">text-3xl / font-bold</p><p className="text-3xl font-bold">Section heading</p></div>
@@ -172,7 +339,7 @@ export default function GuideLibraryPage() {
             <div className="flex flex-wrap gap-3">
               <Button disabled>Disabled</Button>
               <Button variant="outline" disabled>Disabled outline</Button>
-              <Button><span className="mr-1 inline-block h-3 w-3 animate-spin rounded-none border border-current border-t-transparent" />Loading</Button>
+              <Button><span className="mr-1 inline-block h-3 w-3 animate-spin border border-current border-t-transparent" />Loading</Button>
             </div>
           </Preview>
         </Section>
@@ -328,6 +495,262 @@ export default function GuideLibraryPage() {
                 ))}
               </TableBody>
             </Table>
+          </Preview>
+        </Section>
+
+        {/* ── ALERTS ── */}
+        <Section id="alerts" title="Alerts" description="Inline feedback messages for info, warnings, and errors.">
+          <Preview label="Default">
+            <Alert>
+              <Info className="size-4" />
+              <AlertTitle>Your draft has unsaved changes</AlertTitle>
+              <AlertDescription>Click Save to publish your latest edits before leaving the editor.</AlertDescription>
+            </Alert>
+          </Preview>
+          <Preview label="Destructive">
+            <Alert variant="destructive">
+              <AlertCircle className="size-4" />
+              <AlertTitle>Failed to publish</AlertTitle>
+              <AlertDescription>There was an error pushing your case study live. Check your connection and try again.</AlertDescription>
+            </Alert>
+          </Preview>
+        </Section>
+
+        {/* ── AVATARS ── */}
+        <Section id="avatars" title="Avatars" description="Square user avatars, badges, and groups.">
+          <Preview label="Sizes">
+            <div className="flex items-end gap-4">
+              <Avatar size="lg">
+                <AvatarImage src="https://github.com/shadcn.png" alt="User" />
+                <AvatarFallback>MO</AvatarFallback>
+              </Avatar>
+              <Avatar size="default">
+                <AvatarImage src="https://github.com/shadcn.png" alt="User" />
+                <AvatarFallback>MO</AvatarFallback>
+              </Avatar>
+              <Avatar size="sm">
+                <AvatarImage src="https://github.com/shadcn.png" alt="User" />
+                <AvatarFallback>MO</AvatarFallback>
+              </Avatar>
+            </div>
+          </Preview>
+          <Preview label="Fallback initials">
+            <div className="flex items-center gap-4">
+              <Avatar size="lg"><AvatarFallback>MO</AvatarFallback></Avatar>
+              <Avatar size="default"><AvatarFallback>TY</AvatarFallback></Avatar>
+              <Avatar size="sm"><AvatarFallback>AD</AvatarFallback></Avatar>
+            </div>
+          </Preview>
+          <Preview label="Group">
+            <AvatarGroup>
+              <Avatar><AvatarFallback>MO</AvatarFallback></Avatar>
+              <Avatar><AvatarFallback>TY</AvatarFallback></Avatar>
+              <Avatar><AvatarFallback>AD</AvatarFallback></Avatar>
+              <AvatarGroupCount>+4</AvatarGroupCount>
+            </AvatarGroup>
+          </Preview>
+        </Section>
+
+        {/* ── PROGRESS ── */}
+        <Section id="progress" title="Progress" description="Animated determinate progress bar using --primary (lemon).">
+          <Preview label="Interactive">
+            <AnimatedProgress />
+          </Preview>
+          <Preview label="Static states">
+            <div className="space-y-4 max-w-sm">
+              <div>
+                <div className="flex justify-between mb-1.5 text-xs text-muted-foreground"><span>0%</span><span>Empty</span></div>
+                <Progress value={0} />
+              </div>
+              <div>
+                <div className="flex justify-between mb-1.5 text-xs text-muted-foreground"><span>40%</span><span>In progress</span></div>
+                <Progress value={40} />
+              </div>
+              <div>
+                <div className="flex justify-between mb-1.5 text-xs text-muted-foreground"><span>75%</span><span>Almost done</span></div>
+                <Progress value={75} />
+              </div>
+              <div>
+                <div className="flex justify-between mb-1.5 text-xs text-muted-foreground"><span>100%</span><span>Complete</span></div>
+                <Progress value={100} />
+              </div>
+            </div>
+          </Preview>
+        </Section>
+
+        {/* ── SKELETON ── */}
+        <Section id="skeleton" title="Skeleton" description="Pulse loading placeholders that match component shapes.">
+          <Preview label="Card skeleton">
+            <div className="border border-border bg-card p-5 max-w-sm space-y-4">
+              <div className="flex items-center gap-3">
+                <Skeleton className="size-10" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-3 w-32" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+              </div>
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+              <Skeleton className="h-8 w-24" />
+            </div>
+          </Preview>
+          <Preview label="Table skeleton">
+            <div className="space-y-2">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="flex gap-4 border-b border-border pb-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="ml-auto h-4 w-16" />
+                </div>
+              ))}
+            </div>
+          </Preview>
+        </Section>
+
+        {/* ── DROPDOWN MENU ── */}
+        <Section id="dropdown" title="Dropdown Menu" description="Context menus and action menus triggered by a button.">
+          <Preview label="User actions menu">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  Account <ChevronDown className="ml-1 size-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-48">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem>
+                    <User className="mr-2 size-4" /> Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 size-4" /> Settings
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive focus:text-destructive">
+                  <Trash2 className="mr-2 size-4" /> Delete account
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </Preview>
+          <Preview label="Case study actions">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="ghost">Actions <ChevronDown className="ml-1 size-3" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem>Duplicate</DropdownMenuItem>
+                <DropdownMenuItem>View live</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive focus:text-destructive">Archive</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </Preview>
+        </Section>
+
+        {/* ── SHEET ── */}
+        <Section id="sheet" title="Sheet" description="Side panels for secondary content, filters, and forms.">
+          <Preview label="Right sheet (default)">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline">
+                  <PanelRight className="mr-2 size-4" /> Open sheet
+                </Button>
+              </SheetTrigger>
+              <SheetContent>
+                <SheetHeader>
+                  <SheetTitle>Case study details</SheetTitle>
+                  <SheetDescription>Edit the metadata for this work entry.</SheetDescription>
+                </SheetHeader>
+                <div className="space-y-4 px-4 py-6">
+                  <div className="space-y-1.5">
+                    <Label>Client</Label>
+                    <Input placeholder="e.g. Lagos Creative Studio" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Year</Label>
+                    <Input placeholder="2025" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Status</Label>
+                    <Select defaultValue="draft">
+                      <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="published">Published</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <SheetFooter className="px-4">
+                  <Button className="w-full">Save changes</Button>
+                </SheetFooter>
+              </SheetContent>
+            </Sheet>
+          </Preview>
+          <Preview label="Left sheet">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm">Open left</Button>
+              </SheetTrigger>
+              <SheetContent side="left">
+                <SheetHeader>
+                  <SheetTitle>Navigation</SheetTitle>
+                  <SheetDescription>Studio sections</SheetDescription>
+                </SheetHeader>
+                <div className="px-4 py-6 space-y-1">
+                  {['Work', 'Clients', 'Settings', 'Analytics'].map((item) => (
+                    <div key={item} className="px-3 py-2 text-sm text-muted-foreground hover:bg-muted cursor-pointer">{item}</div>
+                  ))}
+                </div>
+              </SheetContent>
+            </Sheet>
+          </Preview>
+        </Section>
+
+        {/* ── TOASTS ── */}
+        <Section id="toasts" title="Toasts" description="Non-blocking notifications via Sonner. Fire-and-forget feedback.">
+          <Preview label="Toast variants">
+            <div className="flex flex-wrap gap-3">
+              <Button variant="outline" onClick={() => toast('Case study saved')}>
+                Default
+              </Button>
+              <Button variant="outline" onClick={() => toast.success('Published successfully')}>
+                Success
+              </Button>
+              <Button variant="outline" onClick={() => toast.error('Failed to save — check your connection')}>
+                Error
+              </Button>
+              <Button variant="outline" onClick={() => toast.warning('You have unsaved changes')}>
+                Warning
+              </Button>
+              <Button variant="outline" onClick={() => toast.info('Auto-save is enabled')}>
+                Info
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  toast('Upload complete', {
+                    description: '3 images added to Media block.',
+                    action: { label: 'View', onClick: () => toast('Navigating to media…') },
+                  })
+                }
+              >
+                With action
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const id = toast.loading('Uploading images…');
+                  setTimeout(() => toast.success('Upload complete', { id }), 2000);
+                }}
+              >
+                Loading → done
+              </Button>
+            </div>
           </Preview>
         </Section>
 
