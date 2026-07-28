@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarGroup, AvatarGroupCount, AvatarImage } from '@/components/ui/avatar';
@@ -203,6 +203,27 @@ function AnimatedProgress() {
 
 export default function GuideLibraryPage() {
   const [activeNav, setActiveNav] = useState('colors');
+  const clickedRef = useRef(false);
+
+  useEffect(() => {
+    const allIds = NAV_GROUPS.flatMap((g) => g.items.map((i) => i.id));
+    const observers: IntersectionObserver[] = [];
+
+    allIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting && !clickedRef.current) setActiveNav(id);
+        },
+        { rootMargin: '-20% 0px -70% 0px', threshold: 0 }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+
+    return () => observers.forEach((o) => o.disconnect());
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
@@ -222,7 +243,11 @@ export default function GuideLibraryPage() {
                   <a
                     key={id}
                     href={`#${id}`}
-                    onClick={() => setActiveNav(id)}
+                    onClick={() => {
+                      setActiveNav(id);
+                      clickedRef.current = true;
+                      setTimeout(() => { clickedRef.current = false; }, 800);
+                    }}
                     className={`block rounded-none px-3 py-1.5 text-[13px] transition-colors ${activeNav === id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
                   >
                     {label}
