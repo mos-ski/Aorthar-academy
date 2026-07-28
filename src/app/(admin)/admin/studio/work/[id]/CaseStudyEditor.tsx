@@ -387,6 +387,18 @@ function StudioCanvas({
     return () => { if (progressTimerRef.current) clearInterval(progressTimerRef.current); };
   }, [uploading, uploadLabel]);
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent): void {
+      if (e.key === '/' && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) {
+        e.preventDefault();
+        setOpen(true);
+      }
+      if (e.key === 'Escape') setOpen(false);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   const projectName = study.client || study.title || 'Project Name';
   const category = study.tags[0] ?? study.services[0] ?? null;
   const year = study.year ?? null;
@@ -594,8 +606,8 @@ function StudioCanvas({
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ flex: 1, height: 1, background: '#484848' }} />
                   <button type="button" onClick={() => setOpen((v) => !v)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a7d252', fontSize: 16, fontWeight: 600, padding: 0, whiteSpace: 'nowrap' }}>
-                    Add Block [/]
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a7d252', fontSize: 13, fontWeight: 400, padding: 0, whiteSpace: 'nowrap' }}>
+                    + add block <span style={{ opacity: 0.5 }}>/</span>
                   </button>
                   <div style={{ flex: 1, height: 1, background: '#484848' }} />
                 </div>
