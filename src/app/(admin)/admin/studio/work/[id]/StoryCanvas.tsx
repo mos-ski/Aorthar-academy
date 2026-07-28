@@ -613,10 +613,11 @@ function BlockRenderer({ block, studyId, onUpdated, onDeleted, imgDragSrc, onImg
 
 // ─── StoryCanvas ───────────────────────────────────────────────────────────────
 
-export default function StoryCanvas({ studyId, topicId, blocks, onBlockAdded, onBlockUpdated, onBlockDeleted, onBlocksReordered }: {
+export default function StoryCanvas({ studyId, topicId, blocks, siblingBlockIds = [], onBlockAdded, onBlockUpdated, onBlockDeleted, onBlocksReordered }: {
   studyId: string;
   topicId?: string | null;
   blocks: StudioCaseStudyBlock[];
+  siblingBlockIds?: string[];
   onBlockAdded: (block: StudioCaseStudyBlock) => void;
   onBlockUpdated: (block: StudioCaseStudyBlock) => void;
   onBlockDeleted: (id: string) => void;
@@ -635,7 +636,7 @@ export default function StoryCanvas({ studyId, topicId, blocks, onBlockAdded, on
     const newIndex = blocks.findIndex((b) => b.id === over.id);
     const reordered = arrayMove(blocks, oldIndex, newIndex).map((b, i) => ({ ...b, sort_order: i }));
     onBlocksReordered(reordered);
-    try { await apiReorder(studyId, reordered.map((b) => b.id)); }
+    try { await apiReorder(studyId, [...reordered.map((b) => b.id), ...siblingBlockIds]); }
     catch (e) { toast.error(e instanceof Error ? e.message : 'Reorder failed'); onBlocksReordered(blocks); }
   }
 
@@ -692,7 +693,7 @@ export default function StoryCanvas({ studyId, topicId, blocks, onBlockAdded, on
       onBlocksReordered(final);
 
       // 4. Persist the order
-      await apiReorder(studyId, final.map((b) => b.id));
+      await apiReorder(studyId, [...final.map((b) => b.id), ...siblingBlockIds]);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to extract block');
       onBlocksReordered(blocks);

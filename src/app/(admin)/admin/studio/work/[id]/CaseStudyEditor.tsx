@@ -589,6 +589,7 @@ function StudioCanvas({
                 studyId={studyId}
                 topicId={activeTopic}
                 blocks={topicBlocks}
+                siblingBlockIds={otherBlocks.map((b) => b.id)}
                 onBlockAdded={onBlockAdded}
                 onBlockUpdated={onBlockUpdated}
                 onBlockDeleted={onBlockDeleted}
