@@ -28,8 +28,8 @@ import {
   ChevronDown, ChevronRight, Circle, Clock, Code, Coffee, Download, Edit, Eye, File, FileText, Filter,
   Flame, Folder, Github, Globe, GraduationCap, Grid3X3, Hash, Heart, HelpCircle, Home, Info, Layout,
   Layers, Leaf, Lightbulb, Link, Linkedin, List, Lock, Mail, MapPin, MessageCircle, MessageSquare,
-  Minus, Monitor, MoreHorizontal, Mountain, Newspaper, Palette, PanelRight, Pen, Phone, Play,
-  Plus, Presentation, RefreshCw, Rocket, Search, Send, Settings, Share2, Shield, Sparkles, Star,
+  Minus, Monitor, MoreHorizontal, Mountain, Moon, Newspaper, Palette, PanelRight, Pen, Phone, Play,
+  Plus, Presentation, RefreshCw, Rocket, Search, Send, Settings, Share2, Shield, Sparkles, Star, Sun,
   Trash2, TrendingUp, Trophy, Tv, Type, Upload, User, Users, Video, X, Zap,
 } from 'lucide-react';
 
@@ -229,7 +229,13 @@ function AnimatedProgress() {
 
 export default function GuideLibraryPage() {
   const [activeNav, setActiveNav] = useState('colors');
+  const [isDark, setIsDark] = useState(true);
   const clickedRef = useRef(false);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDark);
+    document.documentElement.classList.toggle('light', !isDark);
+  }, [isDark]);
 
   useEffect(() => {
     const allIds = NAV_GROUPS.flatMap((g) => g.items.map((i) => i.id));
@@ -290,14 +296,23 @@ export default function GuideLibraryPage() {
 
         {/* Page header */}
         <div className="mb-16">
-          <div className="mb-2 flex items-center gap-3">
-            <span className="inline-block h-3 w-3 bg-primary" />
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">v1.0</p>
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="mb-2 flex items-center gap-3">
+                <span className="inline-block h-3 w-3 bg-primary" />
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">v1.0</p>
+              </div>
+              <h1 className="text-4xl font-bold tracking-tight">Component Library</h1>
+              <p className="mt-3 max-w-xl text-muted-foreground">
+                All UI primitives for the Aorthar design system. Sharp edges, lemon accents, dark-first.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 border border-border bg-card px-3 py-1.5">
+              <Sun className="size-3.5 text-muted-foreground" />
+              <Switch checked={isDark} onCheckedChange={setIsDark} />
+              <Moon className="size-3.5 text-muted-foreground" />
+            </div>
           </div>
-          <h1 className="text-4xl font-bold tracking-tight">Component Library</h1>
-          <p className="mt-3 max-w-xl text-muted-foreground">
-            All UI primitives for the Aorthar design system. Sharp edges, lemon accents, dark-first.
-          </p>
         </div>
 
         {/* ════════════════════════════════════════════ FOUNDATIONS ════════════════════════════════════════════ */}
@@ -332,8 +347,8 @@ All components use rounded-none. No border-radius.`}>
 
         {/* ── TYPOGRAPHY ── */}
         <Section id="typography" title="Typography" description="Type scale. Impact for H1 display; system sans-serif for everything else." refText={`Typography rules:
-- H1 display (hero): font-family Impact, "Arial Narrow", sans-serif — 85px, weight 400, line-height 71.4px, letter-spacing -3.825px, uppercase
-- Body font: "Helvetica Neue", "Neue Haas Grotesk Display Pro", Helvetica, Arial, sans-serif (mapped as --font-sans)
+- H1 display (hero): font-family Impact — 85px, weight 400, line-height 71.4px, letter-spacing -3.825px, uppercase
+- Body font: "Helvetica Neue" (mapped as --font-sans)
 - Mono font: "SFMono-Regular", Menlo, Monaco, Consolas (mapped as --font-mono)
 - Scale: text-4xl/bold (display), text-3xl/bold (section), text-2xl/semibold (page title), text-xl/medium (subheading), text-base (body), text-sm + text-muted-foreground (meta), text-xs/uppercase/tracking-widest (labels)
 - Impact on lemon bg: use color #101112 (dark)
@@ -341,14 +356,14 @@ All components use rounded-none. No border-radius.`}>
           <Preview label="Impact H1 — website display">
             <div>
               <p className="mb-3 font-mono text-[10px] text-muted-foreground">font-family: Impact · 85px · weight 400 · line-height 71.4px · letter-spacing -3.825px · uppercase</p>
-              <p style={{ color: '#FFF', fontFamily: 'Impact, "Arial Narrow", sans-serif', fontSize: 85, fontWeight: 400, lineHeight: '71.4px', letterSpacing: '-3.825px', textTransform: 'uppercase' }}>
+              <p style={{ color: '#FFF', fontFamily: 'Impact', fontSize: 85, fontWeight: 400, lineHeight: '71.4px', letterSpacing: '-3.825px', textTransform: 'uppercase' }}>
                 Build Sharp
               </p>
             </div>
           </Preview>
           <Preview label="Impact H1 — on lemon">
             <div style={{ background: '#a7d252', padding: '24px 32px', display: 'inline-block' }}>
-              <p style={{ color: '#101112', fontFamily: 'Impact, "Arial Narrow", sans-serif', fontSize: 85, fontWeight: 400, lineHeight: '71.4px', letterSpacing: '-3.825px', textTransform: 'uppercase' }}>
+              <p style={{ color: '#101112', fontFamily: 'Impact', fontSize: 85, fontWeight: 400, lineHeight: '71.4px', letterSpacing: '-3.825px', textTransform: 'uppercase' }}>
                 Aorthar
               </p>
             </div>
@@ -370,9 +385,9 @@ All components use rounded-none. No border-radius.`}>
         {/* ── LOGOS ── */}
         <Section id="logos" title="Logos" description="Wordmark and icon mark. Usage rules and clear space." refText={`Logo usage:
 - Wordmark: /Aorthar Logo long complete.svg
-- Icon mark: /Aorthar Favion.svg
+- Icon mark: /Aorthar Favion.svg (lemon #A7D252 strokes, no background)
 - Minimum clear space: 1x icon height on all sides
-- Dark bg: use brightness-0 dark:brightness-100 on SVG
+- Dark bg wordmark: brightness-0 dark:brightness-100 on SVG
 - Do not stretch, rotate, or apply effects`}>
           <Preview label="Wordmark">
             <div className="flex items-center gap-6">
@@ -381,18 +396,18 @@ All components use rounded-none. No border-radius.`}>
             </div>
           </Preview>
           <Preview label="Icon mark">
-            <div className="flex items-end gap-6">
-              <img src="/Aorthar Favion.svg" alt="Aorthar" className="h-10 w-10" />
-              <img src="/Aorthar Favion.svg" alt="Aorthar" className="h-8 w-8" />
-              <img src="/Aorthar Favion.svg" alt="Aorthar" className="h-6 w-6" />
+            <div className="flex items-end gap-8">
+              <img src="/Aorthar Favion.svg" alt="Aorthar" className="h-24 w-24" />
+              <img src="/Aorthar Favion.svg" alt="Aorthar" className="h-16 w-16" />
+              <img src="/Aorthar Favion.svg" alt="Aorthar" className="h-12 w-12" />
             </div>
           </Preview>
           <Preview label="Usage rules">
             <div className="space-y-3 text-sm text-muted-foreground">
               <p>Minimum clear space: 1x the icon height on all sides.</p>
               <p>Do not stretch, rotate, or apply effects to the logo.</p>
-              <p>On dark backgrounds, use the primary (lemon) variant.</p>
-              <p>On light backgrounds, use the dark green variant.</p>
+              <p>Icon mark: lemon (#A7D252) strokes, no background.</p>
+              <p>Wordmark: use brightness-0 dark:brightness-100 for dark/light mode.</p>
             </div>
           </Preview>
         </Section>
@@ -1310,7 +1325,9 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
           <Preview label="Centered hero">
             <div className="py-16 text-center">
               <Badge variant="secondary" className="mb-4">Now enrolling</Badge>
-              <h1 style={{ fontFamily: 'Impact, "Arial Narrow", sans-serif', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '-0.04em' }} className="text-5xl mb-4">Build the future with code</h1>
+              <p style={{ fontFamily: 'Impact', fontSize: 64, fontWeight: 400, lineHeight: '54px', letterSpacing: '-2.88px', textTransform: 'uppercase' }} className="mb-4">
+                BUILD THE<br />FUTURE WITH CODE
+              </p>
               <p className="text-muted-foreground max-w-lg mx-auto mb-6">Join Aorthar Academy and learn software engineering through real-world projects and mentorship.</p>
               <div className="flex gap-3 justify-center">
                 <Button>Get started</Button>
@@ -1322,7 +1339,9 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
             <div className="grid grid-cols-2 gap-8 items-center">
               <div>
                 <Badge variant="secondary" className="mb-4">New cohort</Badge>
-                <h1 style={{ fontFamily: 'Impact, "Arial Narrow", sans-serif', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '-0.04em' }} className="text-4xl mb-3">Master software engineering</h1>
+                <p style={{ fontFamily: 'Impact', fontSize: 56, fontWeight: 400, lineHeight: '47px', letterSpacing: '-2.52px', textTransform: 'uppercase' }} className="mb-3">
+                  MASTER<br />SOFTWARE ENGINEERING
+                </p>
                 <p className="text-sm text-muted-foreground mb-4">A structured 4-year program with courses, quizzes, exams, and capstone projects.</p>
                 <Button>Start learning</Button>
               </div>
@@ -1331,7 +1350,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
           </Preview>
           <Preview label="Impact headline">
             <div className="py-12">
-              <p style={{ fontFamily: 'Impact, "Arial Narrow", sans-serif', fontSize: 64, fontWeight: 400, lineHeight: '54px', letterSpacing: '-2.88px', textTransform: 'uppercase' }} className="mb-4">
+              <p style={{ fontFamily: 'Impact', fontSize: 64, fontWeight: 400, lineHeight: '54px', letterSpacing: '-2.88px', textTransform: 'uppercase' }} className="mb-4">
                 BUILD<br />SHARP
               </p>
               <Button>Explore programs</Button>
