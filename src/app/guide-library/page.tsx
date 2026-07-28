@@ -230,6 +230,7 @@ function AnimatedProgress() {
 export default function GuideLibraryPage() {
   const [activeNav, setActiveNav] = useState('colors');
   const [isDark, setIsDark] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const clickedRef = useRef(false);
 
   useEffect(() => {
@@ -257,8 +258,11 @@ export default function GuideLibraryPage() {
     <TooltipProvider>
     <div className="flex min-h-screen bg-background text-foreground">
 
+      {/* Mobile overlay */}
+      {sidebarOpen && <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />}
+
       {/* Sidebar */}
-      <aside className="fixed top-0 left-0 h-screen w-52 overflow-y-auto border-r border-border bg-card px-4 py-8">
+      <aside className={`fixed top-0 left-0 z-50 h-screen w-56 overflow-y-auto border-r border-border bg-card px-4 py-8 transition-transform duration-200 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="mb-8">
           <img src="/Aorthar Logo long complete.svg" alt="Aorthar" className="h-7 w-auto brightness-0 dark:brightness-100" />
           <h1 className="mt-1 text-base font-bold">Design System</h1>
@@ -274,6 +278,7 @@ export default function GuideLibraryPage() {
                     href={`#${id}`}
                     onClick={() => {
                       setActiveNav(id);
+                      setSidebarOpen(false);
                       clickedRef.current = true;
                       setTimeout(() => { clickedRef.current = false; }, 800);
                     }}
@@ -292,11 +297,20 @@ export default function GuideLibraryPage() {
       </aside>
 
       {/* Main */}
-      <main className="ml-52 flex-1 px-12 py-10 max-w-4xl">
+      <main className="flex-1 lg:ml-56 px-4 py-6 sm:px-8 md:px-12 lg:py-10 max-w-4xl">
+
+        {/* Mobile header */}
+        <div className="mb-4 flex items-center gap-3 lg:hidden">
+          <button onClick={() => setSidebarOpen(true)} className="flex items-center justify-center size-9 border border-border bg-card">
+            <List className="size-4" />
+          </button>
+          <img src="/Aorthar Favion.svg" alt="Aorthar" className="h-6 w-6" />
+          <span className="text-sm font-bold">Design System</span>
+        </div>
 
         {/* Page header */}
-        <div className="mb-16">
-          <div className="flex items-start justify-between">
+        <div className="mb-10 sm:mb-16">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
               <div className="mb-2 flex items-center gap-3">
                 <span className="inline-block h-3 w-3 bg-primary" />
@@ -422,7 +436,7 @@ All components use rounded-none. No border-radius.`}>
 - Common icons: Home, User, Settings, Mail, Search, Calendar, FileText, Download, Upload, Trash2, Plus, Check, Star, ArrowLeft/Right, ChevronDown/Right, MoreHorizontal, Filter, Eye, Edit, Copy, Share2, ExternalLink
 - Icon-only buttons: use Button size="icon" or "icon-sm" or "icon-lg"`}>
           <Preview label="Icon set — sample Lucide icons">
-            <div className="grid grid-cols-8 gap-4">
+            <div className="grid grid-cols-4 gap-4 sm:grid-cols-8">
               {[
                 { Icon: Home, label: 'Home' }, { Icon: User, label: 'User' }, { Icon: Settings, label: 'Settings' },
                 { Icon: Mail, label: 'Mail' }, { Icon: Search, label: 'Search' }, { Icon: Bell, label: 'Bell' },
@@ -460,7 +474,7 @@ All components use rounded-none. No border-radius.`}>
 - Sparkles — premium, special, magic
 - Use with text-primary for brand accent, text-muted-foreground for neutral`}>
           <Preview label="Brand icons">
-            <div className="grid grid-cols-6 gap-6">
+            <div className="grid grid-cols-3 gap-6 sm:grid-cols-6">
               {[
                 { Icon: Leaf, label: 'Leaf / Growth' }, { Icon: Rocket, label: 'Rocket / Launch' },
                 { Icon: Award, label: 'Award / Achievement' }, { Icon: GraduationCap, label: 'Education' },
@@ -1325,7 +1339,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
           <Preview label="Centered hero">
             <div className="py-16 text-center">
               <Badge variant="secondary" className="mb-4">Now enrolling</Badge>
-              <p style={{ fontFamily: 'Impact', fontSize: 64, fontWeight: 400, lineHeight: '54px', letterSpacing: '-2.88px', textTransform: 'uppercase' }} className="mb-4">
+              <p style={{ fontFamily: 'Impact', fontWeight: 400, lineHeight: '0.88em', letterSpacing: '-0.04em', textTransform: 'uppercase' }} className="text-4xl sm:text-5xl md:text-6xl mb-4">
                 BUILD THE<br />FUTURE WITH CODE
               </p>
               <p className="text-muted-foreground max-w-lg mx-auto mb-6">Join Aorthar Academy and learn software engineering through real-world projects and mentorship.</p>
@@ -1336,10 +1350,10 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
             </div>
           </Preview>
           <Preview label="Split hero">
-            <div className="grid grid-cols-2 gap-8 items-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
               <div>
                 <Badge variant="secondary" className="mb-4">New cohort</Badge>
-                <p style={{ fontFamily: 'Impact', fontSize: 56, fontWeight: 400, lineHeight: '47px', letterSpacing: '-2.52px', textTransform: 'uppercase' }} className="mb-3">
+                <p style={{ fontFamily: 'Impact', fontWeight: 400, lineHeight: '0.88em', letterSpacing: '-0.04em', textTransform: 'uppercase' }} className="text-3xl sm:text-4xl md:text-5xl mb-3">
                   MASTER<br />SOFTWARE ENGINEERING
                 </p>
                 <p className="text-sm text-muted-foreground mb-4">A structured 4-year program with courses, quizzes, exams, and capstone projects.</p>
@@ -1350,7 +1364,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
           </Preview>
           <Preview label="Impact headline">
             <div className="py-12">
-              <p style={{ fontFamily: 'Impact', fontSize: 64, fontWeight: 400, lineHeight: '54px', letterSpacing: '-2.88px', textTransform: 'uppercase' }} className="mb-4">
+              <p style={{ fontFamily: 'Impact', fontWeight: 400, lineHeight: '0.88em', letterSpacing: '-0.04em', textTransform: 'uppercase' }} className="text-4xl sm:text-5xl md:text-6xl mb-4">
                 BUILD<br />SHARP
               </p>
               <Button>Explore programs</Button>
@@ -1366,7 +1380,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
 - Text-primary on icon background for brand accent
 - Keep descriptions short (1-2 lines)`}>
           <Preview label="3-column feature grid">
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
                 { icon: BookOpen, title: 'Structured curriculum', desc: '4-year program with courses, quizzes, and exams.' },
                 { icon: Award, title: 'Certifications', desc: 'Earn recognized certificates upon completion.' },
@@ -1408,7 +1422,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
 - CTA: Button full-width, primary card = variant="default", others variant="outline"
 - Highlight middle card as recommended/primary`}>
           <Preview label="Pricing cards">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[
                 { name: 'Free', price: '₦0', features: ['5 courses', 'Community access', 'Basic quizzes'], cta: 'Start free', primary: false },
                 { name: 'Standard', price: '₦50,000/yr', features: ['All courses', 'Exams & certs', 'Priority support', 'Mentorship'], cta: 'Enroll now', primary: true },
@@ -1462,7 +1476,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
 - Labels: concise (1-2 words)
 - Example values: 2,500+ Students, 120+ Courses, 95% Completion rate, 4.8 Avg rating`}>
           <Preview label="Stats row">
-            <div className="grid grid-cols-4 gap-6 text-center">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 text-center">
               {[
                 { value: '2,500+', label: 'Students' },
                 { value: '120+', label: 'Courses' },
@@ -1508,7 +1522,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
 - Author: flex items-center gap-2, Avatar size="sm" + name text-xs font-medium + role text-[10px] text-muted-foreground
 - Quote text should be genuine-sounding, 1-2 sentences`}>
           <Preview label="Testimonial cards">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
                 { quote: 'Aorthar Academy changed my career. The structured curriculum and mentorship are unmatched.', name: 'Ada E.', role: 'Software Developer' },
                 { quote: 'The exam system really tests your knowledge. I feel confident in my skills now.', name: 'Chidi N.', role: 'Frontend Engineer' },
@@ -1551,7 +1565,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
 - Tags: Tutorial, Engineering, Spotlight, etc.
 - Use for: blog index, news listing, resource hub`}>
           <Preview label="Blog grid">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[
                 { title: 'Getting started with Next.js 16', date: '1 Jul 2026', tag: 'Tutorial' },
                 { title: 'Why we chose Supabase', date: '25 Jun 2026', tag: 'Engineering' },
@@ -1605,7 +1619,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
 - Use for: contact page, support page, partnership inquiries
 - Keep form simple (3-4 fields max)`}>
           <Preview>
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 <h2 className="text-xl font-semibold mb-2">Get in touch</h2>
                 <p className="text-sm text-muted-foreground mb-4">Have a question? We&apos;d love to hear from you.</p>
@@ -1634,7 +1648,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
 - Use for: about page, team section, contributor listing
 - Initials from name split: name.split(' ').map(n => n[0]).join('')`}>
           <Preview>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
                 { name: 'Moski Ade', role: 'Founder', initials: 'MA' },
                 { name: 'Ada Obi', role: 'Lead Engineer', initials: 'AO' },
@@ -1719,7 +1733,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
 - Links: Product (Courses, Bootcamps, Internship, Pricing), Company (About, Blog, Careers, Contact), Legal (Privacy, Terms, Refund policy)`}>
           <Preview label="Full footer">
             <div className="border-t border-border pt-8">
-              <div className="grid grid-cols-4 gap-8 mb-8">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
                 <div>
                   <div className="flex items-center gap-2 mb-3"><img src="/Aorthar Favion.svg" alt="Aorthar" className="h-4 w-4" /><span className="font-bold text-sm">Aorthar</span></div>
                   <p className="text-xs text-muted-foreground">Building the next generation of software engineers.</p>
@@ -2049,7 +2063,7 @@ Use for: delete confirmations, create forms, settings modals`}>
 - Use for: dashboard overview, admin stats, course analytics
 - Pattern: <div className="border border-border bg-card p-4"><p className="text-xs text-muted-foreground mb-1">{label}</p><div className="flex items-end justify-between"><p className="text-2xl font-bold">{value}</p><span className="text-xs text-primary">{change}</span></div></div>`}>
           <Preview>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[
                 { label: 'Total students', value: '2,547', change: '+12%', up: true },
                 { label: 'Revenue', value: '₦4.2M', change: '+8%', up: true },
