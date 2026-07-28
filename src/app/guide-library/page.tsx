@@ -81,7 +81,7 @@ export default function GuideLibraryPage() {
     <div className="flex min-h-screen bg-background text-foreground">
 
       {/* Sidebar */}
-      <aside className="sticky top-0 h-screen w-52 shrink-0 overflow-y-auto border-r border-border bg-card px-4 py-8">
+      <aside className="fixed top-0 left-0 h-screen w-52 overflow-y-auto border-r border-border bg-card px-4 py-8">
         <div className="mb-8">
           <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Aorthar</p>
           <h1 className="mt-1 text-base font-bold">Design System</h1>
@@ -104,7 +104,7 @@ export default function GuideLibraryPage() {
       </aside>
 
       {/* Main */}
-      <main className="flex-1 px-12 py-10 max-w-4xl">
+      <main className="ml-52 flex-1 px-12 py-10 max-w-4xl">
 
         {/* Page header */}
         <div className="mb-16">
