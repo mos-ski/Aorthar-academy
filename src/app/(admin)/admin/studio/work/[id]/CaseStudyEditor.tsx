@@ -554,77 +554,83 @@ function StudioCanvas({
         </div>
 
         {/* Canvas area */}
-        <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}
-          onDragOver={topicBlocks.length === 0 ? onDragOver : undefined}
-          onDragLeave={topicBlocks.length === 0 ? onDragLeave : undefined}
-          onDrop={topicBlocks.length === 0 ? onDrop : undefined}
-        >
-          {topicBlocks.length === 0 ? (
-            /* ── Empty state: upload zone ── */
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, padding: '48px 48px 48px 40px' }}>
-              <div style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 360,
-                background: isDragging ? 'rgba(167,210,82,0.06)' : 'rgba(72,72,72,0.25)',
-                border: isDragging ? '2px dashed #a7d252' : '2px dashed transparent',
-                transition: 'all 0.15s',
-              }}>
-                <input ref={fileInputRef} type="file" multiple
-                  accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
-                  style={{ display: 'none' }}
-                  onChange={(e) => { if (e.target.files) void handleFiles(e.target.files); e.target.value = ''; }}
-                />
-                <div role="button" tabIndex={0}
-                  onClick={() => fileInputRef.current?.click()}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
-                  style={{ border: `2px dashed ${isDragging ? '#a7d252' : '#484848'}`, padding: '24px 32px', textAlign: 'center', cursor: 'pointer', transition: 'border-color 0.15s' }}>
-                  <p style={{ color: '#ebefe0', fontSize: 13, margin: 0, lineHeight: '20px', whiteSpace: 'pre-line' }}>
-                    {isDragging ? 'Drop files here' : 'Drag and drop your files here\nor click to upload'}
-                  </p>
-                </div>
-              </div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 
-              {/* Add Block bar */}
-              <div style={{ position: 'relative', flexShrink: 0 }}>
-                {open && (
-                  <div style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0 }}>
-                    <div style={{ width: 240, background: '#18191a', border: '1px solid #484848', boxShadow: '0 4px 16px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
-                      <div style={{ background: '#484848', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search"
-                          style={{ background: 'none', border: 'none', outline: 'none', color: '#ebefe0', fontSize: 14, fontWeight: 500, width: '100%' }} />
-                      </div>
-                      {filteredTypes.map((type) => (
-                        <div key={type} role="button" tabIndex={0}
-                          onClick={() => { void onAdd(type, undefined, activeTopic); setOpen(false); setSearch(''); }}
-                          onKeyDown={(e) => { if (e.key === 'Enter') { void onAdd(type, undefined, activeTopic); setOpen(false); setSearch(''); } }}
-                          style={{ padding: '6px 10px', color: '#ebefe0', fontSize: 14, cursor: 'pointer' }}>
-                          {blockLabels[type]}
-                        </div>
-                      ))}
-                    </div>
+          {/* Scrollable content */}
+          <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}
+            onDragOver={topicBlocks.length === 0 ? onDragOver : undefined}
+            onDragLeave={topicBlocks.length === 0 ? onDragLeave : undefined}
+            onDrop={topicBlocks.length === 0 ? onDrop : undefined}
+          >
+            {topicBlocks.length === 0 ? (
+              /* ── Empty state: upload zone ── */
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 48px 48px 40px' }}>
+                <div style={{
+                  width: '100%', maxWidth: 600, aspectRatio: '16/9',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: isDragging ? 'rgba(167,210,82,0.06)' : 'rgba(72,72,72,0.25)',
+                  border: isDragging ? '2px dashed #a7d252' : '2px dashed transparent',
+                  transition: 'all 0.15s',
+                }}>
+                  <input ref={fileInputRef} type="file" multiple
+                    accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
+                    style={{ display: 'none' }}
+                    onChange={(e) => { if (e.target.files) void handleFiles(e.target.files); e.target.value = ''; }}
+                  />
+                  <div role="button" tabIndex={0}
+                    onClick={() => fileInputRef.current?.click()}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
+                    style={{ border: `2px dashed ${isDragging ? '#a7d252' : '#484848'}`, padding: '24px 32px', textAlign: 'center', cursor: 'pointer', transition: 'border-color 0.15s' }}>
+                    <p style={{ color: '#ebefe0', fontSize: 13, margin: 0, lineHeight: '20px', whiteSpace: 'pre-line' }}>
+                      {isDragging ? 'Drop files here' : 'Drag and drop your files here\nor click to upload'}
+                    </p>
                   </div>
-                )}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ flex: 1, height: 1, background: '#484848' }} />
-                  <button type="button" onClick={() => setOpen((v) => !v)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a7d252', fontSize: 13, fontWeight: 400, padding: 0, whiteSpace: 'nowrap' }}>
-                    + add block <span style={{ opacity: 0.5 }}>/</span>
-                  </button>
-                  <div style={{ flex: 1, height: 1, background: '#484848' }} />
                 </div>
               </div>
+            ) : (
+              /* ── Has blocks: visual canvas ── */
+              <StoryCanvas
+                studyId={studyId}
+                topicId={activeTopic}
+                blocks={topicBlocks}
+                onBlockAdded={onBlockAdded}
+                onBlockUpdated={onBlockUpdated}
+                onBlockDeleted={onBlockDeleted}
+                onBlocksReordered={(reordered) => onBlocksReordered([...reordered, ...otherBlocks])}
+              />
+            )}
+          </div>
+
+          {/* Fixed-bottom add block bar */}
+          <div style={{ flexShrink: 0, position: 'relative', borderTop: '1px solid #2a2a2a' }}>
+            {open && (
+              <div style={{ position: 'absolute', bottom: 'calc(100% + 4px)', left: '50%', transform: 'translateX(-50%)' }}>
+                <div style={{ width: 240, background: '#18191a', border: '1px solid #484848', boxShadow: '0 -4px 16px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
+                  <div style={{ background: '#484848', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search"
+                      style={{ background: 'none', border: 'none', outline: 'none', color: '#ebefe0', fontSize: 14, fontWeight: 500, width: '100%' }} />
+                  </div>
+                  {filteredTypes.map((type) => (
+                    <div key={type} role="button" tabIndex={0}
+                      onClick={() => { void onAdd(type, undefined, activeTopic); setOpen(false); setSearch(''); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { void onAdd(type, undefined, activeTopic); setOpen(false); setSearch(''); } }}
+                      style={{ padding: '6px 10px', color: '#ebefe0', fontSize: 14, cursor: 'pointer' }}>
+                      {blockLabels[type]}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px' }}>
+              <div style={{ flex: 1, height: 1, background: '#2a2a2a' }} />
+              <button type="button" onClick={() => setOpen((v) => !v)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a7d252', fontSize: 13, fontWeight: 400, padding: 0, whiteSpace: 'nowrap' }}>
+                + add block <span style={{ opacity: 0.5 }}>/</span>
+              </button>
+              <div style={{ flex: 1, height: 1, background: '#2a2a2a' }} />
             </div>
-          ) : (
-            /* ── Has blocks: visual canvas ── */
-            <StoryCanvas
-              studyId={studyId}
-              topicId={activeTopic}
-              blocks={topicBlocks}
-              onBlockAdded={onBlockAdded}
-              onBlockUpdated={onBlockUpdated}
-              onBlockDeleted={onBlockDeleted}
-              onBlocksReordered={(reordered) => onBlocksReordered([...reordered, ...otherBlocks])}
-            />
-          )}
+          </div>
+
         </div>
       </div>
     </div>
