@@ -189,15 +189,9 @@ function RefBlock({ text }: { text: string }) {
     setTimeout(() => setCopied(false), 2000);
   }
   return (
-    <div className="mt-6 border border-border bg-card">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Agent reference prompt</p>
-        <button onClick={copy} className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
-          <Copy className="size-3" /> {copied ? 'Copied' : 'Copy'}
-        </button>
-      </div>
-      <pre className="px-4 py-3 text-xs font-mono text-muted-foreground whitespace-pre-wrap leading-relaxed">{text}</pre>
-    </div>
+    <button onClick={copy} className="mt-4 flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+      <Copy className="size-3" /> {copied ? 'Copied to clipboard' : 'Copy agent prompt'}
+    </button>
   );
 }
 
