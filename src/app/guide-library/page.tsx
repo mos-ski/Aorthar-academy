@@ -147,11 +147,15 @@ function Section({ id, title, description, refText, children }: { id: string; ti
   return (
     <section id={id} className="mb-20 scroll-mt-8">
       <div className="mb-6 border-b border-border pb-4">
-        <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
-        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
+            {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+          </div>
+          {refText && <RefBlock text={refText} />}
+        </div>
       </div>
       {children}
-      {refText && <RefBlock text={refText} />}
     </section>
   );
 }
@@ -250,7 +254,7 @@ export default function GuideLibraryPage() {
       {/* Sidebar */}
       <aside className="fixed top-0 left-0 h-screen w-52 overflow-y-auto border-r border-border bg-card px-4 py-8">
         <div className="mb-8">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Aorthar</p>
+          <img src="/Aorthar Logo long complete.svg" alt="Aorthar" className="h-7 w-auto brightness-0 dark:brightness-100" />
           <h1 className="mt-1 text-base font-bold">Design System</h1>
         </div>
         <nav className="space-y-4">
@@ -320,7 +324,7 @@ All components use rounded-none. No border-radius.`}>
           <div className="mt-8 border border-border bg-card p-6">
             <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">Brand mark</p>
             <div className="flex items-center gap-3">
-              <span className="inline-block h-4 w-4 bg-primary" />
+              <img src="/Aorthar Favion.svg" alt="Aorthar" className="h-4 w-4" />
               <span className="font-mono text-sm text-primary">#a7d252 — Lemon</span>
             </div>
           </div>
@@ -365,30 +369,22 @@ All components use rounded-none. No border-radius.`}>
 
         {/* ── LOGOS ── */}
         <Section id="logos" title="Logos" description="Wordmark and icon mark. Usage rules and clear space." refText={`Logo usage:
-- Wordmark: inline-block h-4 w-4 bg-primary square + "Aorthar" bold text
-- Icon mark: square container with bg-primary, letter "A" in primary-foreground
-- Sizes: 40px (lg), 32px (default), 24px (sm)
+- Wordmark: /Aorthar Logo long complete.svg
+- Icon mark: /Aorthar Favion.svg
 - Minimum clear space: 1x icon height on all sides
-- Dark bg: use lemon (#a7d252) variant
-- Light bg: use dark green (#08694a) variant
+- Dark bg: use brightness-0 dark:brightness-100 on SVG
 - Do not stretch, rotate, or apply effects`}>
           <Preview label="Wordmark">
             <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <span className="inline-block h-6 w-6 bg-primary" />
-                <span className="text-xl font-bold tracking-tight">Aorthar</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="inline-block h-6 w-6 bg-primary" />
-                <span className="text-xl font-bold tracking-tight text-primary">Aorthar</span>
-              </div>
+              <img src="/Aorthar Logo long complete.svg" alt="Aorthar" className="h-8 w-auto brightness-0 dark:brightness-100" />
+              <img src="/Aorthar Logo long complete.svg" alt="Aorthar" className="h-6 w-auto" />
             </div>
           </Preview>
           <Preview label="Icon mark">
             <div className="flex items-end gap-6">
-              <div className="flex items-center justify-center h-12 w-12 bg-primary"><span className="text-background font-bold text-lg">A</span></div>
-              <div className="flex items-center justify-center h-10 w-10 bg-primary"><span className="text-background font-bold text-sm">A</span></div>
-              <div className="flex items-center justify-center h-8 w-8 bg-primary"><span className="text-background font-bold text-xs">A</span></div>
+              <img src="/Aorthar Favion.svg" alt="Aorthar" className="h-10 w-10" />
+              <img src="/Aorthar Favion.svg" alt="Aorthar" className="h-8 w-8" />
+              <img src="/Aorthar Favion.svg" alt="Aorthar" className="h-6 w-6" />
             </div>
           </Preview>
           <Preview label="Usage rules">
@@ -647,7 +643,7 @@ All buttons: rounded-none, font-medium, text-sm, whitespace-nowrap, transition-a
             <div className="flex flex-wrap gap-3">
               <Button disabled>Disabled</Button>
               <Button variant="outline" disabled>Disabled outline</Button>
-              <Button><span className="mr-1 inline-block h-3 w-3 animate-spin border border-current border-t-transparent" />Loading</Button>
+              <Button><svg className="mr-1 size-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeDasharray="50 150" /></svg>Loading</Button>
             </div>
           </Preview>
           <Preview label="With icons">
@@ -1124,7 +1120,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
           <Preview label="Login page">
             <div className="border border-border bg-card max-w-sm mx-auto p-8">
               <div className="flex items-center gap-2 mb-6">
-                <span className="inline-block h-4 w-4 bg-primary" />
+                <img src="/Aorthar Favion.svg" alt="Aorthar" className="h-4 w-4" />
                 <span className="font-bold">Aorthar</span>
               </div>
               <h2 className="text-xl font-semibold mb-1">Welcome back</h2>
@@ -1140,7 +1136,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
           <Preview label="Sign up page">
             <div className="border border-border bg-card max-w-sm mx-auto p-8">
               <div className="flex items-center gap-2 mb-6">
-                <span className="inline-block h-4 w-4 bg-primary" />
+                <img src="/Aorthar Favion.svg" alt="Aorthar" className="h-4 w-4" />
                 <span className="font-bold">Aorthar</span>
               </div>
               <h2 className="text-xl font-semibold mb-1">Create account</h2>
@@ -1187,7 +1183,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
           <Preview label="Welcome email">
             <div className="border border-border bg-card max-w-md mx-auto p-8">
               <div className="flex items-center gap-2 mb-6">
-                <span className="inline-block h-4 w-4 bg-primary" />
+                <img src="/Aorthar Favion.svg" alt="Aorthar" className="h-4 w-4" />
                 <span className="font-bold">Aorthar</span>
               </div>
               <h2 className="text-xl font-semibold mb-2">Welcome to Aorthar!</h2>
@@ -1200,7 +1196,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
           <Preview label="Payment confirmation">
             <div className="border border-border bg-card max-w-md mx-auto p-8">
               <div className="flex items-center gap-2 mb-6">
-                <span className="inline-block h-4 w-4 bg-primary" />
+                <img src="/Aorthar Favion.svg" alt="Aorthar" className="h-4 w-4" />
                 <span className="font-bold">Aorthar</span>
               </div>
               <div className="flex items-center gap-2 mb-4"><Check className="size-5 text-primary" /><h2 className="text-xl font-semibold">Payment confirmed</h2></div>
@@ -1277,7 +1273,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
           <Preview label="Full nav bar">
             <div className="border border-border bg-card px-6 py-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="inline-block h-4 w-4 bg-primary" />
+                <img src="/Aorthar Favion.svg" alt="Aorthar" className="h-4 w-4" />
                 <span className="font-bold text-sm">Aorthar</span>
               </div>
               <nav className="flex items-center gap-6 text-sm text-muted-foreground">
@@ -1295,7 +1291,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
           <Preview label="Sticky header variant">
             <div className="border border-border bg-card/80 backdrop-blur-md px-6 py-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="inline-block h-4 w-4 bg-primary" />
+                <img src="/Aorthar Favion.svg" alt="Aorthar" className="h-4 w-4" />
                 <span className="font-bold text-sm">Aorthar</span>
               </div>
               <Button size="sm">Enroll now</Button>
@@ -1314,7 +1310,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
           <Preview label="Centered hero">
             <div className="py-16 text-center">
               <Badge variant="secondary" className="mb-4">Now enrolling</Badge>
-              <h1 className="text-4xl font-bold mb-4">Build the future with code</h1>
+              <h1 style={{ fontFamily: 'Impact, "Arial Narrow", sans-serif', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '-0.04em' }} className="text-5xl mb-4">Build the future with code</h1>
               <p className="text-muted-foreground max-w-lg mx-auto mb-6">Join Aorthar Academy and learn software engineering through real-world projects and mentorship.</p>
               <div className="flex gap-3 justify-center">
                 <Button>Get started</Button>
@@ -1326,7 +1322,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
             <div className="grid grid-cols-2 gap-8 items-center">
               <div>
                 <Badge variant="secondary" className="mb-4">New cohort</Badge>
-                <h1 className="text-3xl font-bold mb-3">Master software engineering</h1>
+                <h1 style={{ fontFamily: 'Impact, "Arial Narrow", sans-serif', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '-0.04em' }} className="text-4xl mb-3">Master software engineering</h1>
                 <p className="text-sm text-muted-foreground mb-4">A structured 4-year program with courses, quizzes, exams, and capstone projects.</p>
                 <Button>Start learning</Button>
               </div>
@@ -1706,7 +1702,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
             <div className="border-t border-border pt-8">
               <div className="grid grid-cols-4 gap-8 mb-8">
                 <div>
-                  <div className="flex items-center gap-2 mb-3"><span className="inline-block h-4 w-4 bg-primary" /><span className="font-bold text-sm">Aorthar</span></div>
+                  <div className="flex items-center gap-2 mb-3"><img src="/Aorthar Favion.svg" alt="Aorthar" className="h-4 w-4" /><span className="font-bold text-sm">Aorthar</span></div>
                   <p className="text-xs text-muted-foreground">Building the next generation of software engineers.</p>
                 </div>
                 {[
@@ -2464,17 +2460,26 @@ Keep minimal — dividers should be subtle`}>
 
         {/* ── LOADING INDICATORS ── */}
         <Section id="loading-indicators" title="Loading Indicators" description="Skeleton, spinner, progress." refText={`Loading patterns:
-- Spinner: div with animate-spin border-2 border-current border-t-transparent, sizes: size-4 (sm), size-6 (md), size-8 (lg)
+- Spinner (Apple-style): SVG circle with strokeDasharray="50 150", animate-spin
+  - Sizes: size-4 (sm), size-6 (md), size-8 (lg)
+  - Color: text-foreground (default) or text-primary
+  - Pattern: <svg className="size-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="50 150" /></svg>
 - Skeleton: import { Skeleton } from '@/components/ui/skeleton'
   - Card skeleton: flex items-center gap-3 + Skeleton className="size-10" (avatar) + Skeleton h-3 w-32 (text) + multiple Skeleton lines + Skeleton h-8 w-24 (button)
   - Table skeleton: space-y-2, each row flex gap-4 with Skeleton h-4 w-{various}
 - Pulse animation: animate-pulse on Skeleton (default behavior)
 - Use for: page load states, content loading, table loading`}>
           <Preview label="Spinner">
-            <div className="flex items-center gap-4">
-              <div className="size-4 animate-spin border-2 border-current border-t-transparent" />
-              <div className="size-6 animate-spin border-2 border-primary border-t-transparent" />
-              <div className="size-8 animate-spin border-2 border-primary border-t-transparent" />
+            <div className="flex items-center gap-6">
+              <svg className="size-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="50 150" />
+              </svg>
+              <svg className="size-6 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeDasharray="50 150" />
+              </svg>
+              <svg className="size-8 animate-spin text-primary" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeDasharray="50 150" />
+              </svg>
             </div>
           </Preview>
           <Preview label="Card skeleton">
@@ -2532,9 +2537,9 @@ Keep minimal — dividers should be subtle`}>
 - Header: flex items-center justify-between border-b border-border px-4 py-2
   - Filename: text-xs font-mono text-muted-foreground
   - Copy button: Button variant="ghost" size="icon" className="size-6" with Copy icon
-- Code: pre p-4 text-xs font-mono overflow-x-auto text-muted-foreground with <code> tag
+- Code: pre p-4 text-xs font-mono overflow-x-auto leading-relaxed
+- Syntax colors (One Dark theme): imports #c678dd (purple), strings #98c37b (green), functions #61afef (blue), tags #e06c7b (red), text #abb2bf (gray), types #e5c07b (yellow)
 - Inline code: <code className="bg-muted px-1.5 py-0.5 text-xs font-mono">command</code>
-- No syntax highlighting library installed — use plain text or add shiki/highlight.js later
 - Use for: API docs, command references, code examples in courses`}>
           <Preview>
             <div className="border border-border bg-card overflow-hidden">
@@ -2544,17 +2549,17 @@ Keep minimal — dividers should be subtle`}>
                 </div>
                 <Button variant="ghost" size="icon" className="size-6"><Copy className="size-3" /></Button>
               </div>
-              <pre className="p-4 text-xs font-mono overflow-x-auto text-muted-foreground">
-                <code>{`import { Button } from '@/components/ui/button';
-
-export default function Home() {
-  return (
-    <main>
-      <h1>Hello, Aorthar</h1>
-      <Button>Get started</Button>
-    </main>
-  );
-}`}</code>
+              <pre className="p-4 text-xs font-mono overflow-x-auto leading-relaxed">
+                <code>
+                  <span className="text-[#c678dd]">import</span>{' '}<span className="text-[#e5c07b]">{'{ Button }'}</span>{' '}<span className="text-[#c678dd]">from</span>{' '}<span className="text-[#98c379]">&apos;@/components/ui/button&apos;</span>{';\n\n'}
+                  <span className="text-[#c678dd]">export default function</span>{' '}<span className="text-[#61afef]">Home</span>{'() {\n'}
+                  {'  '}<span className="text-[#c678dd]">return</span>{' (\n'}
+                  {'    '}<span className="text-[#e06c75]">{'<main>'}</span>{'\n'}
+                  {'      '}<span className="text-[#e06c75]">{'<h1>'}</span><span className="text-[#abb2bf]">Hello, Aorthar</span><span className="text-[#e06c75]">{'</h1>'}</span>{'\n'}
+                  {'      '}<span className="text-[#e06c75]">{'<Button>'}</span><span className="text-[#abb2bf]">Get started</span><span className="text-[#e06c75]">{'</Button>'}</span>{'\n'}
+                  {'    '}<span className="text-[#e06c75]">{'</main>'}</span>{'\n'}
+                  {'  '});{'\n}'}
+                </code>
               </pre>
             </div>
           </Preview>
