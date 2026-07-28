@@ -24,8 +24,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  AlertCircle, ArrowLeft, ArrowRight, Award, BarChart3, Bell, BookOpen, Briefcase, Building2, Calendar, Check,
-  ChevronDown, ChevronRight, Circle, Clock, Code, Coffee, Copy, Download, Edit, Eye, File, FileText, Filter,
+  AlertCircle, ArrowLeft, ArrowRight, Award, BarChart3, Bell, BookOpen, Briefcase, Building2, Calendar, Check, Copy,
+  ChevronDown, ChevronRight, Circle, Clock, Code, Coffee, Download, Edit, Eye, File, FileText, Filter,
   Flame, Folder, Github, Globe, GraduationCap, Grid3X3, Hash, Heart, HelpCircle, Home, Info, Layout,
   Layers, Leaf, Lightbulb, Link, Linkedin, List, Lock, Mail, MapPin, MessageCircle, MessageSquare,
   Minus, Monitor, MoreHorizontal, Mountain, Newspaper, Palette, PanelRight, Pen, Phone, Play,
@@ -143,7 +143,7 @@ const COLORS = [
   { name: 'Destructive', hex: '#ef4444', token: '--destructive', note: 'Errors, delete actions' },
 ];
 
-function Section({ id, title, description, children }: { id: string; title: string; description?: string; children: React.ReactNode }) {
+function Section({ id, title, description, refText, children }: { id: string; title: string; description?: string; refText?: string; children: React.ReactNode }) {
   return (
     <section id={id} className="mb-20 scroll-mt-8">
       <div className="mb-6 border-b border-border pb-4">
@@ -151,6 +151,7 @@ function Section({ id, title, description, children }: { id: string; title: stri
         {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
       </div>
       {children}
+      {refText && <RefBlock text={refText} />}
     </section>
   );
 }
@@ -176,6 +177,26 @@ function Preview({ label, children }: { label?: string; children: React.ReactNod
       <div className="border border-border bg-muted/20 p-6">
         {children}
       </div>
+    </div>
+  );
+}
+
+function RefBlock({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  function copy() {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+  return (
+    <div className="mt-6 border border-border bg-card">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Agent reference prompt</p>
+        <button onClick={copy} className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+          <Copy className="size-3" /> {copied ? 'Copied' : 'Copy'}
+        </button>
+      </div>
+      <pre className="px-4 py-3 text-xs font-mono text-muted-foreground whitespace-pre-wrap leading-relaxed">{text}</pre>
     </div>
   );
 }
@@ -284,7 +305,21 @@ export default function GuideLibraryPage() {
         {/* ════════════════════════════════════════════ FOUNDATIONS ════════════════════════════════════════════ */}
 
         {/* ── COLORS ── */}
-        <Section id="colors" title="Colors" description="Core brand palette and semantic tokens.">
+        <Section id="colors" title="Colors" description="Core brand palette and semantic tokens." refText={`Aorthar color tokens (dark mode primary):
+- --primary: #a7d252 (lemon) — active states, CTAs, highlights
+- --primary-foreground: #121413 (dark on lemon)
+- --secondary: #24453b — secondary backgrounds
+- --accent: #2a5a4b — hover backgrounds
+- --background: #101112 — page bg
+- --card: #18191a — card/popover surfaces
+- --border: #2a2d2f — borders, dividers
+- --foreground: #f5f8ef — primary text
+- --muted-foreground: #a0aba7 — secondary text
+- --destructive: oklch(0.704 0.191 22.216) — errors, delete
+
+Light mode swaps: --primary becomes #08694a (dark green), --secondary becomes #a7d252 (lemon).
+Brand hex: #a7d252 (Lemon), #08694a (Dark Green), #18191a (Ink).
+All components use rounded-none. No border-radius.`}>
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
             {COLORS.map((c) => <Swatch key={c.name} {...c} />)}
           </div>
@@ -298,7 +333,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── TYPOGRAPHY ── */}
-        <Section id="typography" title="Typography" description="Type scale. Impact for H1 display; system sans-serif for everything else.">
+        <Section id="typography" title="Typography" description="Type scale. Impact for H1 display; system sans-serif for everything else." refText={`Typography rules:
+- H1 display (hero): font-family Impact, "Arial Narrow", sans-serif — 85px, weight 400, line-height 71.4px, letter-spacing -3.825px, uppercase
+- Body font: "Helvetica Neue", "Neue Haas Grotesk Display Pro", Helvetica, Arial, sans-serif (mapped as --font-sans)
+- Mono font: "SFMono-Regular", Menlo, Monaco, Consolas (mapped as --font-mono)
+- Scale: text-4xl/bold (display), text-3xl/bold (section), text-2xl/semibold (page title), text-xl/medium (subheading), text-base (body), text-sm + text-muted-foreground (meta), text-xs/uppercase/tracking-widest (labels)
+- Impact on lemon bg: use color #101112 (dark)
+- Impact on dark bg: use color #FFF`}>
           <Preview label="Impact H1 — website display">
             <div>
               <p className="mb-3 font-mono text-[10px] text-muted-foreground">font-family: Impact · 85px · weight 400 · line-height 71.4px · letter-spacing -3.825px · uppercase</p>
@@ -329,7 +370,14 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── LOGOS ── */}
-        <Section id="logos" title="Logos" description="Wordmark and icon mark. Usage rules and clear space.">
+        <Section id="logos" title="Logos" description="Wordmark and icon mark. Usage rules and clear space." refText={`Logo usage:
+- Wordmark: inline-block h-4 w-4 bg-primary square + "Aorthar" bold text
+- Icon mark: square container with bg-primary, letter "A" in primary-foreground
+- Sizes: 40px (lg), 32px (default), 24px (sm)
+- Minimum clear space: 1x icon height on all sides
+- Dark bg: use lemon (#a7d252) variant
+- Light bg: use dark green (#08694a) variant
+- Do not stretch, rotate, or apply effects`}>
           <Preview label="Wordmark">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
@@ -360,7 +408,14 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── ICONS ── */}
-        <Section id="icons" title="Icons" description="Primary icon set (Lucide). Size scale and usage.">
+        <Section id="icons" title="Icons" description="Primary icon set (Lucide). Size scale and usage." refText={`Icon system:
+- Library: lucide-react (import individual icons)
+- Size classes: size-3 (12px), size-4 (16px, default), size-5 (20px), size-6 (24px), size-8 (32px), size-10 (40px)
+- Use inline: <Icon className="size-4 text-foreground" />
+- On primary bg: text-primary-foreground
+- On muted bg: text-muted-foreground
+- Common icons: Home, User, Settings, Mail, Search, Calendar, FileText, Download, Upload, Trash2, Plus, Check, Star, ArrowLeft/Right, ChevronDown/Right, MoreHorizontal, Filter, Eye, Edit, Copy, Share2, ExternalLink
+- Icon-only buttons: use Button size="icon" or "icon-sm" or "icon-lg"`}>
           <Preview label="Icon set — sample Lucide icons">
             <div className="grid grid-cols-8 gap-4">
               {[
@@ -391,7 +446,14 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── MISC ICONS ── */}
-        <Section id="misc-icons" title="Misc Icons" description="Custom / brand icons used across the app.">
+        <Section id="misc-icons" title="Misc Icons" description="Custom / brand icons used across the app." refText={`Brand / misc icons (lucide-react):
+- Leaf — growth, organic, nature
+- Rocket — launch, speed, new features
+- Award — achievement, certificate, completion
+- GraduationCap — education, university, learning
+- Flame — trending, hot, popular
+- Sparkles — premium, special, magic
+- Use with text-primary for brand accent, text-muted-foreground for neutral`}>
           <Preview label="Brand icons">
             <div className="grid grid-cols-6 gap-6">
               {[
@@ -409,7 +471,15 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── EFFECT STYLES ── */}
-        <Section id="effect-styles" title="Effect Styles" description="Shadows, glows, overlays, and visual effects.">
+        <Section id="effect-styles" title="Effect Styles" description="Shadows, glows, overlays, and visual effects." refText={`Effects:
+- Shadows: shadow-sm, shadow, shadow-md, shadow-lg (Tailwind defaults)
+- Primary glow: bg-primary/10 border border-primary/20
+- Destructive glow: bg-destructive/10 border border-destructive/20
+- Overlay: absolute inset-0 bg-background/60
+- Grain texture: SVG feTurbulence filter, opacity-[0.03], absolute inset-0
+- Body gradients (dark): radial-gradient lime at 85% top + radial-gradient forest at -10% top + linear gradient
+- Selection: background rgba(8,105,74,0.2) color #0f2a21
+- Animations: [data-reveal] scroll-reveal, .landing-pulse (7s), .landing-float (10s)`}>
           <Preview label="Shadows">
             <div className="flex gap-6">
               <div className="h-20 w-40 border border-border bg-card shadow-sm flex items-center justify-center text-xs text-muted-foreground">shadow-sm</div>
@@ -439,7 +509,12 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── SPACING ── */}
-        <Section id="spacing" title="Spacing, Radius & Grids" description="Spacing scale, border-radius (always 0), grid system.">
+        <Section id="spacing" title="Spacing, Radius & Grids" description="Spacing scale, border-radius (always 0), grid system." refText={`Spacing & layout:
+- Spacing scale: space-1 (4px), space-2 (8px), space-3 (12px), space-4 (16px), space-5 (20px), space-6 (24px), space-8 (32px), space-10 (40px), space-12 (48px)
+- Border radius: ALWAYS rounded-none (0px). No curves anywhere.
+- CSS --radius exists (0.625rem) but override with Tailwind rounded-none on all components.
+- Grid: standard Tailwind grid — grid-cols-2, grid-cols-3, grid-cols-4 with gap-4 or gap-6
+- Dashboard layout: px-[15%] padding from (dashboard)/layout.tsx — do not add per-page horizontal padding`}>
           <Preview label="Spacing scale">
             <div className="space-y-3">
               {[
@@ -483,7 +558,11 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── PORTFOLIO MOCKUPS ── */}
-        <Section id="portfolio-mockups" title="Portfolio Mockups" description="Device frames and presentation mockups.">
+        <Section id="portfolio-mockups" title="Portfolio Mockups" description="Device frames and presentation mockups." refText={`Device mockups:
+- Desktop frame: border border-border bg-card, top bar with 3 dots + address bar, content area bg-muted/30
+- Mobile frame: border border-border bg-card, notch bar (h-6, centered pill), content area, home indicator bar
+- Use for: hero images, portfolio previews, app screenshots
+- Keep frames sharp (rounded-none)`}>
           <Preview label="Desktop frame">
             <div className="border border-border bg-card overflow-hidden max-w-lg">
               <div className="flex items-center gap-1.5 border-b border-border px-3 py-2">
@@ -505,7 +584,11 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── DESIGN ANNOTATIONS ── */}
-        <Section id="design-annotations" title="Design Annotations" description="Redline / spec annotation components.">
+        <Section id="design-annotations" title="Design Annotations" description="Redline / spec annotation components." refText={`Annotations:
+- Spacing annotation: horizontal h-px bg-destructive line with "16px" label between two elements
+- Dimension annotation: vertical measurement line with "320px" label above element
+- Color annotation: color swatch + mono label with hex value (e.g. "bg-primary #a7d252")
+- Use for design specs, QA reviews, and handoff documentation`}>
           <Preview label="Spacing annotation">
             <div className="flex items-center gap-4">
               <div className="h-10 w-24 bg-primary flex items-center justify-center text-xs text-primary-foreground">Element</div>
@@ -542,7 +625,12 @@ export default function GuideLibraryPage() {
         {/* ════════════════════════════════════════════ SHARED COMPONENTS ════════════════════════════════════════════ */}
 
         {/* ── BUTTONS ── */}
-        <Section id="buttons" title="Buttons" description="Six variants across four sizes. All sharp-edged.">
+        <Section id="buttons" title="Buttons" description="Six variants across four sizes. All sharp-edged." refText={`Button component: import { Button } from '@/components/ui/button'
+Variants: default (bg-primary text-primary-foreground), outline, secondary, ghost, destructive, link
+Sizes: lg (h-10), default (h-9), sm (h-8), xs (h-6), icon (size-9), icon-sm (size-8), icon-lg (size-10), icon-xs (size-6)
+States: disabled (opacity-50), loading (animate-spin border on child)
+Icons: <Button><Plus className="size-4" /> Create</Button> — icon auto-sizes to 4 via [&_svg:not([class*='size-'])]:size-4
+All buttons: rounded-none, font-medium, text-sm, whitespace-nowrap, transition-all`}>
           <Preview label="Variants">
             <div className="flex flex-wrap gap-3">
               <Button>Default</Button>
@@ -578,7 +666,12 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── BUTTON GROUPS ── */}
-        <Section id="button-groups" title="Button Groups" description="Segmented / connected button rows.">
+        <Section id="button-groups" title="Button Groups" description="Segmented / connected button rows." refText={`Button groups:
+- Container: inline-flex border border-border
+- Each button: rounded-none, border-r-0 (except last), no gap between
+- Segmented: <div className="inline-flex border border-border"><Button variant="outline" className="rounded-none border-r-0">Left</Button>...</div>
+- Icon groups: same pattern with size="icon" buttons
+- Mixed: text + icon buttons in same group`}>
           <Preview label="Segmented group">
             <div className="inline-flex border border-border">
               <Button variant="outline" className="rounded-none border-r-0">Left</Button>
@@ -603,7 +696,12 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── BADGES ── */}
-        <Section id="badges" title="Badges" description="Small status indicators and labels.">
+        <Section id="badges" title="Badges" description="Small status indicators and labels." refText={`Badge component: import { Badge } from '@/components/ui/badge'
+Variants: default (bg-primary), secondary, outline, destructive, ghost
+Shape: rounded-full (badges are the one exception to rounded-none)
+Size: inline-flex w-fit shrink-0, px-2 py-0.5, text-xs
+Usage: <Badge>Published</Badge>, <Badge variant="secondary">Draft</Badge>, <Badge variant="outline">Tag</Badge>
+Status pattern: default=published/active, secondary=draft, destructive=archived/error, ghost=neutral/free`}>
           <Preview label="Variants">
             <div className="flex flex-wrap gap-3">
               <Badge>Default</Badge>
@@ -626,7 +724,12 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── TAGS ── */}
-        <Section id="tags" title="Tags" description="Removable / interactive tags.">
+        <Section id="tags" title="Tags" description="Removable / interactive tags." refText={`Tags (custom, not shadcn):
+- Base: inline-flex items-center gap-1.5 border border-border bg-muted/50 px-2.5 py-1 text-xs
+- Variants: default (border bg-card), primary (border-primary/30 bg-primary/10 text-primary), destructive (border-destructive/30 bg-destructive/10 text-destructive), muted (bg-muted text-muted-foreground)
+- Removable: add × button with text-muted-foreground hover:text-foreground
+- Interactive: add cursor-pointer hover:bg-muted transition-colors
+- Status dot: <span className="h-1.5 w-1.5 bg-primary" /> for active state`}>
           <Preview label="Removable tags">
             <div className="flex flex-wrap gap-2">
               {['React', 'TypeScript', 'Next.js', 'Supabase', 'Tailwind'].map((tag) => (
@@ -658,7 +761,12 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── DROPDOWNS ── */}
-        <Section id="dropdowns" title="Dropdowns" description="Context menus and action menus triggered by a button.">
+        <Section id="dropdowns" title="Dropdowns" description="Context menus and action menus triggered by a button." refText={`DropdownMenu: import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuGroup } from '@/components/ui/dropdown-menu'
+Pattern: <DropdownMenu><DropdownMenuTrigger asChild><Button>...</Button></DropdownMenuTrigger><DropdownMenuContent><DropdownMenuItem>...</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+Icons in items: <DropdownMenuItem><User className="mr-2 size-4" /> Profile</DropdownMenuItem>
+Destructive item: <DropdownMenuItem className="text-destructive focus:text-destructive">
+Separator: <DropdownMenuSeparator />
+Label: <DropdownMenuLabel>My Account</DropdownMenuLabel>`}>
           <Preview label="User actions menu">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -692,7 +800,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── INPUTS ── */}
-        <Section id="inputs" title="Inputs" description="Text, email, password, number inputs. States: default, disabled, error.">
+        <Section id="inputs" title="Inputs" description="Text, email, password, number inputs. States: default, disabled, error." refText={`Input components: import { Input } from '@/components/ui/input' / import { Textarea } from '@/components/ui/textarea' / import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select' / import { Label } from '@/components/ui/label'
+Input types: text, email, password, number, date — all use type prop
+States: default, disabled (disabled prop), error (className border-destructive focus-visible:ring-destructive + <p className="text-xs text-destructive">)
+With icon: wrap in relative div, absolute icon left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground, input pl-9
+Textarea: <Textarea placeholder="..." rows={3} />
+Select: <Select defaultValue="draft"><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="draft">Draft</SelectItem></SelectContent></Select>
+Label: <Label htmlFor="id">Label text</Label>`}>
           <Preview label="Text inputs">
             <div className="max-w-sm space-y-4">
               <div className="space-y-1.5">
@@ -760,7 +874,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── TOGGLES ── */}
-        <Section id="toggles" title="Toggles" description="Switch on/off boolean toggle.">
+        <Section id="toggles" title="Toggles" description="Switch on/off boolean toggle." refText={`Switch: import { Switch } from '@/components/ui/switch'
+Sizes: "default" (h-[1.15rem] w-8), "sm" (h-3.5 w-6)
+States: default (unchecked), defaultChecked, disabled
+Pattern: <div className="flex items-center gap-3"><Switch id="toggle" /><Label htmlFor="toggle">Label</Label></div>
+Checked: data-[state=checked]:bg-primary, unchecked: bg-input
+Thumb: rounded-full, checked: translate-x-[calc(100%-2px)]
+With description: add <p className="text-xs text-muted-foreground"> below Label`}>
           <Preview label="Default">
             <div className="flex items-center gap-3">
               <Switch id="toggle-1" />
@@ -797,7 +917,12 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── CHECKBOXES ── */}
-        <Section id="checkboxes" title="Checkboxes" description="Single checkbox, checked / unchecked / disabled states.">
+        <Section id="checkboxes" title="Checkboxes" description="Single checkbox, checked / unchecked / disabled states." refText={`Checkbox: import { Checkbox } from '@/components/ui/checkbox'
+States: unchecked, defaultChecked, disabled, defaultChecked disabled
+Pattern: <div className="flex items-center gap-2"><Checkbox id="cb" /><Label htmlFor="cb">Label</Label></div>
+Checked: bg-primary text-primary-foreground with CheckIcon
+Unchecked: border border-input, rounded-[4px]
+With description: <div className="flex items-start gap-2"><Checkbox className="mt-0.5" /><div><Label>...</Label><p className="text-xs text-muted-foreground">...</p></div></div>`}>
           <Preview label="States">
             <div className="space-y-3">
               <div className="flex items-center gap-2"><Checkbox id="cb-unchecked" /><Label htmlFor="cb-unchecked">Unchecked</Label></div>
@@ -820,7 +945,12 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── CHECKBOX GROUPS ── */}
-        <Section id="checkbox-groups" title="Checkbox Groups" description="Grouped checkbox lists.">
+        <Section id="checkbox-groups" title="Checkbox Groups" description="Grouped checkbox lists." refText={`Checkbox groups:
+- Wrap in a container with <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-2"> for group label
+- Each item: <div className="flex items-center gap-2"><Checkbox id="perm-1" /><Label htmlFor="perm-1">Label</Label></div>
+- Spacing: space-y-2 between items, space-y-4 between groups
+- Pre-check with defaultChecked prop
+- Use for: permissions, notification preferences, multi-select filters, bulk actions`}>
           <Preview label="Permission groups">
             <div className="space-y-4">
               <div>
@@ -849,7 +979,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── AVATARS ── */}
-        <Section id="avatars" title="Avatars" description="Square user avatars, fallback initials, badge, group.">
+        <Section id="avatars" title="Avatars" description="Square user avatars, fallback initials, badge, group." refText={`Avatar: import { Avatar, AvatarImage, AvatarFallback, AvatarBadge, AvatarGroup, AvatarGroupCount } from '@/components/ui/avatar'
+Sizes: "lg" (size-10), "default" (size-8), "sm" (size-6)
+Pattern: <Avatar size="lg"><AvatarImage src="..." alt="User" /><AvatarFallback>MO</AvatarFallback></Avatar>
+With badge: <Avatar><AvatarFallback>MO</AvatarFallback><AvatarBadge /></AvatarBadge> — online/active indicator
+Group: <AvatarGroup><Avatar>...</Avatar><Avatar>...</Avatar><AvatarGroupCount>+4</AvatarGroupCount></AvatarGroup>
+Group overlap: -space-x-2 with ring-2 ring-background on each avatar
+All avatars: rounded-none (square)`}>
           <Preview label="Sizes">
             <div className="flex items-end gap-4">
               <Avatar size="lg"><AvatarImage src="https://github.com/shadcn.png" alt="User" /><AvatarFallback>MO</AvatarFallback></Avatar>
@@ -887,7 +1023,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── TOOLTIPS ── */}
-        <Section id="tooltips" title="Tooltips" description="Hover tooltips (top / bottom / left / right).">
+        <Section id="tooltips" title="Tooltips" description="Hover tooltips (top / bottom / left / right)." refText={`Tooltip: import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
+Wrap app in <TooltipProvider> (delayDuration=0 by default)
+Pattern: <Tooltip><TooltipTrigger asChild><Button>Trigger</Button></TooltipTrigger><TooltipContent side="top"><p>Tooltip text</p></TooltipContent></Tooltip>
+Sides: top, bottom, left, right
+Style: bg-foreground text-background, rounded-md, with arrow
+Use on icon buttons, compact UI, or anywhere label is hidden
+Tooltip has arrow indicator pointing to trigger`}>
           <Preview label="Positions">
             <div className="flex flex-wrap gap-4">
               <Tooltip><TooltipTrigger asChild><Button variant="outline" size="sm">Top</Button></TooltipTrigger><TooltipContent side="top"><p>Tooltip top</p></TooltipContent></Tooltip>
@@ -906,7 +1048,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── PROGRESS INDICATORS ── */}
-        <Section id="progress-indicators" title="Progress Indicators" description="Progress bar + animated demo.">
+        <Section id="progress-indicators" title="Progress Indicators" description="Progress bar + animated demo." refText={`Progress: import { Progress } from '@/components/ui/progress'
+Props: value (0-100)
+Pattern: <Progress value={75} />
+Bar: bg-primary (lemon), track: bg-muted, h-1.5, rounded-full
+Label pattern: <div className="flex justify-between mb-1.5 text-xs text-muted-foreground"><span>75%</span><span>Label</span></div>
+Circular variant: SVG with two circles (track stroke-muted, fill stroke-primary), strokeDasharray for percentage
+Use for: file upload, course completion, quiz progress, enrollment status`}>
           <Preview label="Interactive">
             <AnimatedProgress />
           </Preview>
@@ -938,7 +1086,15 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── SLIDERS ── */}
-        <Section id="sliders" title="Sliders" description="Range slider input.">
+        <Section id="sliders" title="Sliders" description="Range slider input." refText={`Slider: import { Slider } from '@/components/ui/slider'
+Props: defaultValue={[50]}, min, max, disabled
+Single: <Slider defaultValue={[60]} />
+Range: <Slider defaultValue={[20, 80]} /> (two thumbs)
+Disabled: <Slider defaultValue={[50]} disabled />
+Track: bg-muted, h-1.5, rounded-full
+Range fill: bg-primary (lemon)
+Thumb: size-4, rounded-full, border border-primary bg-white, ring on focus
+Label pattern: <div className="flex justify-between text-xs text-muted-foreground"><span>Label</span><span className="font-mono">Value</span></div>`}>
           <Preview label="Default">
             <div className="max-w-sm space-y-6">
               <div className="space-y-2">
@@ -963,7 +1119,14 @@ export default function GuideLibraryPage() {
         {/* ════════════════════════════════════════════ SHARED ASSETS ════════════════════════════════════════════ */}
 
         {/* ── LOGIN SIGNUP ── */}
-        <Section id="login-signup" title="Login & Sign Up Pages" description="Auth page layouts.">
+        <Section id="login-signup" title="Login & Sign Up Pages" description="Auth page layouts." refText={`Login/Signup page pattern:
+- Container: border border-border bg-card max-w-sm mx-auto p-8
+- Logo: inline-block h-4 w-4 bg-primary + "Aorthar" bold
+- Heading: text-xl font-semibold + text-sm text-muted-foreground subtitle
+- Form: space-y-3 with Input components + full-width Button
+- Footer: text-xs text-muted-foreground with "Don't have an account? Sign up" link
+- Sign up: add Confirm password field
+- No rounded corners on any element`}>
           <Preview label="Login page">
             <div className="border border-border bg-card max-w-sm mx-auto p-8">
               <div className="flex items-center gap-2 mb-6">
@@ -1001,7 +1164,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── 404 ── */}
-        <Section id="404" title="404 Page" description="404 error page layout.">
+        <Section id="404" title="404 Page" description="404 error page layout." refText={`404 page pattern:
+- Centered layout: flex flex-col items-center justify-center py-16 text-center
+- Big number: text-8xl font-bold text-primary/20 (transparent "404")
+- Heading: text-2xl font-semibold "Page not found"
+- Description: text-sm text-muted-foreground max-w-sm
+- CTA: <Button>Go home</Button>
+- Minimal, no sidebar, no nav`}>
           <Preview>
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <p className="text-8xl font-bold text-primary/20 mb-4">404</p>
@@ -1013,7 +1182,14 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── EMAIL TEMPLATES ── */}
-        <Section id="email-templates" title="Email Templates" description="Transactional email template layouts.">
+        <Section id="email-templates" title="Email Templates" description="Transactional email template layouts." refText={`Email template pattern:
+- Container: border border-border bg-card max-w-md mx-auto p-8
+- Logo header: inline-block h-4 w-4 bg-primary + "Aorthar" bold
+- Welcome: h2 + p text-muted-foreground + Button CTA
+- Payment: Check icon + "Payment confirmed" + detail table (flex justify-between in border container) + Button
+- Separator between content and footer
+- Footer: text-xs text-muted-foreground
+- Keep simple — email clients have limited CSS support`}>
           <Preview label="Welcome email">
             <div className="border border-border bg-card max-w-md mx-auto p-8">
               <div className="flex items-center gap-2 mb-6">
@@ -1045,7 +1221,11 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── MISC ASSETS ── */}
-        <Section id="misc-assets" title="Miscellaneous Assets" description="Reusable visual assets and patterns.">
+        <Section id="misc-assets" title="Miscellaneous Assets" description="Reusable visual assets and patterns." refText={`Misc assets:
+- QR code: grid of black/white squares (placeholder for actual QR generation)
+- Star rating: Star icon from lucide, fill-primary text-primary for filled, text-muted-foreground for empty
+- Badge counters, status dots, and other small visual elements
+- Use for: testimonials, reviews, ratings, badges`}>
           <Preview label="QR code placeholder">
             <div className="inline-block border border-border bg-card p-4">
               <div className="grid grid-cols-5 gap-0.5">
@@ -1063,7 +1243,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── BACKGROUND ELEMENTS ── */}
-        <Section id="background-elements" title="Background Elements" description="Texture, grain, gradient overlays.">
+        <Section id="background-elements" title="Background Elements" description="Texture, grain, gradient overlays." refText={`Background patterns:
+- Lime glow: radial-gradient(1200px 520px at 85% 0px, rgba(167,210,82,0.16), transparent 65%)
+- Forest glow: radial-gradient(900px 420px at -10% 0px, rgba(8,105,74,0.12), transparent 70%)
+- Noise texture: SVG feTurbulence filter at opacity-[0.03-0.04], absolute inset-0
+- Body gradient (dark): radial lime + radial forest + linear-gradient(180deg, #0f1112 0%, #141617 55%)
+- Body gradient (light): radial lime + radial forest + linear-gradient(180deg, #f7f9f4 0%, #ffffff 40%)
+- Apply as background-image on container div, relative with overflow-hidden`}>
           <Preview label="Gradient overlay — lime glow">
             <div className="h-32 w-full bg-background relative overflow-hidden">
               <div className="absolute inset-0" style={{ background: 'radial-gradient(1200px 520px at 85% 0px, rgba(167, 210, 82, 0.16), transparent 65%)' }} />
@@ -1087,7 +1273,13 @@ export default function GuideLibraryPage() {
         {/* ════════════════════════════════════════════ MARKETING WEBSITE COMPONENTS ════════════════════════════════════════════ */}
 
         {/* ── HEADER NAVIGATION ── */}
-        <Section id="header-navigation" title="Header Navigation" description="Top nav bar with logo, links, CTA.">
+        <Section id="header-navigation" title="Header Navigation" description="Top nav bar with logo, links, CTA." refText={`Header nav pattern:
+- Container: border border-border bg-card px-6 py-3 flex items-center justify-between
+- Logo: inline-block h-4 w-4 bg-primary + "Aorthar" bold
+- Nav links: flex gap-6 text-sm text-muted-foreground, active = text-foreground
+- CTA area: <Button variant="ghost" size="sm">Log in</Button> + <Button size="sm">Sign up</Button>
+- Sticky variant: bg-card/80 backdrop-blur-md
+- Subdomain-aware: links change per university/bootcamp/internship`}>
           <Preview label="Full nav bar">
             <div className="border border-border bg-card px-6 py-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -1118,7 +1310,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── HEADER SECTIONS ── */}
-        <Section id="header-sections" title="Header Sections" description="Hero sections: full-bleed, split, centered.">
+        <Section id="header-sections" title="Header Sections" description="Hero sections: full-bleed, split, centered." refText={`Hero patterns:
+- Centered: py-16 text-center, Badge + h1 text-4xl font-bold + p text-muted-foreground max-w-lg + flex gap-3 justify-center buttons
+- Split: grid grid-cols-2 gap-8, left text content + right image placeholder (h-48 bg-muted border border-border)
+- Impact headline: use Impact font, 64px, uppercase, negative letter-spacing
+- Badge above heading: <Badge variant="secondary">Now enrolling</Badge>
+- Two-button CTA: primary Button + outline Button
+- Hero text: always max-w-lg or max-w-xl mx-auto for readable width`}>
           <Preview label="Centered hero">
             <div className="py-16 text-center">
               <Badge variant="secondary" className="mb-4">Now enrolling</Badge>
@@ -1152,7 +1350,12 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── FEATURES SECTIONS ── */}
-        <Section id="features-sections" title="Features Sections" description="Feature grids, icon + text layouts.">
+        <Section id="features-sections" title="Features Sections" description="Feature grids, icon + text layouts." refText={`Feature sections:
+- 3-column grid: grid grid-cols-3 gap-6, each card border border-border bg-card p-5 with icon mb-3 + h3 font-medium + p text-xs text-muted-foreground
+- Icon inline: flex items-start gap-4, icon in bg-primary/10 size-9 shrink-0, title text-sm, desc text-xs
+- Icons: use lucide-react icons (BookOpen, Award, Users, Shield, Zap, Globe, etc.)
+- Text-primary on icon background for brand accent
+- Keep descriptions short (1-2 lines)`}>
           <Preview label="3-column feature grid">
             <div className="grid grid-cols-3 gap-6">
               {[
@@ -1188,7 +1391,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── PRICING SECTIONS ── */}
-        <Section id="pricing-sections" title="Pricing Sections" description="Pricing cards, comparison tables.">
+        <Section id="pricing-sections" title="Pricing Sections" description="Pricing cards, comparison tables." refText={`Pricing cards:
+- Grid grid-cols-3 gap-4
+- Each card: border p-5 flex flex-col, primary card gets border-primary bg-primary/5
+- Header: h3 font-medium + p text-2xl font-bold
+- Features list: ul space-y-2 mb-6 flex-1, each li flex items-center gap-2 text-xs with Check icon text-primary
+- CTA: Button full-width, primary card = variant="default", others variant="outline"
+- Highlight middle card as recommended/primary`}>
           <Preview label="Pricing cards">
             <div className="grid grid-cols-3 gap-4">
               {[
@@ -1212,7 +1421,11 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── CTA SECTIONS ── */}
-        <Section id="cta-sections" title="CTA Sections" description="Call-to-action banners, inline CTAs.">
+        <Section id="cta-sections" title="CTA Sections" description="Call-to-action banners, inline CTAs." refText={`CTA patterns:
+- Full banner: bg-primary/10 border border-primary/20 p-8 text-center, h2 text-2xl font-bold + p text-sm text-muted-foreground max-w-md mx-auto + Button
+- Inline CTA: flex items-center justify-between border border-border bg-card p-4, left text (h3 text-sm + p text-xs), right Button size="max-w-sm"
+- Use for: enrollment prompts, upgrade prompts, feature announcements
+- Keep copy concise (1-2 lines)`}>
           <Preview label="Full-width CTA banner">
             <div className="bg-primary/10 border border-primary/20 p-8 text-center">
               <h2 className="text-2xl font-bold mb-2">Ready to start learning?</h2>
@@ -1232,7 +1445,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── METRICS SECTIONS ── */}
-        <Section id="metrics-sections" title="Metrics Sections" description="Stat / number callout rows.">
+        <Section id="metrics-sections" title="Metrics Sections" description="Stat / number callout rows." refText={`Metrics section:
+- Grid grid-cols-4 gap-6 text-center
+- Each stat: p text-3xl font-bold text-primary (value) + p text-xs text-muted-foreground mt-1 (label)
+- Use for: landing page stats, hero supporting data, social proof
+- Numbers should be bold and oversized (text-3xl or text-4xl)
+- Labels: concise (1-2 words)
+- Example values: 2,500+ Students, 120+ Courses, 95% Completion rate, 4.8 Avg rating`}>
           <Preview label="Stats row">
             <div className="grid grid-cols-4 gap-6 text-center">
               {[
@@ -1251,7 +1470,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── NEWSLETTER CTA ── */}
-        <Section id="newsletter-cta" title="Newsletter CTA" description="Email capture sections.">
+        <Section id="newsletter-cta" title="Newsletter CTA" description="Email capture sections." refText={`Newsletter CTA:
+- Container: border border-border bg-card p-8 text-center
+- Icon: Mail size-8 text-primary mx-auto mb-3
+- Heading: text-xl font-semibold mb-1
+- Description: text-sm text-muted-foreground mb-4
+- Form: flex gap-2 max-w-sm mx-auto, Input placeholder="Your email" className="flex-1" + Button
+- Use for: blog footer, sidebar, landing page sections`}>
           <Preview>
             <div className="border border-border bg-card p-8 text-center">
               <Mail className="size-8 text-primary mx-auto mb-3" />
@@ -1266,7 +1491,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── TESTIMONIAL SECTIONS ── */}
-        <Section id="testimonial-sections" title="Testimonial Sections" description="Quote cards, carousel testimonials.">
+        <Section id="testimonial-sections" title="Testimonial Sections" description="Quote cards, carousel testimonials." refText={`Testimonials:
+- Grid grid-cols-2 gap-4
+- Card: border border-border bg-card p-5
+- Stars: flex gap-0.5 mb-3, Star className="size-3 fill-primary text-primary"
+- Quote: text-sm mb-4 with &ldquo;...&rdquo; smart quotes
+- Author: flex items-center gap-2, Avatar size="sm" + name text-xs font-medium + role text-[10px] text-muted-foreground
+- Quote text should be genuine-sounding, 1-2 sentences`}>
           <Preview label="Testimonial cards">
             <div className="grid grid-cols-2 gap-4">
               {[
@@ -1287,7 +1518,12 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── SOCIAL PROOF ── */}
-        <Section id="social-proof" title="Social Proof" description="Logo clouds, press mentions.">
+        <Section id="social-proof" title="Social Proof" description="Logo clouds, press mentions." refText={`Social proof:
+- Logo cloud: flex items-center justify-center gap-8 opacity-50
+- Each logo: text-sm font-medium text-muted-foreground (text placeholder for real logos)
+- Use for: "Trusted by" sections, partner logos, press mentions
+- Keep subtle (opacity-50 or opacity-60) so it doesn't compete with main content
+- Typically 4-6 logos in a row`}>
           <Preview label="Logo cloud">
             <div className="flex items-center justify-center gap-8 opacity-50">
               {['Company A', 'Company B', 'Company C', 'Company D', 'Company E'].map((name) => (
@@ -1298,7 +1534,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── BLOG SECTIONS ── */}
-        <Section id="blog-sections" title="Blog Sections" description="Blog listing grids, featured post.">
+        <Section id="blog-sections" title="Blog Sections" description="Blog listing grids, featured post." refText={`Blog grid:
+- Grid grid-cols-3 gap-4
+- Card: border border-border bg-card overflow-hidden
+- Thumbnail: h-28 bg-muted flex items-center justify-center text-xs text-muted-foreground
+- Content: p-4 with Badge variant="secondary" text-[10px] for tag + h3 font-medium text-sm + p text-[10px] text-muted-foreground for date
+- Tags: Tutorial, Engineering, Spotlight, etc.
+- Use for: blog index, news listing, resource hub`}>
           <Preview label="Blog grid">
             <div className="grid grid-cols-3 gap-4">
               {[
@@ -1320,7 +1562,14 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── CONTENT ── */}
-        <Section id="content" title="Content" description="Long-form prose content blocks.">
+        <Section id="content" title="Content" description="Long-form prose content blocks." refText={`Content blocks:
+- Wrapper: prose prose-invert prose-sm max-w-none (if using prose) or manual spacing
+- Headings: h2 for main, h3 for sub
+- Body: p text-sm text-muted-foreground
+- Blockquote: border-l-2 border-primary pl-4 text-sm text-muted-foreground italic
+- Lists: ul text-sm text-muted-foreground space-y-1
+- Use for: blog posts, course descriptions, documentation pages
+- Keep max-width readable (max-w-2xl or max-w-3xl for prose)`}>
           <Preview>
             <div className="prose prose-invert prose-sm max-w-none">
               <h2>Building a design system from scratch</h2>
@@ -1340,7 +1589,12 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── CONTACT SECTIONS ── */}
-        <Section id="contact-sections" title="Contact Sections" description="Contact form layouts.">
+        <Section id="contact-sections" title="Contact Sections" description="Contact form layouts." refText={`Contact section:
+- Grid grid-cols-2 gap-8
+- Left: h2 text-xl font-semibold + p text-sm text-muted-foreground + contact info (flex items-center gap-2 with Mail/MapPin icons text-primary)
+- Right: space-y-3 with Input + Input type="email" + Textarea rows={3} + Button className="w-full"
+- Use for: contact page, support page, partnership inquiries
+- Keep form simple (3-4 fields max)`}>
           <Preview>
             <div className="grid grid-cols-2 gap-8">
               <div>
@@ -1362,7 +1616,14 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── TEAM SECTIONS ── */}
-        <Section id="team-sections" title="Team Sections" description="Team member cards and grids.">
+        <Section id="team-sections" title="Team Sections" description="Team member cards and grids." refText={`Team grid:
+- Grid grid-cols-4 gap-4
+- Card: border border-border bg-card p-4 text-center
+- Avatar: size="lg" mx-auto mb-3 with AvatarFallback initials
+- Name: h3 font-medium text-sm
+- Role: p text-[10px] text-muted-foreground
+- Use for: about page, team section, contributor listing
+- Initials from name split: name.split(' ').map(n => n[0]).join('')`}>
           <Preview>
             <div className="grid grid-cols-4 gap-4">
               {[
@@ -1382,7 +1643,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── CAREERS SECTIONS ── */}
-        <Section id="careers-sections" title="Careers Sections" description="Job listing layouts.">
+        <Section id="careers-sections" title="Careers Sections" description="Job listing layouts." refText={`Job listings:
+- space-y-2 container
+- Each job: flex items-center justify-between border border-border bg-card p-4
+- Left: h3 font-medium text-sm + p text-[10px] text-muted-foreground (dept · location)
+- Right: Badge variant="secondary" for type + Button variant="outline" size="sm" for "Apply"
+- Types: Full-time, Contract, Part-time
+- Use for: careers page, job board`}>
           <Preview>
             <div className="space-y-2">
               {[
@@ -1406,7 +1673,14 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── FAQ SECTIONS ── */}
-        <Section id="faq-sections" title="FAQ Sections" description="Accordion FAQ layouts.">
+        <Section id="faq-sections" title="FAQ Sections" description="Accordion FAQ layouts." refText={`FAQ accordion:
+- space-y-2 max-w-2xl
+- Item: border border-border bg-card
+- Header: flex items-center justify-between p-4 cursor-pointer, question text-sm font-medium + ChevronDown icon text-muted-foreground
+- Answer: px-4 pb-4 text-xs text-muted-foreground (show/hide with state)
+- Use useState to toggle open/closed per item
+- Use for: help center, pricing page, enrollment page
+- Keep questions concise, answers 1-2 sentences`}>
           <Preview>
             <div className="space-y-2 max-w-2xl">
               {[
@@ -1427,7 +1701,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── FOOTERS ── */}
-        <Section id="footers" title="Footers" description="Full footer, minimal footer.">
+        <Section id="footers" title="Footers" description="Full footer, minimal footer." refText={`Footer patterns:
+- Full: border-t border-border pt-8, grid grid-cols-4 gap-8 mb-8
+  - Col 1: logo + tagline p text-xs text-muted-foreground
+  - Cols 2-4: p text-xs font-medium (title) + ul space-y-1, each li has a text-xs text-muted-foreground hover:text-foreground cursor-pointer link
+  - Bottom: Separator + copyright text-[10px]
+- Minimal: border-t border-border pt-4, flex justify-between, copyright left + links right
+- Links: Product (Courses, Bootcamps, Internship, Pricing), Company (About, Blog, Careers, Contact), Legal (Privacy, Terms, Refund policy)`}>
           <Preview label="Full footer">
             <div className="border-t border-border pt-8">
               <div className="grid grid-cols-4 gap-8 mb-8">
@@ -1459,7 +1739,11 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── BANNERS ── */}
-        <Section id="banners" title="Banners" description="Announcement bars, cookie banners.">
+        <Section id="banners" title="Banners" description="Announcement bars, cookie banners." refText={`Banner patterns:
+- Announcement bar: bg-primary text-primary-foreground px-4 py-2 text-center text-sm, with underline link
+- Cookie banner: border border-border bg-card p-4 flex items-center justify-between, p text-xs text-muted-foreground + flex gap-2 with Button variant="outline" size="xs" "Decline" + Button size="xs" "Accept"
+- Use for: promotions, legal notices, limited-time offers
+- Keep banners thin and non-intrusive`}>
           <Preview label="Announcement bar">
             <div className="bg-primary text-primary-foreground px-4 py-2 text-center text-sm">
               New cohort starting September 2026 — <span className="underline cursor-pointer">Enroll now</span>
@@ -1479,7 +1763,12 @@ export default function GuideLibraryPage() {
         {/* ════════════════════════════════════════════ APPLICATION COMPONENTS ════════════════════════════════════════════ */}
 
         {/* ── PAGE HEADERS ── */}
-        <Section id="page-headers" title="Page Headers" description="App page title + action row.">
+        <Section id="page-headers" title="Page Headers" description="App page title + action row." refText={`Page header patterns:
+- Simple: flex items-center justify-between, left (h1 text-2xl font-bold + p text-sm text-muted-foreground), right Button(s)
+- With breadcrumbs: breadcrumbs row above, then same title + actions row
+- Breadcrumbs: flex items-center gap-1.5 text-sm, Home icon + ChevronRight + links
+- Actions: Button variant="outline" size="sm" for secondary + Button size="sm" primary action
+- Icons in buttons: <Filter className="size-3" />, <Plus className="size-3" />`}>
           <Preview label="With actions">
             <div className="flex items-center justify-between">
               <div>
@@ -1506,7 +1795,11 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── CARD HEADERS ── */}
-        <Section id="card-headers" title="Card Headers" description="Card title + meta + actions.">
+        <Section id="card-headers" title="Card Headers" description="Card title + meta + actions." refText={`Card header:
+- Uses Card, CardHeader, CardTitle, CardDescription, CardContent
+- Pattern: <Card><CardHeader><div className="flex items-center justify-between"><div><CardTitle>Title</CardTitle><CardDescription>Description</CardDescription></div><Button variant="ghost" size="icon"><MoreHorizontal /></Button></div></CardHeader><CardContent>...</CardContent></Card>
+- MoreHorizontal icon for overflow menu
+- Use for: dashboard cards, stat containers, content blocks`}>
           <Preview>
             <Card>
               <CardHeader>
@@ -1524,7 +1817,12 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── SECTION HEADERS ── */}
-        <Section id="section-headers" title="Section Headers" description="In-page section headings.">
+        <Section id="section-headers" title="Section Headers" description="In-page section headings." refText={`Section header patterns:
+- Simple: flex items-center justify-between mb-4, h2 text-lg font-semibold + Button variant="ghost" size="sm" "View all"
+- With badge: flex items-center gap-2 mb-4, h2 + Badge for count
+- With description: mb-4, h2 text-lg font-semibold + p text-xs text-muted-foreground
+- Use for: card section titles, dashboard sections, content areas
+- Keep consistent spacing (mb-4 or mb-6)`}>
           <Preview label="Simple">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Recent activity</h2>
@@ -1546,7 +1844,11 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── SECTION FOOTERS ── */}
-        <Section id="section-footers" title="Section Footers" description="In-page section footers / &quot;view all&quot; rows.">
+        <Section id="section-footers" title="Section Footers" description="In-page section footers / &quot;view all&quot; rows." refText={`Section footer:
+- border-t border-border pt-4 flex items-center justify-between
+- Left: p text-xs text-muted-foreground (pagination info, "Showing X of Y")
+- Right: Button variant="ghost" size="sm" with ArrowRight icon "View all courses"
+- Use for: table pagination, list footers, "load more" sections`}>
           <Preview>
             <div className="border-t border-border pt-4 flex items-center justify-between">
               <p className="text-xs text-muted-foreground">Showing 3 of 12 courses</p>
@@ -1556,7 +1858,16 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── APP NAVIGATION ── */}
-        <Section id="app-navigation" title="Application Navigation" description="Sidebar nav, top nav, breadcrumbs.">
+        <Section id="app-navigation" title="Application Navigation" description="Sidebar nav, top nav, breadcrumbs." refText={`App navigation patterns:
+- Sidebar: border border-border bg-card w-56 p-3 space-y-1
+  - Item: flex items-center gap-2 px-3 py-2 text-sm cursor-pointer
+  - Active: bg-primary/10 text-primary font-medium
+  - Inactive: text-muted-foreground hover:bg-muted
+  - Icons: lucide-react, size-4
+- Breadcrumbs: flex items-center gap-1.5 text-sm
+  - Home icon + ChevronRight + text-muted-foreground links + current page font-medium
+  - Separator: <ChevronRight className="size-3 text-muted-foreground" />
+- Use for: dashboard nav, course navigation, settings sidebar`}>
           <Preview label="Sidebar nav">
             <div className="border border-border bg-card w-56 p-3 space-y-1">
               {[
@@ -1586,7 +1897,11 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── MODALS ── */}
-        <Section id="modals" title="Modals" description="Dialog, confirmation, form modals.">
+        <Section id="modals" title="Modals" description="Dialog, confirmation, form modals." refText={`Dialog: import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+Confirmation: DialogTrigger asChild > Button, DialogContent > DialogHeader (title + description) + DialogFooter (Cancel outline + Delete destructive)
+Form: DialogContent > DialogHeader + form fields (space-y-4 py-2) + DialogFooter (Cancel + Submit)
+Pattern: <Dialog><DialogTrigger asChild><Button>Open</Button></DialogTrigger><DialogContent><DialogHeader><DialogTitle>...</DialogTitle><DialogDescription>...</DialogDescription></DialogHeader>...<DialogFooter>...</DialogFooter></DialogContent></Dialog>
+Use for: delete confirmations, create forms, settings modals`}>
           <Preview label="Confirmation dialog">
             <Dialog>
               <DialogTrigger asChild><Button variant="outline">Delete course</Button></DialogTrigger>
@@ -1624,7 +1939,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── COMMAND MENUS ── */}
-        <Section id="command-menus" title="Command Menus" description="Command palette (Cmd+K).">
+        <Section id="command-menus" title="Command Menus" description="Command palette (Cmd+K)." refText={`Command palette (custom, not shadcn cmdk):
+- Container: border border-border bg-card max-w-md mx-auto overflow-hidden
+- Search bar: flex items-center gap-2 border-b border-border px-4 py-3, Search icon + "Search commands..." + kbd "⌘K"
+- Sections: p px-2 py-1 text-[10px] uppercase text-muted-foreground for group labels ("Suggestions", "Actions")
+- Items: flex items-center gap-2 px-2 py-1.5 text-sm cursor-pointer hover:bg-muted, Icon + label + hint text-[10px] text-muted-foreground ml-auto
+- Separator: <Separator className="my-1" />
+- Use for: global search, quick actions, navigation shortcuts`}>
           <Preview>
             <div className="border border-border bg-card max-w-md mx-auto overflow-hidden">
               <div className="flex items-center gap-2 border-b border-border px-4 py-3">
@@ -1659,7 +1980,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── CHARTS ── */}
-        <Section id="charts" title="Charts" description="Bar, line, pie — placeholder frames for now.">
+        <Section id="charts" title="Charts" description="Bar, line, pie — placeholder frames for now." refText={`Chart placeholders (no charting library yet):
+- Bar chart: flex items-end gap-2 h-32, each bar flex-1 bg-primary/30 with height percentage
+- Line chart: SVG polyline with stroke-primary, area fill text-primary/10
+- Pie chart: SVG with concentric circles using strokeDasharray, color-coded segments
+- Labels: flex justify-between mt-2 text-[10px] text-muted-foreground
+- Use for: dashboard analytics, course stats, enrollment data
+- Real charts (recharts/chart.js) to be added later`}>
           <Preview label="Bar chart placeholder">
             <div className="border border-border bg-card p-4">
               <div className="flex items-center justify-between mb-4"><p className="text-sm font-medium">Enrollments</p><Badge variant="secondary">This month</Badge></div>
@@ -1704,7 +2031,14 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── METRICS ── */}
-        <Section id="metrics" title="Metrics" description="KPI cards, stat blocks.">
+        <Section id="metrics" title="Metrics" description="KPI cards, stat blocks." refText={`KPI metric cards:
+- Grid grid-cols-3 gap-4
+- Card: border border-border bg-card p-4
+- Label: p text-xs text-muted-foreground mb-1
+- Value: p text-2xl font-bold
+- Change: span text-xs, positive text-primary "+12%", negative text-destructive "-2%"
+- Use for: dashboard overview, admin stats, course analytics
+- Pattern: <div className="border border-border bg-card p-4"><p className="text-xs text-muted-foreground mb-1">{label}</p><div className="flex items-end justify-between"><p className="text-2xl font-bold">{value}</p><span className="text-xs text-primary">{change}</span></div></div>`}>
           <Preview>
             <div className="grid grid-cols-3 gap-4">
               {[
@@ -1725,7 +2059,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── SLIDEOUT MENUS ── */}
-        <Section id="slideout-menus" title="Slideout Menus" description="Sheet side panels (left / right).">
+        <Section id="slideout-menus" title="Slideout Menus" description="Sheet side panels (left / right)." refText={`Sheet: import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet'
+Right (default): <Sheet><SheetTrigger asChild><Button>Open</Button></SheetTrigger><SheetContent><SheetHeader>...</SheetHeader>...<SheetFooter>...</SheetFooter></SheetContent></Sheet>
+Left: <SheetContent side="left">
+Sides: "left", "right" (default)
+Content: SheetHeader (title + description) + body (px-4 py-6 space-y-4) + SheetFooter (Button full-width)
+Use for: filters, detail panels, settings, secondary content
+Pattern: form inside sheet for editing metadata`}>
           <Preview label="Right sheet (default)">
             <Sheet>
               <SheetTrigger asChild><Button variant="outline"><PanelRight className="mr-2 size-4" /> Open sheet</Button></SheetTrigger>
@@ -1756,7 +2096,12 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── INLINE CTAs ── */}
-        <Section id="inline-ctas" title="Inline CTAs" description="Upsell banners inside app pages.">
+        <Section id="inline-ctas" title="Inline CTAs" description="Upsell banners inside app pages." refText={`Inline CTA patterns:
+- Upgrade banner: border border-primary/20 bg-primary/5 p-4 flex items-center justify-between, Sparkles icon + text + Button size="sm"
+- Promo banner: bg-primary text-primary-foreground p-4 flex items-center justify-between, Flame icon + text + Button variant="secondary" size="sm"
+- Use inside dashboard pages, course viewers, settings
+- Keep compact and non-intrusive
+- Trigger based on: free tier users, expired subscriptions, new features`}>
           <Preview>
             <div className="border border-primary/20 bg-primary/5 p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -1781,7 +2126,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── PAGINATION ── */}
-        <Section id="pagination" title="Pagination" description="Page number nav, load more.">
+        <Section id="pagination" title="Pagination" description="Page number nav, load more." refText={`Pagination patterns:
+- Page numbers: flex items-center gap-1
+  - Arrow buttons: Button variant="outline" size="icon" className="size-8" with ArrowLeft/ArrowRight
+  - Page buttons: Button variant="default" (active) or "outline" (inactive) size="icon" className="size-8"
+  - Ellipsis: disabled button with "..."
+- Load more: text-center, Button variant="outline" "Load more" + p text-xs text-muted-foreground "Showing X of Y results"
+- Use for: table pagination, course listing, blog posts`}>
           <Preview label="Page numbers">
             <div className="flex items-center gap-1">
               <Button variant="outline" size="icon" className="size-8"><ArrowLeft className="size-3" /></Button>
@@ -1800,7 +2151,16 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── PROGRESS STEPS ── */}
-        <Section id="progress-steps" title="Progress Steps" description="Step wizard / multi-step progress.">
+        <Section id="progress-steps" title="Progress Steps" description="Step wizard / multi-step progress." refText={`Progress steps:
+- Container: flex items-center max-w-lg
+- Each step: flex flex-col items-center + flex-1
+  - Circle: size-8 flex items-center justify-center text-xs font-medium
+    - Completed: bg-primary text-primary-foreground (shows Check icon)
+    - Current: bg-primary/20 text-primary border border-primary (shows step number)
+    - Upcoming: bg-muted text-muted-foreground border border-border
+  - Label: text-[10px] mt-1 text-muted-foreground
+- Connector: flex-1 h-px mx-2, bg-primary (completed) or bg-border (upcoming)
+- Use for: onboarding flow, checkout steps, course enrollment`}>
           <Preview>
             <div className="flex items-center max-w-lg">
               {['Account', 'Profile', 'Courses', 'Complete'].map((step, i) => (
@@ -1819,7 +2179,14 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── ACTIVITY FEEDS ── */}
-        <Section id="activity-feeds" title="Activity Feeds" description="Timeline, activity log.">
+        <Section id="activity-feeds" title="Activity Feeds" description="Timeline, activity log." refText={`Activity feed:
+- space-y-4 container
+- Item: flex items-start gap-3
+  - Icon: text-primary for positive actions, text-muted-foreground for neutral (size-4)
+  - Content: p text-sm (action text) + p text-[10px] text-muted-foreground (timestamp)
+- Common icons: User (enroll), Check (completion), Upload (content), Award (certificate)
+- Timestamps: "2 hours ago", "1 day ago", "2 days ago"
+- Use for: dashboard activity, course updates, notification feeds`}>
           <Preview>
             <div className="space-y-4">
               {[
@@ -1841,7 +2208,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── MESSAGING ── */}
-        <Section id="messaging" title="Messaging" description="Chat bubbles, message thread layout.">
+        <Section id="messaging" title="Messaging" description="Chat bubbles, message thread layout." refText={`Chat/messaging:
+- Container: space-y-3 max-w-sm
+- Sent (right): flex justify-end, bubble bg-primary text-primary-foreground px-3 py-2 text-sm max-w-[70%]
+- Received (left): flex justify-start, bubble bg-muted px-3 py-2 text-sm max-w-[70%]
+- Typing indicator: flex items-center gap-1, 3 dots (h-1.5 w-1.5 bg-muted-foreground/40 animate-bounce with staggered delays)
+- Use for: support chat, messaging feature, notification previews
+- Keep bubbles sharp (no rounded corners on containers)`}>
           <Preview>
             <div className="space-y-3 max-w-sm">
               <div className="flex justify-end">
@@ -1865,7 +2238,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── TABS ── */}
-        <Section id="tabs" title="Tabs" description="Line variant only — text + lemon underline, no filled backgrounds.">
+        <Section id="tabs" title="Tabs" description="Line variant only — text + lemon underline, no filled backgrounds." refText={`Tabs: import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+Line variant (preferred): <TabsList variant="line" className="h-auto w-full border-b border-border p-0">
+Triggers: <TabsTrigger value="overview">Overview</TabsTrigger> — active state gets lemon underline (after:opacity-100)
+Content: <TabsContent value="overview" className="pt-6">...</TabsContent>
+Pattern: <Tabs defaultValue="overview"><TabsList variant="line" className="..."><TabsTrigger>...</TabsTrigger></TabsList><TabsContent>...</TabsContent></Tabs>
+No filled backgrounds on active tabs — only text color change + underline
+Use for: course detail tabs (Overview, Media, Metadata, SEO)`}>
           <Preview>
             <Tabs defaultValue="overview">
               <TabsList variant="line" className="h-auto w-full border-b border-border p-0">
@@ -1883,7 +2262,12 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── TABLES ── */}
-        <Section id="tables" title="Tables" description="Data tables with actions.">
+        <Section id="tables" title="Tables" description="Data tables with actions." refText={`Table: import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
+Pattern: <Table><TableHeader><TableRow><TableHead>...</TableHead></TableRow></TableHeader><TableBody><TableRow><TableCell>...</TableCell></TableRow></TableBody></Table>
+Row actions: <DropdownMenu> inside TableCell className="text-right"
+Status badges: <Badge variant={status === 'Published' ? 'default' : 'secondary'}>{status}</Badge>
+Cell content: primary text font-medium + secondary text text-xs text-muted-foreground (e.g. name + email)
+Use for: student lists, course management, transaction history, admin dashboards`}>
           <Preview>
             <Table>
               <TableHeader>
@@ -1920,7 +2304,14 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── BREADCRUMBS ── */}
-        <Section id="breadcrumbs" title="Breadcrumbs" description="Path breadcrumb nav.">
+        <Section id="breadcrumbs" title="Breadcrumbs" description="Path breadcrumb nav." refText={`Breadcrumb patterns:
+- Standard: flex items-center gap-1.5 text-sm
+  - Home icon (size-3.5 text-muted-foreground) + ChevronRight (size-3) + text-muted-foreground links + current page font-medium
+  - Separator: <ChevronRight className="size-3 text-muted-foreground" />
+- With icons: each segment can have an icon (Folder, File) before text
+- Links: hover:text-foreground cursor-pointer transition-colors
+- Use for: nested navigation (University > Year 1 > Course), file browsers
+- Current page: font-medium text-foreground (no hover)`}>
           <Preview label="Standard">
             <div className="flex items-center gap-1.5 text-sm">
               <Home className="size-3.5 text-muted-foreground" />
@@ -1944,7 +2335,19 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── ALERTS & NOTIFICATIONS ── */}
-        <Section id="alerts-notifications" title="Alerts & Notifications" description="Alert banners, toast notifications.">
+        <Section id="alerts-notifications" title="Alerts & Notifications" description="Alert banners, toast notifications." refText={`Alert: import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
+Info: <Alert><Info className="size-4" /><AlertTitle>Title</AlertTitle><AlertDescription>Description</AlertDescription></Alert>
+Error: <Alert variant="destructive"><AlertCircle className="size-4" /><AlertTitle>...</AlertTitle><AlertDescription>...</AlertDescription></Alert>
+
+Toast (sonner): import { toast } from 'sonner'
+- Default: toast('Message')
+- Success: toast.success('Done')
+- Error: toast.error('Failed')
+- Warning: toast.warning('Caution')
+- Info: toast.info('Note')
+- With action: toast('Done', { action: { label: 'View', onClick: () => {} } })
+- Loading → done: const id = toast.loading('...'); toast.success('Done', { id })
+- Use for: form feedback, real-time updates, non-blocking notifications`}>
           <Preview label="Alert variants">
             <div className="space-y-3">
               <Alert><Info className="size-4" /><AlertTitle>Info</AlertTitle><AlertDescription>Your draft has unsaved changes.</AlertDescription></Alert>
@@ -1964,7 +2367,17 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── DATE PICKERS ── */}
-        <Section id="date-pickers" title="Date Pickers" description="Calendar / date input.">
+        <Section id="date-pickers" title="Date Pickers" description="Calendar / date input." refText={`Date input patterns:
+- Simple: <Input type="date" /> with Label
+- Calendar placeholder (custom):
+  - Container: border border-border bg-card p-4 max-w-xs
+  - Header: flex justify-between, ArrowLeft/ArrowRight Button variant="ghost" size="icon" className="size-7" + month/year text-sm font-medium
+  - Weekday row: grid grid-cols-7 gap-1 text-center text-[10px] text-muted-foreground
+  - Day grid: grid grid-cols-7 gap-1 text-center text-xs
+  - Today: bg-primary text-primary-foreground
+  - Out of month: text-muted-foreground/30
+  - Hover: hover:bg-muted
+- No date picker library installed yet — use native input or add react-day-picker later`}>
           <Preview label="Date input">
             <div className="max-w-xs space-y-1.5">
               <Label>Start date</Label>
@@ -1994,7 +2407,16 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── FILE UPLOAD ── */}
-        <Section id="file-upload" title="File Upload" description="Drag-and-drop upload zone.">
+        <Section id="file-upload" title="File Upload" description="Drag-and-drop upload zone." refText={`File upload patterns:
+- Drop zone: border-2 border-dashed border-border p-8 text-center cursor-pointer hover:border-primary/50 transition-colors
+  - Icon: Upload size-8 text-muted-foreground mx-auto mb-3
+  - Title: text-sm font-medium mb-1
+  - Subtitle: text-xs text-muted-foreground (file types + size limit)
+- Uploaded file: border border-border bg-card p-3 flex items-center gap-3
+  - Icon: FileText size-8 text-primary shrink-0
+  - Info: flex-1 min-w-0, filename text-sm font-medium truncate + size text-[10px] text-muted-foreground
+  - Delete: Button variant="ghost" size="icon" className="size-7" with Trash2 icon
+- Use for: course content upload, avatar upload, document management`}>
           <Preview>
             <div className="border-2 border-dashed border-border p-8 text-center cursor-pointer hover:border-primary/50 transition-colors">
               <Upload className="size-8 text-muted-foreground mx-auto mb-3" />
@@ -2015,7 +2437,12 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── CONTENT DIVIDERS ── */}
-        <Section id="content-dividers" title="Content Dividers" description="Section separators, horizontal rules.">
+        <Section id="content-dividers" title="Content Dividers" description="Section separators, horizontal rules." refText={`Divider: import { Separator } from '@/components/ui/separator'
+Horizontal: <Separator /> (default, h-px w-full bg-border)
+Labeled: <div className="flex items-center gap-4"><Separator className="flex-1" /><span className="text-[10px] text-muted-foreground uppercase">or</span><Separator className="flex-1" /></div>
+Vertical: <Separator orientation="vertical" /> with flex items-center gap-4 h-8 container
+Use for: form section breaks, content section separators, "or" dividers between options
+Keep minimal — dividers should be subtle`}>
           <Preview label="Horizontal rule">
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">Content above</p>
@@ -2042,7 +2469,13 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── LOADING INDICATORS ── */}
-        <Section id="loading-indicators" title="Loading Indicators" description="Skeleton, spinner, progress.">
+        <Section id="loading-indicators" title="Loading Indicators" description="Skeleton, spinner, progress." refText={`Loading patterns:
+- Spinner: div with animate-spin border-2 border-current border-t-transparent, sizes: size-4 (sm), size-6 (md), size-8 (lg)
+- Skeleton: import { Skeleton } from '@/components/ui/skeleton'
+  - Card skeleton: flex items-center gap-3 + Skeleton className="size-10" (avatar) + Skeleton h-3 w-32 (text) + multiple Skeleton lines + Skeleton h-8 w-24 (button)
+  - Table skeleton: space-y-2, each row flex gap-4 with Skeleton h-4 w-{various}
+- Pulse animation: animate-pulse on Skeleton (default behavior)
+- Use for: page load states, content loading, table loading`}>
           <Preview label="Spinner">
             <div className="flex items-center gap-4">
               <div className="size-4 animate-spin border-2 border-current border-t-transparent" />
@@ -2072,7 +2505,16 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── EMPTY STATES ── */}
-        <Section id="empty-states" title="Empty States" description="Zero-data states with illustration + CTA.">
+        <Section id="empty-states" title="Empty States" description="Zero-data states with illustration + CTA." refText={`Empty state patterns:
+- Container: flex flex-col items-center justify-center py-12 text-center
+- Icon: size-12 bg-muted flex items-center justify-center mb-4, inner icon size-6 text-muted-foreground
+- Title: h3 font-medium mb-1
+- Description: text-xs text-muted-foreground mb-4 max-w-xs
+- CTA: Button size="sm" with Plus icon + action text
+- Variants:
+  - No data: BookOpen icon, "No courses yet", "Create your first course"
+  - No results: Search size-10 text-muted-foreground/30, "No results found", "Try adjusting your search"
+- Use for: empty dashboards, search with no results, first-time user states`}>
           <Preview>
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="size-12 bg-muted flex items-center justify-center mb-4"><BookOpen className="size-6 text-muted-foreground" /></div>
@@ -2091,7 +2533,15 @@ export default function GuideLibraryPage() {
         </Section>
 
         {/* ── CODE SNIPPETS ── */}
-        <Section id="code-snippets" title="Code Snippets" description="Syntax-highlighted code block.">
+        <Section id="code-snippets" title="Code Snippets" description="Syntax-highlighted code block." refText={`Code blocks:
+- Container: border border-border bg-card overflow-hidden
+- Header: flex items-center justify-between border-b border-border px-4 py-2
+  - Filename: text-xs font-mono text-muted-foreground
+  - Copy button: Button variant="ghost" size="icon" className="size-6" with Copy icon
+- Code: pre p-4 text-xs font-mono overflow-x-auto text-muted-foreground with <code> tag
+- Inline code: <code className="bg-muted px-1.5 py-0.5 text-xs font-mono">command</code>
+- No syntax highlighting library installed — use plain text or add shiki/highlight.js later
+- Use for: API docs, command references, code examples in courses`}>
           <Preview>
             <div className="border border-border bg-card overflow-hidden">
               <div className="flex items-center justify-between border-b border-border px-4 py-2">
