@@ -402,7 +402,7 @@ export default function Sidebar({
                 <button
                   type="button"
                   aria-label="Collapse main menu"
-                  className="inline-flex size-8 items-center justify-center rounded-md text-white/50 hover:bg-white/10 hover:text-white"
+                  className="inline-flex size-8 items-center justify-center rounded-none text-white/50 hover:bg-white/10 hover:text-white"
                   onClick={toggleAdminMenu}
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -412,7 +412,7 @@ export default function Sidebar({
                 <button
                   type="button"
                   aria-label="Expand main menu"
-                  className="absolute left-[52px] top-3.5 inline-flex size-7 items-center justify-center rounded-full border border-white/10 bg-[#161719] text-white/60 shadow-sm hover:text-white"
+                  className="absolute left-[52px] top-3.5 inline-flex size-7 items-center justify-center rounded-none border border-white/10 bg-[#161719] text-white/60 shadow-sm hover:text-white"
                   onClick={toggleAdminMenu}
                 >
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -435,7 +435,7 @@ export default function Sidebar({
                       title={adminMenuCollapsed ? label : undefined}
                       aria-current={active ? 'page' : undefined}
                       className={cn(
-                        'flex items-center rounded-lg text-sm font-medium transition-colors',
+                        'flex items-center rounded-none text-sm font-medium transition-colors',
                         adminMenuCollapsed ? 'justify-center px-0 py-3' : 'justify-between gap-3 px-3 py-2.5',
                         active
                           ? 'bg-white text-black shadow-sm'
@@ -466,7 +466,7 @@ export default function Sidebar({
                               href={item.href}
                               aria-current={childActive ? 'page' : undefined}
                               className={cn(
-                                'block rounded-md px-3 py-2 text-[13px] font-medium transition-colors',
+                                'block rounded-none px-3 py-2 text-[13px] font-medium transition-colors',
                                 childActive
                                   ? 'bg-white/10 text-[#B9E85B]'
                                   : 'text-white/55 hover:bg-white/5 hover:text-white',
