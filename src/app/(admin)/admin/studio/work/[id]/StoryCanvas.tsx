@@ -34,7 +34,6 @@ const BORDER = '#2a2a2a';
 const TEXT_PRIMARY = '#ebefe0';
 const TEXT_MUTED = '#6b6b6b';
 const ACCENT = '#a7d252';
-const ROW_H = 300; // px — height of one image row in all layouts
 
 // ─── types ─────────────────────────────────────────────────────────────────────
 
@@ -168,7 +167,7 @@ function ImageCell({
               draggable
               onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; onDragStart(blockId, idx); }}
               onDragEnd={onDragEnd}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: objectPos, display: 'block', cursor: 'grab', userSelect: 'none' }}
+              style={{ width: '100%', height: 'auto', display: 'block', cursor: 'grab', userSelect: 'none' }}
             />
             <button type="button" onClick={onRemove}
               style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.65)', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', zIndex: 5 }}>
@@ -199,8 +198,6 @@ function MediaBlock({
   const [uploading, setUploading] = useState(false);
   const [dropSide, setDropSide] = useState<'left' | 'right' | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-
-  const rowH = block.height ?? ROW_H;
 
   const isDropTarget = imgDragSrc !== null && imgDragSrc.blockId !== block.id && block.items.length < 3;
   const isTrio = block.layout === 'trio-left' || block.layout === 'trio-right';
@@ -281,38 +278,38 @@ function MediaBlock({
   if (isTrio) {
     const isLeft = block.layout === 'trio-left';
     content = (
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: `${rowH}px ${rowH}px`, gap: 2 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: 'auto auto', gap: 2 }}>
         {isLeft ? (
           <>
-            {cell(0, { gridRow: '1 / 3', gridColumn: '1', height: rowH * 2 + 2 })}
-            {cell(1, { height: rowH })}
-            {cell(2, { height: rowH })}
+            {cell(0, { gridRow: '1 / 3', gridColumn: '1' })}
+            {cell(1, {})}
+            {cell(2, {})}
           </>
         ) : (
           <>
-            {cell(1, { height: rowH, gridRow: '1', gridColumn: '1' })}
-            {cell(0, { gridRow: '1 / 3', gridColumn: '2', height: rowH * 2 + 2 })}
-            {cell(2, { height: rowH, gridRow: '2', gridColumn: '1' })}
+            {cell(1, { gridRow: '1', gridColumn: '1' })}
+            {cell(0, { gridRow: '1 / 3', gridColumn: '2' })}
+            {cell(2, { gridRow: '2', gridColumn: '1' })}
           </>
         )}
       </div>
     );
   } else if (block.layout === 'pair') {
     content = (
-      <div style={{ display: 'flex', gap: 2 }}>
-        {cell(0, { flex: '1', height: rowH })}
-        {cell(1, { flex: '1', height: rowH })}
+      <div style={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+        {cell(0, { flex: '1' })}
+        {cell(1, { flex: '1' })}
       </div>
     );
   } else {
     // single
     content = (
-      <div style={{ display: 'flex', gap: 2 }}>
-        {cell(0, { flex: '1', height: rowH })}
+      <div style={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+        {cell(0, { flex: '1' })}
         {/* + Pair slot */}
         {block.items.length < 2 && (
           <div onClick={() => !uploading && fileRef.current?.click()}
-            style={{ width: 52, background: 'rgba(255,255,255,0.025)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: uploading ? 'wait' : 'pointer', flexShrink: 0, height: rowH, borderLeft: `1px dashed ${BORDER}` }}
+            style={{ width: 52, background: 'rgba(255,255,255,0.025)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: uploading ? 'wait' : 'pointer', flexShrink: 0, alignSelf: 'stretch', minHeight: 80, borderLeft: `1px dashed ${BORDER}` }}
             title="Add second image (pair)">
             <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => void addImage(e.target.files)} />
             {uploading ? <span style={{ color: TEXT_MUTED, fontSize: 10 }}>…</span>
@@ -463,7 +460,7 @@ function AddBlockBar({
   function startResize(e: React.MouseEvent): void {
     if (!aboveBlock || !onAboveResized) return;
     e.preventDefault();
-    const startH = aboveBlock.height ?? ROW_H;
+    const startH = aboveBlock.height ?? 300;
     resizeRef.current = { startY: e.clientY, startH };
     setLiveH(startH);
 
