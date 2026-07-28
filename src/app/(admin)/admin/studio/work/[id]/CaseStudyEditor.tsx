@@ -146,6 +146,21 @@ export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactE
     });
   }
 
+  async function saveTitleInline(title: string): Promise<void> {
+    const updated: StudyDraft = { ...draft, title };
+    setDraft(updated);
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/studio/case-studies/${study.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...updated, ...parseCaseStudyListFields(listFields) }),
+      });
+      const data = await res.json().catch((): { error?: string } => ({}));
+      if (!res.ok) { toast.error(data.error ?? 'Failed to save'); return; }
+      toast.success('Title saved');
+    } catch { toast.error('Failed to save title'); } finally { setSaving(false); }
+  }
+
   async function saveStudy(nextStatus?: StudioCaseStudyStatus): Promise<void> {
     setSaving(true);
     try {
@@ -296,6 +311,7 @@ export default function CaseStudyEditor({ study }: CaseStudyEditorProps): ReactE
           activeTopic={activeTopic}
           onAdd={addBlock}
           onSave={() => saveStudy()}
+          onTitleSave={saveTitleInline}
           onBlockAdded={(b) => setBlocksWithHistory((curr) => [...curr, b])}
           onBlockUpdated={(b) => setBlocksWithHistory((curr) => curr.map((x) => x.id === b.id ? b : x))}
           onBlockDeleted={(id) => setBlocksWithHistory((curr) => curr.filter((x) => x.id !== id))}
@@ -327,6 +343,7 @@ function StudioCanvas({
   activeTopic,
   onAdd,
   onSave,
+  onTitleSave,
   onBlockAdded,
   onBlockUpdated,
   onBlockDeleted,
@@ -348,6 +365,7 @@ function StudioCanvas({
   activeTopic: string | null;
   onAdd: (type: StudioCaseStudyBlockType, content?: Record<string, unknown>, topicId?: string | null) => Promise<void>;
   onSave: () => Promise<void>;
+  onTitleSave: (title: string) => Promise<void>;
   onBlockAdded: (block: StudioCaseStudyBlock) => void;
   onBlockUpdated: (block: StudioCaseStudyBlock) => void;
   onBlockDeleted: (id: string) => void;
@@ -373,6 +391,8 @@ function StudioCanvas({
   const [addingNew, setAddingNew] = useState(false);
   const [newTopicInput, setNewTopicInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleInput, setTitleInput] = useState('');
 
   useEffect(() => {
     if (progressTimerRef.current) clearInterval(progressTimerRef.current);
@@ -487,7 +507,21 @@ function StudioCanvas({
         <div style={{ width: 220, flexShrink: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
           {/* Project header */}
           <div style={{ padding: '40px 16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-            <p style={{ color: '#fff', fontSize: 18, margin: '0 0 6px', lineHeight: 1.2, fontWeight: 600 }}>{projectName}</p>
+            {editingTitle
+              ? <input autoFocus value={titleInput}
+                  onChange={(e) => setTitleInput(e.target.value)}
+                  onBlur={() => { void onTitleSave(titleInput); setEditingTitle(false); }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') { void onTitleSave(titleInput); setEditingTitle(false); }
+                    if (e.key === 'Escape') setEditingTitle(false);
+                  }}
+                  style={{ color: '#fff', fontSize: 18, margin: '0 0 6px', lineHeight: 1.2, fontWeight: 600, background: 'none', border: 'none', borderBottom: '1px solid #a7d252', outline: 'none', width: '100%', padding: 0, fontFamily: 'inherit', display: 'block' }}
+                />
+              : <p onClick={() => { setTitleInput(study.title ?? ''); setEditingTitle(true); }}
+                  style={{ color: '#fff', fontSize: 18, margin: '0 0 6px', lineHeight: 1.2, fontWeight: 600, cursor: 'text' }}>
+                  {projectName}
+                </p>
+            }
             <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap' }}>
               {category && <span style={{ color: '#989898', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{category}</span>}
               {category && year && <span style={{ width: 2, height: 2, borderRadius: '50%', background: '#989898', flexShrink: 0 }} />}
