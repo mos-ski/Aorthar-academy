@@ -22,7 +22,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { toast } from 'sonner';
-import { GripVertical, Plus, Trash2, Upload, Type, Film, Quote, X, Move } from 'lucide-react';
+import { GripVertical, Plus, Trash2, Upload, Type, Film, Quote, X } from 'lucide-react';
 import type { ReactElement, CSSProperties } from 'react';
 import type { StudioCaseStudyBlock, StudioCaseStudyBlockType } from '@/lib/studio/case-study-schema';
 
@@ -146,7 +146,7 @@ function SortableBlock({ block, onDelete, children }: { block: StudioCaseStudyBl
 
 function ImageCell({
   item, idx, blockId, style,
-  onRemove, onUpdated,
+  onRemove,
   onDragStart, onDragEnd,
 }: {
   item: MediaItem | undefined;
@@ -154,45 +154,10 @@ function ImageCell({
   blockId: string;
   style?: CSSProperties;
   onRemove: () => void;
-  onUpdated: (pos: string) => void;
   onDragStart: (blockId: string, idx: number) => void;
   onDragEnd: () => void;
 }): ReactElement {
-  const [livePos, setLivePos] = useState<string | null>(null);
-  const [cropping, setCropping] = useState(false);
-  const cropRef = useRef<{ startX: number; startY: number; px: number; py: number } | null>(null);
-
-  const objectPos = livePos ?? item?.objectPosition ?? '50% 50%';
-
-  function startCrop(e: React.MouseEvent): void {
-    e.preventDefault();
-    e.stopPropagation();
-    const parts = objectPos.split(' ');
-    cropRef.current = {
-      startX: e.clientX, startY: e.clientY,
-      px: parseFloat(parts[0] ?? '50'),
-      py: parseFloat(parts[1] ?? '50'),
-    };
-    setCropping(true);
-
-    function onMove(ev: MouseEvent): void {
-      if (!cropRef.current) return;
-      const nx = Math.max(0, Math.min(100, cropRef.current.px - (ev.clientX - cropRef.current.startX) * 0.4));
-      const ny = Math.max(0, Math.min(100, cropRef.current.py - (ev.clientY - cropRef.current.startY) * 0.4));
-      setLivePos(`${nx.toFixed(1)}% ${ny.toFixed(1)}%`);
-    }
-
-    function onUp(): void {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-      cropRef.current = null;
-      setCropping(false);
-      setLivePos((pos) => { if (pos) onUpdated(pos); return null; });
-    }
-
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  }
+  const objectPos = item?.objectPosition ?? '50% 50%';
 
   return (
     <div style={{ position: 'relative', overflow: 'hidden', background: '#080808', ...style }}>
@@ -200,18 +165,11 @@ function ImageCell({
         ? <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={item.url} alt={item.alt}
-              draggable={!cropping}
+              draggable
               onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; onDragStart(blockId, idx); }}
               onDragEnd={onDragEnd}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: objectPos, display: 'block', cursor: cropping ? 'move' : 'grab', userSelect: 'none' }}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: objectPos, display: 'block', cursor: 'grab', userSelect: 'none' }}
             />
-            {/* Move handle */}
-            <button type="button" onMouseDown={startCrop} title="Drag to reposition"
-              style={{ position: 'absolute', bottom: 8, left: 8, background: cropping ? ACCENT : 'rgba(0,0,0,0.65)', border: 'none', borderRadius: '50%', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'move', color: cropping ? '#111' : '#fff', zIndex: 5 }}>
-              <Move size={13} />
-            </button>
-            {cropping && <div style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(167,210,82,0.9)', color: '#111', fontSize: 10, padding: '2px 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', pointerEvents: 'none' }}>Drag to reposition</div>}
-            {/* Remove */}
             <button type="button" onClick={onRemove}
               style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.65)', border: 'none', borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', zIndex: 5 }}>
               <X size={12} />
@@ -260,15 +218,6 @@ function MediaBlock({
     const updated = { ...block, layout: newLayout, items: newItems } as Extract<StudioCaseStudyBlock, { type: 'media_row' }>;
     try { await apiPatchBlock(studyId, updated); onUpdated(updated); }
     catch (e) { toast.error(e instanceof Error ? e.message : 'Failed'); }
-  }
-
-  // ── update object position ────────────────────────────────────────────────
-
-  async function updatePos(idx: number, pos: string): Promise<void> {
-    const newItems = block.items.map((item, i) => i === idx ? { ...item, objectPosition: pos } : item);
-    const updated = { ...block, items: newItems } as Extract<StudioCaseStudyBlock, { type: 'media_row' }>;
-    try { await apiPatchBlock(studyId, updated); onUpdated(updated); }
-    catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to save position'); }
   }
 
   // ── add paired image (single → pair) ────────────────────────────────────
@@ -320,7 +269,6 @@ function MediaBlock({
       blockId={block.id}
       style={style}
       onRemove={() => void removeItem(idx)}
-      onUpdated={(pos) => void updatePos(idx, pos)}
       onDragStart={onImgDragStart}
       onDragEnd={onImgDragEnd}
     />
@@ -440,7 +388,7 @@ function TextBlock({ block, studyId, onUpdated }: { block: Extract<StudioCaseStu
         </div>
       )}
       <EditorContent editor={editor} />
-      <style>{`.ProseMirror p.is-editor-empty:first-child::before{content:attr(data-placeholder);float:left;color:${TEXT_MUTED};pointer-events:none;height:0}.ProseMirror h1{font-size:2rem;font-weight:700;margin:.5em 0 .25em;color:${TEXT_PRIMARY}}.ProseMirror h2{font-size:1.4rem;font-weight:700;margin:.5em 0 .25em;color:${TEXT_PRIMARY}}.ProseMirror strong{font-weight:700}.ProseMirror em{font-style:italic}.ProseMirror ul{list-style:disc;padding-left:1.5rem;margin:.25rem 0}.ProseMirror ol{list-style:decimal;padding-left:1.5rem;margin:.25rem 0}.ProseMirror p{margin:0}`}</style>
+      <style>{`.ProseMirror p.is-editor-empty:first-child::before{content:attr(data-placeholder);float:left;color:${TEXT_MUTED};pointer-events:none;height:0}.ProseMirror{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif}.ProseMirror h1{font-size:2rem;font-weight:700;margin:.5em 0 .25em;color:${TEXT_PRIMARY}}.ProseMirror h2{font-size:1.4rem;font-weight:700;margin:.5em 0 .25em;color:${TEXT_PRIMARY}}.ProseMirror strong{font-weight:700}.ProseMirror em{font-style:italic}.ProseMirror ul{list-style:disc;padding-left:1.5rem;margin:.25rem 0}.ProseMirror ol{list-style:decimal;padding-left:1.5rem;margin:.25rem 0}.ProseMirror p{margin:0}`}</style>
     </div>
   );
 }
@@ -815,7 +763,7 @@ export default function StoryCanvas({ studyId, topicId, blocks, onBlockAdded, on
   const activeBlock = blocks.find((b) => b.id === activeId);
 
   return (
-    <div style={{ background: CANVAS_BG, minHeight: '100%', padding: '0 48px 80px 56px' }}>
+    <div style={{ background: CANVAS_BG, minHeight: '100%', padding: '0 48px 80px 56px', fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
       <DndContext sensors={sensors} collisionDetection={closestCenter}
         onDragStart={({ active }: DragStartEvent) => setActiveId(active.id as string)}
         onDragEnd={(e) => void handleDragEnd(e)}>
