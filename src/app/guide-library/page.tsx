@@ -39,7 +39,6 @@ const NAV_GROUPS = [
     items: [
       { id: 'colors', label: 'Colors' },
       { id: 'typography', label: 'Typography' },
-      { id: 'animations', label: 'Animations' },
       { id: 'logos', label: 'Logos' },
       { id: 'icons', label: 'Icons' },
       { id: 'misc-icons', label: 'Misc icons' },
@@ -127,6 +126,12 @@ const NAV_GROUPS = [
       { id: 'loading-indicators', label: 'Loading indicators' },
       { id: 'empty-states', label: 'Empty states' },
       { id: 'code-snippets', label: 'Code snippets' },
+    ],
+  },
+  {
+    group: 'Animations',
+    items: [
+      { id: 'animations', label: 'Animations' },
     ],
   },
 ];
@@ -858,7 +863,7 @@ All components use rounded-none. No border-radius.`}>
             </div>
           </Preview>
           <Preview label="Border radius — all 0">
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
               <div className="h-12 w-24 bg-primary flex items-center justify-center text-xs text-primary-foreground rounded-none">rounded-none</div>
               <div className="h-12 w-24 bg-muted flex items-center justify-center text-xs text-muted-foreground border border-border">No curves anywhere</div>
             </div>
@@ -1390,7 +1395,7 @@ Use for: file upload, course completion, quiz progress, enrollment status`}>
             </div>
           </Preview>
           <Preview label="Circular indicators">
-            <div className="flex gap-8 items-center">
+            <div className="flex flex-wrap gap-8 items-center">
               {[20, 40, 60, 80, 100].map((v) => (
                 <div key={v} className="flex flex-col items-center gap-2">
                   <div className="relative size-12">
@@ -1602,12 +1607,12 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
 - Sticky variant: bg-card/80 backdrop-blur-md
 - Subdomain-aware: links change per university/bootcamp/internship`}>
           <Preview label="Full nav bar">
-            <div className="border border-border bg-card px-6 py-3 flex items-center justify-between">
+            <div className="border border-border bg-card px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-2">
                 <img src="/Aorthar Favion.svg" alt="Aorthar" className="h-4 w-4" />
                 <span className="font-bold text-sm">Aorthar</span>
               </div>
-              <nav className="flex items-center gap-6 text-sm text-muted-foreground">
+              <nav className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
                 <span className="text-foreground cursor-pointer">Home</span>
                 <span className="cursor-pointer hover:text-foreground transition-colors">Courses</span>
                 <span className="cursor-pointer hover:text-foreground transition-colors">Bootcamps</span>
@@ -1620,7 +1625,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
             </div>
           </Preview>
           <Preview label="Sticky header variant">
-            <div className="border border-border bg-card/80 backdrop-blur-md px-6 py-3 flex items-center justify-between">
+            <div className="border border-border bg-card/80 backdrop-blur-md px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-2">
                 <img src="/Aorthar Favion.svg" alt="Aorthar" className="h-4 w-4" />
                 <span className="font-bold text-sm">Aorthar</span>
@@ -1759,7 +1764,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
             </div>
           </Preview>
           <Preview label="Inline CTA">
-            <div className="flex items-center justify-between border border-border bg-card p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border border-border bg-card p-4">
               <div>
                 <h3 className="font-medium text-sm">Upgrade to Standard</h3>
                 <p className="text-xs text-muted-foreground">Unlock all courses and certifications</p>
@@ -1982,7 +1987,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
                 { title: 'Content Creator', dept: 'Content', location: 'Lagos', type: 'Contract' },
                 { title: 'Product Designer', dept: 'Design', location: 'Remote', type: 'Full-time' },
               ].map(({ title, dept, location, type }) => (
-                <div key={title} className="flex items-center justify-between border border-border bg-card p-4">
+                <div key={title} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border border-border bg-card p-4">
                   <div>
                     <h3 className="font-medium text-sm">{title}</h3>
                     <p className="text-[10px] text-muted-foreground">{dept} · {location}</p>
@@ -2014,7 +2019,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
                 { q: 'Are certifications recognized?', a: 'Yes, our certifications are recognized by partner organizations and employers.' },
               ].map(({ q, a }, i) => (
                 <div key={i} className="border border-border bg-card">
-                  <div className="flex items-center justify-between p-4 cursor-pointer">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 cursor-pointer">
                     <span className="text-sm font-medium">{q}</span>
                     <ChevronDown className="size-4 text-muted-foreground" />
                   </div>
@@ -2056,9 +2061,9 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
             </div>
           </Preview>
           <Preview label="Minimal footer">
-            <div className="border-t border-border pt-4 flex items-center justify-between">
+            <div className="border-t border-border pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <p className="text-xs text-muted-foreground">&copy; 2026 Aorthar</p>
-              <div className="flex gap-4 text-xs text-muted-foreground"><span className="hover:text-foreground cursor-pointer">Privacy</span><span className="hover:text-foreground cursor-pointer">Terms</span></div>
+              <div className="flex flex-wrap gap-4 text-xs text-muted-foreground"><span className="hover:text-foreground cursor-pointer">Privacy</span><span className="hover:text-foreground cursor-pointer">Terms</span></div>
             </div>
           </Preview>
         </Section>
@@ -2075,9 +2080,9 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
             </div>
           </Preview>
           <Preview label="Cookie banner">
-            <div className="border border-border bg-card p-4 flex items-center justify-between">
+            <div className="border border-border bg-card p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <p className="text-xs text-muted-foreground">We use cookies to improve your experience.</p>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="xs">Decline</Button>
                 <Button size="xs">Accept</Button>
               </div>
@@ -2095,7 +2100,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
 - Actions: Button variant="outline" size="sm" for secondary + Button size="sm" primary action
 - Icons in buttons: <Filter className="size-3" />, <Plus className="size-3" />`}>
           <Preview label="With actions">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <h1 className="text-2xl font-bold">Courses</h1>
                 <p className="text-sm text-muted-foreground">Manage your university courses</p>
@@ -2108,9 +2113,9 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
               <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
                 <Home className="size-3" /> <ChevronRight className="size-3" /> <span>University</span> <ChevronRight className="size-3" /> <span className="text-foreground">Courses</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <h1 className="text-2xl font-bold">All Courses</h1>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button variant="outline" size="sm"><Filter className="size-3" /> Filter</Button>
                   <Button size="sm"><Plus className="size-3" /> Create</Button>
                 </div>
@@ -2128,7 +2133,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
           <Preview>
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
                     <CardTitle>Student Progress</CardTitle>
                     <CardDescription>Overview of student performance across all courses</CardDescription>
@@ -2149,7 +2154,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
 - Use for: card section titles, dashboard sections, content areas
 - Keep consistent spacing (mb-4 or mb-6)`}>
           <Preview label="Simple">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
               <h2 className="text-lg font-semibold">Recent activity</h2>
               <Button variant="ghost" size="sm">View all</Button>
             </div>
@@ -2175,7 +2180,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
 - Right: Button variant="ghost" size="sm" with ArrowRight icon "View all courses"
 - Use for: table pagination, list footers, "load more" sections`}>
           <Preview>
-            <div className="border-t border-border pt-4 flex items-center justify-between">
+            <div className="border-t border-border pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <p className="text-xs text-muted-foreground">Showing 3 of 12 courses</p>
               <Button variant="ghost" size="sm">View all courses <ArrowRight className="size-3 ml-1" /></Button>
             </div>
@@ -2194,6 +2199,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
   - Separator: <ChevronRight className="size-3 text-muted-foreground" />
 - Use for: dashboard nav, course navigation, settings sidebar`}>
           <Preview label="Sidebar nav">
+            <div className="overflow-x-auto">
             <div className="border border-border bg-card w-56 p-3 space-y-1">
               {[
                 { icon: Home, label: 'Dashboard', active: true },
@@ -2206,6 +2212,7 @@ Label pattern: <div className="flex justify-between text-xs text-muted-foregroun
                   <Icon className="size-4" /> {label}
                 </div>
               ))}
+            </div>
             </div>
           </Preview>
           <Preview label="Breadcrumbs">
@@ -2314,7 +2321,7 @@ Use for: delete confirmations, create forms, settings modals`}>
 - Real charts (recharts/chart.js) to be added later`}>
           <Preview label="Bar chart placeholder">
             <div className="border border-border bg-card p-4">
-              <div className="flex items-center justify-between mb-4"><p className="text-sm font-medium">Enrollments</p><Badge variant="secondary">This month</Badge></div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4"><p className="text-sm font-medium">Enrollments</p><Badge variant="secondary">This month</Badge></div>
               <div className="flex items-end gap-2 h-32">
                 {[40, 65, 45, 80, 55, 90, 70].map((h, i) => (
                   <div key={i} className="flex-1 bg-primary/30" style={{ height: `${h}%` }} />
@@ -2327,7 +2334,7 @@ Use for: delete confirmations, create forms, settings modals`}>
           </Preview>
           <Preview label="Line chart placeholder">
             <div className="border border-border bg-card p-4">
-              <div className="flex items-center justify-between mb-4"><p className="text-sm font-medium">Revenue</p><Badge variant="secondary">Last 6 months</Badge></div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4"><p className="text-sm font-medium">Revenue</p><Badge variant="secondary">Last 6 months</Badge></div>
               <div className="h-32 flex items-end">
                 <svg viewBox="0 0 200 80" className="w-full h-full" preserveAspectRatio="none">
                   <polyline points="0,60 33,40 66,50 100,20 133,30 166,10 200,25" fill="none" className="stroke-primary" strokeWidth="2" />
@@ -2428,7 +2435,7 @@ Pattern: form inside sheet for editing metadata`}>
 - Keep compact and non-intrusive
 - Trigger based on: free tier users, expired subscriptions, new features`}>
           <Preview>
-            <div className="border border-primary/20 bg-primary/5 p-4 flex items-center justify-between">
+            <div className="border border-primary/20 bg-primary/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-3">
                 <Sparkles className="size-5 text-primary" />
                 <div>
@@ -2440,7 +2447,7 @@ Pattern: form inside sheet for editing metadata`}>
             </div>
           </Preview>
           <Preview label="Promo banner">
-            <div className="bg-primary text-primary-foreground p-4 flex items-center justify-between">
+            <div className="bg-primary text-primary-foreground p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Flame className="size-4" />
                 <span className="text-sm font-medium">Limited offer: 20% off lifetime access</span>
@@ -2832,7 +2839,7 @@ Keep minimal — dividers should be subtle`}>
           <Preview label="Table skeleton">
             <div className="space-y-2">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex gap-4 border-b border-border pb-2">
+                <div key={i} className="flex flex-wrap gap-4 border-b border-border pb-2">
                   <Skeleton className="h-4 w-32" /><Skeleton className="h-4 w-24" /><Skeleton className="h-4 w-20" /><Skeleton className="ml-auto h-4 w-16" />
                 </div>
               ))}
@@ -2880,7 +2887,7 @@ Keep minimal — dividers should be subtle`}>
 - Use for: API docs, command references, code examples in courses`}>
           <Preview>
             <div className="border border-border bg-card overflow-hidden">
-              <div className="flex items-center justify-between border-b border-border px-4 py-2">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border px-4 py-2">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-mono text-muted-foreground">page.tsx</span>
                 </div>
