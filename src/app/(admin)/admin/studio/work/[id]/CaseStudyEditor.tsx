@@ -223,7 +223,7 @@ function EmptyCanvas({ study, onAdd }: { study: StudyDraft; onAdd: (type: Studio
       {/* Sidebar */}
       <div style={{ width: 180, flexShrink: 0, borderRight: '1px solid #2d2d2d', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 48, paddingBottom: 24 }}>
         <div style={{ textAlign: 'center', padding: '0 12px', marginBottom: 24 }}>
-          <p style={{ color: '#fff', fontSize: 18, fontWeight: 400, margin: '0 0 6px', lineHeight: 1.2 }}>{study.client ?? study.title || 'Project Name'}</p>
+          <p style={{ color: '#fff', fontSize: 18, fontWeight: 400, margin: '0 0 6px', lineHeight: 1.2 }}>{(study.client ?? study.title) || 'Project Name'}</p>
           {meta && <p style={{ color: '#989898', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>{meta}</p>}
         </div>
         <div style={{ width: '100%', padding: '0 12px' }}>
