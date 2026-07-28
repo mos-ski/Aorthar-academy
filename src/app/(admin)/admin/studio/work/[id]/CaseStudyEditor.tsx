@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowDown, ArrowLeft, ArrowUp, Copy, ExternalLink, Plus, Redo, Save, Trash2, Undo, X } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, Copy, ExternalLink, Film, MessageSquare, Plus, Redo, Save, Trash2, Type, Undo, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -362,7 +362,7 @@ function StudioCanvas({
   onRedo: () => void;
 }): ReactElement {
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  const bottomFileRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadLabel, setUploadLabel] = useState('');
@@ -405,10 +405,6 @@ function StudioCanvas({
 
   const topicBlocks = activeTopic != null ? blocks.filter((b) => b.topic_id === activeTopic) : blocks;
   const otherBlocks = activeTopic != null ? blocks.filter((b) => b.topic_id !== activeTopic) : [];
-
-  const filteredTypes = (Object.keys(emptyContentByType) as StudioCaseStudyBlockType[]).filter(
-    (type) => !search || blockLabels[type].toLowerCase().includes(search.toLowerCase()),
-  );
 
   async function handleFiles(fileList: FileList | File[]): Promise<void> {
     const files = Array.from(fileList);
@@ -603,20 +599,24 @@ function StudioCanvas({
 
           {/* Fixed-bottom add block bar */}
           <div style={{ flexShrink: 0, position: 'relative', borderTop: '1px solid #2a2a2a' }}>
+            <input ref={bottomFileRef} type="file" multiple
+              accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
+              style={{ display: 'none' }}
+              onChange={(e) => { if (e.target.files) void handleFiles(e.target.files); if (e.target) e.target.value = ''; setOpen(false); }}
+            />
             {open && (
-              <div style={{ position: 'absolute', bottom: 'calc(100% + 4px)', left: '50%', transform: 'translateX(-50%)' }}>
-                <div style={{ width: 240, background: '#18191a', border: '1px solid #484848', boxShadow: '0 -4px 16px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
-                  <div style={{ background: '#484848', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search"
-                      style={{ background: 'none', border: 'none', outline: 'none', color: '#ebefe0', fontSize: 14, fontWeight: 500, width: '100%' }} />
-                  </div>
-                  {filteredTypes.map((type) => (
-                    <div key={type} role="button" tabIndex={0}
-                      onClick={() => { void onAdd(type, undefined, activeTopic); setOpen(false); setSearch(''); }}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { void onAdd(type, undefined, activeTopic); setOpen(false); setSearch(''); } }}
-                      style={{ padding: '6px 10px', color: '#ebefe0', fontSize: 14, cursor: 'pointer' }}>
-                      {blockLabels[type]}
-                    </div>
+              <div style={{ position: 'absolute', bottom: 'calc(100% + 4px)', left: '50%', transform: 'translateX(-50%)', zIndex: 30 }}>
+                <div style={{ background: '#18191a', border: '1px solid #2a2a2a', padding: 6, display: 'flex', gap: 4, boxShadow: '0 -4px 16px rgba(0,0,0,0.4)' }}>
+                  {[
+                    { icon: <Upload size={14} color="#a7d252" />, label: 'Upload', action: () => { bottomFileRef.current?.click(); } },
+                    { icon: <Type size={14} />, label: 'Text', action: () => { void onAdd('text', undefined, activeTopic); setOpen(false); } },
+                    { icon: <Film size={14} />, label: 'Video', action: () => { void onAdd('video', undefined, activeTopic); setOpen(false); } },
+                    { icon: <MessageSquare size={14} />, label: 'Quote', action: () => { void onAdd('quote', undefined, activeTopic); setOpen(false); } },
+                  ].map((btn) => (
+                    <button key={btn.label} type="button" onClick={btn.action}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', padding: '8px 12px', cursor: 'pointer', color: '#ebefe0', fontSize: 11 }}>
+                      <span style={{ color: '#6b6b6b' }}>{btn.icon}</span>{btn.label}
+                    </button>
                   ))}
                 </div>
               </div>
