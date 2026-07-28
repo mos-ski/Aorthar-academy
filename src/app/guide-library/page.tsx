@@ -39,6 +39,7 @@ const NAV_GROUPS = [
     items: [
       { id: 'colors', label: 'Colors' },
       { id: 'typography', label: 'Typography' },
+      { id: 'animations', label: 'Animations' },
       { id: 'logos', label: 'Logos' },
       { id: 'icons', label: 'Icons' },
       { id: 'misc-icons', label: 'Misc icons' },
@@ -46,7 +47,6 @@ const NAV_GROUPS = [
       { id: 'spacing', label: 'Spacing, radius & grids' },
       { id: 'portfolio-mockups', label: 'Portfolio mockups' },
       { id: 'design-annotations', label: 'Design annotations' },
-      { id: 'animations', label: 'Animations' },
     ],
   },
   {
@@ -340,6 +340,65 @@ function CouponPulseDemo() {
   );
 }
 
+const STAGGER_ITEMS = [
+  { icon: <User className="size-4" />, title: 'Profile updated', meta: '2 min ago' },
+  { icon: <Bell className="size-4" />, title: 'New webinar registration', meta: '14 min ago' },
+  { icon: <Check className="size-4" />, title: 'Payment confirmed', meta: '1 hr ago' },
+  { icon: <Upload className="size-4" />, title: 'Media block uploaded', meta: '3 hrs ago' },
+];
+
+function StaggeredList() {
+  const [key, setKey] = useState(0);
+  return (
+    <div className="space-y-3 max-w-sm">
+      <Button size="sm" variant="outline" onClick={() => setKey((k) => k + 1)} className="mb-4">Replay</Button>
+      {STAGGER_ITEMS.map((item, i) => (
+        <div
+          key={`${i}-${key}`}
+          className="animate-in fade-in slide-in-from-bottom-3 fill-mode-both flex items-center gap-3 border border-border bg-card px-4 py-3"
+          style={{ animationDuration: '400ms', animationDelay: `${i * 80}ms` }}
+        >
+          <span className="flex size-8 shrink-0 items-center justify-center bg-primary/10 text-primary">{item.icon}</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium">{item.title}</p>
+            <p className="text-xs text-muted-foreground">{item.meta}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SkeletonReveal() {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <div className="max-w-sm space-y-4">
+      <div className="flex gap-2 mb-4">
+        <Button size="sm" variant="outline" onClick={() => setLoaded(false)}>Show skeleton</Button>
+        <Button size="sm" onClick={() => setLoaded(true)}>Reveal content</Button>
+      </div>
+      <div className="border border-border bg-card p-5 space-y-4">
+        <div className="flex items-center gap-3">
+          {loaded
+            ? <Avatar size="lg"><AvatarFallback>MO</AvatarFallback></Avatar>
+            : <Skeleton className="size-10 shrink-0" />}
+          <div className="flex-1 space-y-2">
+            {loaded
+              ? <><p className="text-sm font-semibold">Moses Adedamola</p><p className="text-xs text-muted-foreground">Lead Designer · Aorthar</p></>
+              : <><Skeleton className="h-3 w-32" /><Skeleton className="h-3 w-20" /></>}
+          </div>
+        </div>
+        {loaded
+          ? <p className="text-sm text-muted-foreground">Brand identity and strategy for a new creative studio based in Lagos.</p>
+          : <><Skeleton className="h-3 w-full" /><Skeleton className="h-3 w-3/4" /></>}
+        {loaded
+          ? <Button size="sm">View profile</Button>
+          : <Skeleton className="h-8 w-24" />}
+      </div>
+    </div>
+  );
+}
+
 export default function GuideLibraryPage() {
   const [activeNav, setActiveNav] = useState('colors');
   const [isDark, setIsDark] = useState(true);
@@ -410,7 +469,7 @@ export default function GuideLibraryPage() {
       </aside>
 
       {/* Main */}
-      <main className="flex-1 lg:ml-56 px-4 py-6 sm:px-8 md:px-12 lg:py-10 max-w-4xl">
+      <main className="flex-1 lg:ml-56 px-4 py-6 sm:px-8 md:px-12 lg:py-10 max-w-4xl overflow-x-hidden">
 
         {/* Mobile header */}
         <div className="mb-4 flex items-center gap-3 lg:hidden">
@@ -507,6 +566,136 @@ All components use rounded-none. No border-radius.`}>
               <div><p className="mb-1 font-mono text-[10px] text-muted-foreground">font-mono</p><p className="font-mono text-sm">/api/admin/studio/case-studies/:id</p></div>
             </div>
           </Preview>
+        </Section>
+
+        {/* ── ANIMATIONS ── */}
+        <Section id="animations" title="Animations" description="Every motion primitive in the stack — interact with each demo.">
+
+          {/* 1. Button interactions */}
+          <Preview label="Button micro-interactions — hover, press, loading">
+            <div className="flex flex-wrap items-center gap-6">
+              <div className="flex flex-col items-center gap-2">
+                <Button className="transition-all duration-150 hover:scale-105 active:scale-95">Hover me</Button>
+                <span className="font-mono text-[10px] text-muted-foreground">scale on hover/press</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <Button variant="outline" className="transition-all duration-200 hover:border-primary hover:text-primary hover:bg-primary/5">Outline hover</Button>
+                <span className="font-mono text-[10px] text-muted-foreground">border + color transition</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <Button disabled className="opacity-70 cursor-not-allowed">
+                  <svg className="mr-2 size-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="50 150" />
+                  </svg>
+                  Saving…
+                </Button>
+                <span className="font-mono text-[10px] text-muted-foreground">Apple-style spinner</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <Button variant="outline" className="group gap-2 transition-all duration-200">
+                  <Upload className="size-4 transition-transform duration-200 group-hover:-translate-y-0.5" />
+                  Upload
+                </Button>
+                <span className="font-mono text-[10px] text-muted-foreground">icon lifts on hover</span>
+              </div>
+            </div>
+          </Preview>
+
+          {/* 2. Card hover effects */}
+          <Preview label="Card hover — lift, glow, border reveal">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="group border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 cursor-pointer">
+                <div className="mb-2 h-8 w-8 bg-primary transition-transform duration-200 group-hover:scale-110" />
+                <p className="text-sm font-medium">Lift</p>
+                <p className="text-xs text-muted-foreground mt-0.5">translateY on hover</p>
+              </div>
+              <div className="group border border-border bg-card p-4 transition-all duration-300 hover:bg-card/80 hover:shadow-[0_0_0_1px_#a7d252] cursor-pointer">
+                <div className="mb-2 h-8 w-8 bg-primary/60 transition-all duration-300 group-hover:bg-primary" />
+                <p className="text-sm font-medium">Glow ring</p>
+                <p className="text-xs text-muted-foreground mt-0.5">lemon outline on hover</p>
+              </div>
+              <div className="group border border-border bg-card p-4 overflow-hidden relative cursor-pointer transition-all duration-200">
+                <div className="absolute inset-x-0 bottom-0 h-0.5 bg-primary transition-all duration-300 group-hover:h-1" />
+                <div className="mb-2 h-8 w-8 bg-muted transition-all duration-300 group-hover:bg-primary" />
+                <p className="text-sm font-medium">Underline grow</p>
+                <p className="text-xs text-muted-foreground mt-0.5">bottom border expands</p>
+              </div>
+            </div>
+          </Preview>
+
+          {/* 3. Staggered list entry */}
+          <Preview label="Staggered list entry — click to replay">
+            <StaggeredList />
+          </Preview>
+
+          {/* 4. Skeleton → content reveal */}
+          <Preview label="Skeleton → content reveal — click to toggle">
+            <SkeletonReveal />
+          </Preview>
+
+          {/* 5. Tailwind built-ins */}
+          <Preview label="Tailwind built-ins — spin / ping / pulse / bounce">
+            <div className="flex flex-wrap items-end gap-10">
+              <div className="flex flex-col items-center gap-3">
+                <svg className="size-7 animate-spin text-primary" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeDasharray="50 150" />
+                </svg>
+                <span className="font-mono text-[10px] text-muted-foreground">animate-spin</span>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <div className="relative h-7 w-7">
+                  <span className="absolute inline-flex h-full w-full animate-ping bg-primary opacity-40" />
+                  <span className="relative inline-flex h-7 w-7 bg-primary" />
+                </div>
+                <span className="font-mono text-[10px] text-muted-foreground">animate-ping</span>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <div className="h-7 w-7 animate-pulse bg-primary/60" />
+                <span className="font-mono text-[10px] text-muted-foreground">animate-pulse</span>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <div className="h-7 w-7 animate-bounce bg-primary" />
+                <span className="font-mono text-[10px] text-muted-foreground">animate-bounce</span>
+              </div>
+            </div>
+          </Preview>
+
+          {/* 6. Enter animations */}
+          <Preview label="tw-animate-css enter animations — click to replay">
+            <EnterAnimations />
+          </Preview>
+
+          {/* 7. Easing comparison */}
+          <Preview label="Easing curves — same distance, different feel — click Run">
+            <EasingDemo />
+          </Preview>
+
+          {/* 8. Duration scale */}
+          <Preview label="Duration scale — same fade, different speed — click Replay">
+            <DurationDemo />
+          </Preview>
+
+          {/* 9. Custom keyframes */}
+          <Preview label="Custom keyframes from globals.css">
+            <div className="flex flex-wrap items-end gap-12">
+              <div className="flex flex-col items-center gap-3">
+                <div className="landing-pulse flex h-16 w-16 items-center justify-center bg-primary">
+                  <span className="font-mono text-[10px] text-background font-bold">PULSE</span>
+                </div>
+                <span className="font-mono text-[10px] text-muted-foreground">landing-pulse</span>
+                <span className="text-[10px] text-muted-foreground/60">scale + lemon glow, 7s loop</span>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <div className="landing-float flex h-16 w-16 items-center justify-center bg-card border border-primary/30">
+                  <span className="font-mono text-[10px] text-primary font-bold">FLOAT</span>
+                </div>
+                <span className="font-mono text-[10px] text-muted-foreground">landing-float</span>
+                <span className="text-[10px] text-muted-foreground/60">translateY -8px, 10s loop</span>
+              </div>
+              <CouponPulseDemo />
+            </div>
+          </Preview>
+
         </Section>
 
         {/* ── LOGOS ── */}
@@ -613,17 +802,17 @@ All components use rounded-none. No border-radius.`}>
 - Selection: background rgba(8,105,74,0.2) color #0f2a21
 - Animations: [data-reveal] scroll-reveal, .landing-pulse (7s), .landing-float (10s)`}>
           <Preview label="Shadows">
-            <div className="flex gap-6">
-              <div className="h-20 w-40 border border-border bg-card shadow-sm flex items-center justify-center text-xs text-muted-foreground">shadow-sm</div>
-              <div className="h-20 w-40 border border-border bg-card shadow flex items-center justify-center text-xs text-muted-foreground">shadow</div>
-              <div className="h-20 w-40 border border-border bg-card shadow-md flex items-center justify-center text-xs text-muted-foreground">shadow-md</div>
-              <div className="h-20 w-40 border border-border bg-card shadow-lg flex items-center justify-center text-xs text-muted-foreground">shadow-lg</div>
+            <div className="flex flex-wrap gap-4 sm:gap-6">
+              <div className="h-20 w-28 sm:w-40 border border-border bg-card shadow-sm flex items-center justify-center text-xs text-muted-foreground">shadow-sm</div>
+              <div className="h-20 w-28 sm:w-40 border border-border bg-card shadow flex items-center justify-center text-xs text-muted-foreground">shadow</div>
+              <div className="h-20 w-28 sm:w-40 border border-border bg-card shadow-md flex items-center justify-center text-xs text-muted-foreground">shadow-md</div>
+              <div className="h-20 w-28 sm:w-40 border border-border bg-card shadow-lg flex items-center justify-center text-xs text-muted-foreground">shadow-lg</div>
             </div>
           </Preview>
           <Preview label="Glows">
-            <div className="flex gap-6">
-              <div className="h-20 w-40 bg-primary/10 border border-primary/20 flex items-center justify-center text-xs text-primary">primary glow</div>
-              <div className="h-20 w-40 bg-destructive/10 border border-destructive/20 flex items-center justify-center text-xs text-destructive">destructive glow</div>
+            <div className="flex flex-wrap gap-4 sm:gap-6">
+              <div className="h-20 w-28 sm:w-40 bg-primary/10 border border-primary/20 flex items-center justify-center text-xs text-primary">primary glow</div>
+              <div className="h-20 w-28 sm:w-40 bg-destructive/10 border border-destructive/20 flex items-center justify-center text-xs text-destructive">destructive glow</div>
             </div>
           </Preview>
           <Preview label="Overlays">
@@ -648,7 +837,7 @@ All components use rounded-none. No border-radius.`}>
 - Grid: standard Tailwind grid — grid-cols-2, grid-cols-3, grid-cols-4 with gap-4 or gap-6
 - Dashboard layout: px-[15%] padding from (dashboard)/layout.tsx — do not add per-page horizontal padding`}>
           <Preview label="Spacing scale">
-            <div className="space-y-3">
+            <div className="space-y-3 overflow-x-auto">
               {[
                 { space: '1', px: 4, label: '4px' },
                 { space: '2', px: 8, label: '8px' },
@@ -752,78 +941,6 @@ All components use rounded-none. No border-radius.`}>
               </div>
             </div>
           </Preview>
-        </Section>
-
-        {/* ── ANIMATIONS ── */}
-        <Section id="animations" title="Animations" description="All animation primitives: Tailwind built-ins, tw-animate-css enter/exit, transitions, easings, durations, and custom keyframes.">
-
-          <Preview label="Tailwind built-in — spin / ping / pulse / bounce">
-            <div className="flex flex-wrap items-center gap-10">
-              <div className="flex flex-col items-center gap-3">
-                <div className="h-8 w-8 animate-spin border-2 border-primary border-t-transparent" />
-                <span className="font-mono text-[10px] text-muted-foreground">animate-spin</span>
-              </div>
-              <div className="flex flex-col items-center gap-3">
-                <div className="relative h-8 w-8">
-                  <span className="absolute inline-flex h-full w-full animate-ping bg-primary opacity-40" />
-                  <span className="relative inline-flex h-8 w-8 bg-primary" />
-                </div>
-                <span className="font-mono text-[10px] text-muted-foreground">animate-ping</span>
-              </div>
-              <div className="flex flex-col items-center gap-3">
-                <div className="h-8 w-8 animate-pulse bg-primary/60" />
-                <span className="font-mono text-[10px] text-muted-foreground">animate-pulse</span>
-              </div>
-              <div className="flex flex-col items-center gap-3">
-                <div className="h-8 w-8 animate-bounce bg-primary" />
-                <span className="font-mono text-[10px] text-muted-foreground">animate-bounce</span>
-              </div>
-            </div>
-          </Preview>
-
-          <Preview label="tw-animate-css — enter animations (click to replay)">
-            <EnterAnimations />
-          </Preview>
-
-          <Preview label="Transitions — hover over each box">
-            <div className="flex flex-wrap gap-4">
-              {[
-                { label: 'colors', cls: 'bg-card border border-border hover:bg-primary hover:text-background transition-colors duration-300' },
-                { label: 'opacity', cls: 'bg-primary opacity-100 hover:opacity-20 transition-opacity duration-300' },
-                { label: 'scale', cls: 'bg-primary hover:scale-110 transition-transform duration-300' },
-                { label: 'translate Y', cls: 'bg-primary hover:-translate-y-2 transition-transform duration-300' },
-                { label: 'all', cls: 'bg-card border border-border hover:bg-primary hover:scale-105 hover:-translate-y-1 hover:border-primary transition-all duration-300' },
-              ].map(({ label, cls }) => (
-                <div key={label} className="flex flex-col items-center gap-2">
-                  <div className={`h-14 w-14 cursor-pointer ${cls}`} />
-                  <span className="font-mono text-[10px] text-muted-foreground">{label}</span>
-                </div>
-              ))}
-            </div>
-          </Preview>
-
-          <Preview label="Duration scale — same fade at different speeds">
-            <DurationDemo />
-          </Preview>
-
-          <Preview label="Easing comparison — same distance, different feel">
-            <EasingDemo />
-          </Preview>
-
-          <Preview label="Custom keyframes — landing-pulse / landing-float / coupon-pulse">
-            <div className="flex flex-wrap items-end gap-10">
-              <div className="flex flex-col items-center gap-3">
-                <div className="landing-pulse h-14 w-14 bg-primary" />
-                <span className="font-mono text-[10px] text-muted-foreground">landing-pulse</span>
-              </div>
-              <div className="flex flex-col items-center gap-3">
-                <div className="landing-float h-14 w-14 bg-primary" />
-                <span className="font-mono text-[10px] text-muted-foreground">landing-float</span>
-              </div>
-              <CouponPulseDemo />
-            </div>
-          </Preview>
-
         </Section>
 
         {/* ════════════════════════════════════════════ SHARED COMPONENTS ════════════════════════════════════════════ */}
@@ -2220,7 +2337,7 @@ Use for: delete confirmations, create forms, settings modals`}>
             </div>
           </Preview>
           <Preview label="Pie chart placeholder">
-            <div className="border border-border bg-card p-4 flex items-center gap-8">
+            <div className="border border-border bg-card p-4 flex flex-wrap items-center gap-4 sm:gap-8">
               <div className="relative size-24">
                 <svg viewBox="0 0 36 36" className="size-24 -rotate-90">
                   <circle cx="18" cy="18" r="16" fill="none" className="stroke-muted" strokeWidth="3" />
@@ -2477,6 +2594,7 @@ Status badges: <Badge variant={status === 'Published' ? 'default' : 'secondary'}
 Cell content: primary text font-medium + secondary text text-xs text-muted-foreground (e.g. name + email)
 Use for: student lists, course management, transaction history, admin dashboards`}>
           <Preview>
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -2508,6 +2626,7 @@ Use for: student lists, course management, transaction history, admin dashboards
                 ))}
               </TableBody>
             </Table>
+            </div>
           </Preview>
         </Section>
 
