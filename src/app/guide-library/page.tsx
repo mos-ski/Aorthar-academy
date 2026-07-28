@@ -46,6 +46,7 @@ const NAV_GROUPS = [
       { id: 'spacing', label: 'Spacing, radius & grids' },
       { id: 'portfolio-mockups', label: 'Portfolio mockups' },
       { id: 'design-annotations', label: 'Design annotations' },
+      { id: 'animations', label: 'Animations' },
     ],
   },
   {
@@ -178,7 +179,7 @@ function Preview({ label, children }: { label?: string; children: React.ReactNod
   return (
     <div className="mb-6">
       {label && <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">{label}</p>}
-      <div className="border border-border bg-muted/20 p-6">
+      <div className="border border-border bg-muted/20 p-4 sm:p-6 overflow-hidden">
         {children}
       </div>
     </div>
@@ -227,6 +228,118 @@ function AnimatedProgress() {
   );
 }
 
+const ENTER_ANIMS = [
+  { label: 'fade-in', cls: 'animate-in fade-in' },
+  { label: 'fade-in + slide up', cls: 'animate-in fade-in slide-in-from-bottom-4' },
+  { label: 'slide from top', cls: 'animate-in slide-in-from-top-4' },
+  { label: 'slide from left', cls: 'animate-in slide-in-from-left-4' },
+  { label: 'slide from right', cls: 'animate-in slide-in-from-right-4' },
+  { label: 'zoom-in', cls: 'animate-in zoom-in-75' },
+  { label: 'spin-in', cls: 'animate-in spin-in-12' },
+];
+
+function EnterAnimations() {
+  const [key, setKey] = useState(0);
+  return (
+    <div className="space-y-4">
+      <Button size="sm" variant="outline" onClick={() => setKey((k) => k + 1)}>
+        Replay all
+      </Button>
+      <div className="flex flex-wrap gap-3">
+        {ENTER_ANIMS.map(({ label, cls }) => (
+          <div key={`${label}-${key}`} className="flex flex-col items-center gap-2">
+            <div className={`h-12 w-24 bg-primary duration-500 fill-mode-both ${cls}`} />
+            <span className="font-mono text-[10px] text-muted-foreground text-center leading-tight">{label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const DURATIONS = [75, 150, 300, 500, 700, 1000];
+
+function DurationDemo() {
+  const [key, setKey] = useState(0);
+  return (
+    <div className="space-y-4">
+      <Button size="sm" variant="outline" onClick={() => setKey((k) => k + 1)}>Replay</Button>
+      <div className="flex flex-wrap gap-4">
+        {DURATIONS.map((ms) => (
+          <div key={ms} className="flex flex-col items-center gap-2">
+            <div
+              key={`${ms}-${key}`}
+              className={`h-10 w-10 bg-primary animate-in fade-in duration-${ms} fill-mode-both`}
+            />
+            <span className="font-mono text-[10px] text-muted-foreground">{ms}ms</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const EASINGS = [
+  { label: 'linear', style: 'transition-timing-function: linear' },
+  { label: 'ease', style: 'transition-timing-function: ease' },
+  { label: 'ease-in', style: 'transition-timing-function: cubic-bezier(0.4,0,1,1)' },
+  { label: 'ease-out', style: 'transition-timing-function: cubic-bezier(0,0,0.2,1)' },
+  { label: 'ease-in-out', style: 'transition-timing-function: cubic-bezier(0.4,0,0.2,1)' },
+];
+
+function EasingDemo() {
+  const [running, setRunning] = useState(false);
+  const [pos, setPos] = useState(0);
+
+  function run() {
+    if (running) return;
+    setRunning(true);
+    setPos(0);
+    setTimeout(() => {
+      setPos(1);
+      setTimeout(() => { setPos(0); setRunning(false); }, 900);
+    }, 50);
+  }
+
+  return (
+    <div className="space-y-4">
+      <Button size="sm" variant="outline" onClick={run} disabled={running}>Run</Button>
+      <div className="space-y-3">
+        {EASINGS.map(({ label, style }) => (
+          <div key={label} className="flex items-center gap-4">
+            <span className="w-24 shrink-0 font-mono text-[10px] text-muted-foreground text-right">{label}</span>
+            <div className="relative flex-1 h-6 border-b border-border/40">
+              <div
+                className="absolute top-0 h-6 w-6 bg-primary"
+                style={{
+                  left: `calc(${pos * 100}% - ${pos * 24}px)`,
+                  transition: `left 800ms`,
+                  [style.split(':')[0].trim()]: style.split(':')[1].trim(),
+                } as React.CSSProperties}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CouponPulseDemo() {
+  const [key, setKey] = useState(0);
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <div
+        key={key}
+        className={key > 0 ? 'coupon-pulse h-14 w-14 bg-primary' : 'h-14 w-14 bg-primary'}
+        onClick={() => setKey((k) => k + 1)}
+        style={{ cursor: 'pointer' }}
+      />
+      <span className="font-mono text-[10px] text-muted-foreground">coupon-pulse (click)</span>
+    </div>
+  );
+}
+
 export default function GuideLibraryPage() {
   const [activeNav, setActiveNav] = useState('colors');
   const [isDark, setIsDark] = useState(true);
@@ -256,7 +369,7 @@ export default function GuideLibraryPage() {
 
   return (
     <TooltipProvider>
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div className="flex min-h-screen overflow-x-hidden bg-background text-foreground">
 
       {/* Mobile overlay */}
       {sidebarOpen && <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />}
@@ -639,6 +752,78 @@ All components use rounded-none. No border-radius.`}>
               </div>
             </div>
           </Preview>
+        </Section>
+
+        {/* ── ANIMATIONS ── */}
+        <Section id="animations" title="Animations" description="All animation primitives: Tailwind built-ins, tw-animate-css enter/exit, transitions, easings, durations, and custom keyframes.">
+
+          <Preview label="Tailwind built-in — spin / ping / pulse / bounce">
+            <div className="flex flex-wrap items-center gap-10">
+              <div className="flex flex-col items-center gap-3">
+                <div className="h-8 w-8 animate-spin border-2 border-primary border-t-transparent" />
+                <span className="font-mono text-[10px] text-muted-foreground">animate-spin</span>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <div className="relative h-8 w-8">
+                  <span className="absolute inline-flex h-full w-full animate-ping bg-primary opacity-40" />
+                  <span className="relative inline-flex h-8 w-8 bg-primary" />
+                </div>
+                <span className="font-mono text-[10px] text-muted-foreground">animate-ping</span>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <div className="h-8 w-8 animate-pulse bg-primary/60" />
+                <span className="font-mono text-[10px] text-muted-foreground">animate-pulse</span>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <div className="h-8 w-8 animate-bounce bg-primary" />
+                <span className="font-mono text-[10px] text-muted-foreground">animate-bounce</span>
+              </div>
+            </div>
+          </Preview>
+
+          <Preview label="tw-animate-css — enter animations (click to replay)">
+            <EnterAnimations />
+          </Preview>
+
+          <Preview label="Transitions — hover over each box">
+            <div className="flex flex-wrap gap-4">
+              {[
+                { label: 'colors', cls: 'bg-card border border-border hover:bg-primary hover:text-background transition-colors duration-300' },
+                { label: 'opacity', cls: 'bg-primary opacity-100 hover:opacity-20 transition-opacity duration-300' },
+                { label: 'scale', cls: 'bg-primary hover:scale-110 transition-transform duration-300' },
+                { label: 'translate Y', cls: 'bg-primary hover:-translate-y-2 transition-transform duration-300' },
+                { label: 'all', cls: 'bg-card border border-border hover:bg-primary hover:scale-105 hover:-translate-y-1 hover:border-primary transition-all duration-300' },
+              ].map(({ label, cls }) => (
+                <div key={label} className="flex flex-col items-center gap-2">
+                  <div className={`h-14 w-14 cursor-pointer ${cls}`} />
+                  <span className="font-mono text-[10px] text-muted-foreground">{label}</span>
+                </div>
+              ))}
+            </div>
+          </Preview>
+
+          <Preview label="Duration scale — same fade at different speeds">
+            <DurationDemo />
+          </Preview>
+
+          <Preview label="Easing comparison — same distance, different feel">
+            <EasingDemo />
+          </Preview>
+
+          <Preview label="Custom keyframes — landing-pulse / landing-float / coupon-pulse">
+            <div className="flex flex-wrap items-end gap-10">
+              <div className="flex flex-col items-center gap-3">
+                <div className="landing-pulse h-14 w-14 bg-primary" />
+                <span className="font-mono text-[10px] text-muted-foreground">landing-pulse</span>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <div className="landing-float h-14 w-14 bg-primary" />
+                <span className="font-mono text-[10px] text-muted-foreground">landing-float</span>
+              </div>
+              <CouponPulseDemo />
+            </div>
+          </Preview>
+
         </Section>
 
         {/* ════════════════════════════════════════════ SHARED COMPONENTS ════════════════════════════════════════════ */}

@@ -16,6 +16,7 @@ Each section maps to a `#anchor` in the page. Build one section at a time.
 - [ ] spacing — Spacing scale, border-radius (always 0), grid system
 - [ ] portfolio-mockups — Device frames and presentation mockups
 - [ ] design-annotations — Redline / spec annotation components
+- [x] animations — Tailwind built-ins, tw-animate-css enter/exit, transitions, easings, durations, custom keyframes
 
 ---
 
